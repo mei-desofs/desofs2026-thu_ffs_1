@@ -1,0 +1,39 @@
+@startuml
+left to right direction
+
+actor UnregisteredSupplier as "Unregistered Supplier"
+actor Admin as "Administrator"
+actor Dietitian
+actor CentralCanteenManager as "Central Canteen Manager"
+actor CanteenManager as "Canteen Manager"
+
+
+rectangle BioCantinas {
+
+    CentralCanteenManager -- (UC1: Authenticate in the system)
+    CanteenManager -- (UC1: Authenticate in the system)
+    Dietitian -- (UC1: Authenticate in the system)
+    Admin -- (UC1: Authenticate in the system)
+
+    CentralCanteenManager -- (UC2: Recover my password)
+    CanteenManager -- (UC2: Recover my password)
+    Dietitian -- (UC2: Recover my password)
+    Admin -- (UC2: Recover my password)
+
+    UnregisteredSupplier -- (UC3: Send a Supplier Application)
+
+    Admin -- (UC4: Approve a Supplier Candidate)
+    Admin -- (UC5: Visualize the KPIs of every canteen)
+
+    Dietitian -- (UC6: Edit proposed meal planning)
+    Dietitian -- (UC7: Publish meal planning)
+
+    CentralCanteenManager -- (UC8: Receive low stock alerts)
+    CentralCanteenManager -- (UC9: Visualize KPIs of the central canteen)
+    CentralCanteenManager -- (UC10: Order products from suppliers)
+
+    CanteenManager -- (UC11: Visualize KPIs of the canteen)
+
+}
+
+@enduml
