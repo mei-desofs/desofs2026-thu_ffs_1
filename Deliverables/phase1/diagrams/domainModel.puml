@@ -1,0 +1,330 @@
+@startuml
+!pragma layout smetana
+
+hide methods
+left to right direction
+
+Title "Domain Model"
+
+class User{
+    -name
+    -email
+    -password
+    -Role
+}
+
+enum Role {
+   ADMIN
+   DIETITIAN
+   USER
+   CANTEEN_MANAGER
+   NETWORK_MANAGER
+   DINING_HALL_MANAGER
+}
+
+class Consumer {
+    -name
+}
+
+class Dietician {
+    -name
+}
+
+class Supplier {
+    -name
+    -nif
+    -address
+    -contactInfo
+    -certifiedOrganic
+    -isQuarantined
+}
+
+class Address  {
+    -street
+    -municipality
+    -village
+    -postalCode
+    -country
+}
+
+enum Municipality {
+    MUNICIPALITY_1
+    MUNICIPALITY_2
+    MUNICIPALITY_3
+}
+
+class SupplierApplication{
+    -name
+    -email
+    -nif
+    -bioCertificate
+    -applicationDate
+    -status
+    -interviewStatus
+}
+
+class SupplierCapactity {
+    -productName
+    -startDate
+    -endDate
+    -quantity
+    -remainingQuantity
+}
+
+enum SupplierApplicationStatus{
+    PENDING
+    APPROVED
+    REJECTED
+}
+
+enum InterviewStatus{
+    SCHEDULED
+    COMPLETED
+    NOT_SCHEDULED
+}
+
+class CanteenManager {
+    - name
+}
+
+class DiningHallManager {
+    - name
+}
+
+class Menu {
+    -weekStartDate
+    -weekEndDate
+    -status
+}
+
+class MenuEntry {
+    -menuDate
+    -weekDay
+}
+
+enum MenuStatus{
+    GENERATED
+    EDITED
+    PUBLISHED
+}
+
+class Reservation {
+    -reservationDate
+    -status
+}
+
+enum ReservationStatus{
+    RESERVED
+    CANCELLED
+    COMPLETED
+}
+
+class Dish {
+    -dishName
+    -nutritionalInformation
+    -dishType
+}
+
+class DishIngredient {
+    -dish
+    -ingredient
+    -quantity
+}
+
+class ProvisioningItem {
+    -menu
+    -product
+    -quantity
+    -type
+}
+
+enum ProvisioningType {
+   PLANNED
+   ADJUSTED
+}
+
+
+enum DishType{
+    MEAT
+    FISH
+    VEGETARIAN
+    DIET
+    KOSHER
+}
+
+class Ingredient {
+    -ingredientName
+    -ingredientQuantity
+}
+
+class Product {
+    -productName
+    -productUnit
+    -expirationDays
+    -allergens
+    -seasons
+}
+
+enum Allergen {
+    -GLUTEN
+    -MILK
+    -EGGS
+}
+
+enum Season {
+    SPRING
+    SUMMER
+    AUTUMN
+    WINTER
+}
+
+class Canteen {
+    -canteenName
+    -location
+    -capacity
+    -canCookDishes
+}
+
+class Waste{
+    -date
+    - totalMealsReserved
+    - mealsNotServed
+    - servedWaste
+    - servedTotal
+}
+
+class Delivery {
+    -deliveryDate
+}
+
+enum DeliveryStatus{
+    PREPARING
+    IN_TRANSIT
+    DELIVERED
+}
+
+class SupplierContract {
+    -startDate
+    -endDate
+    -details
+}
+
+class SupplierBioCertificate {
+    -certificateDetails
+}
+
+class Recipe {
+    -name
+    -preparationSteps
+}
+
+class ProductRequest{
+    -isAccepted
+    -quantity
+    -deliveryDate
+}
+
+class ProductBatch {
+    -batchNumber
+    -product
+    -receivedDate
+    -expirationDay
+    -isBio
+}
+
+class DiningHall {
+    -name
+    -location
+    -capacity
+}
+
+class Notification {
+    -user
+    -title
+    -message
+    -type
+    -read
+    -actionUrl
+    -priority
+}
+
+enum NotificationType {
+    INFO
+    ALERT
+    WARNING
+    SUCCESS
+    STOCK_ALERT
+    DEVIATION_ALERT
+}
+
+User "1" --> "N" Notification : receives
+
+Notification "1" --> "1" NotificationType : is of type
+
+ProvisioningItem "N" --> "1" Product : references
+ProvisioningItem "N" --> "1" Menu : belongs to
+ProvisioningItem "1" --> "1" ProvisioningType : has a
+
+
+SupplierApplication "1" --> "1" SupplierApplicationStatus : has a
+SupplierApplication "1" --> "1" InterviewStatus : has a
+SupplierApplication "1" --> "N" SupplierCapactity : includes
+
+Address "1" --> "1" Municipality : is in
+
+DiningHall "1" --> "1" Canteen : belongs to
+DiningHall "1" --> "N" Waste : produces
+
+User "1" --> "1" Role : has a
+
+Product "1" --> "N" Allergen : may contain
+Product "1" --> "N" Season : may be in
+
+Consumer --> Menu : views
+Dietician "1" --> "N" Menu : creates
+Menu "1" --> "N+" Dish : includes
+Menu "1" --> "N" MenuEntry : includes
+MenuEntry "1" --> "1" Dish : features
+Dish "1" --> "N" DishIngredient : includes
+DishIngredient "1" --> "1" Ingredient : uses
+Menu "1" --> "1" MenuStatus : has a
+Dish "1" --> "N" Ingredient : contains
+Ingredient "1" --> "N" Product : is made of
+Dish "1" --> "1" Recipe : has a
+Dish "1" --> "1" DishType : has a
+Recipe "1" --> "N" Ingredient : uses
+Delivery "1" --> "1" Canteen : is delivered to
+
+Reservation "1" --> "1" Dish : has a
+Reservation "1" --> "1" Canteen : associate a
+Consumer "1" --> "N+" Reservation : makes
+
+CanteenManager "1" --> "1" Canteen : manages a
+Consumer "1" --> "1" Canteen : uses a
+
+Supplier "1" ---> "1" SupplierContract : is binded to a
+Supplier "1" ---> "1" SupplierBioCertificate : has a
+Supplier "1" --> "N" Product : has
+Supplier "1" --> "N" Delivery : completes
+Supplier "1" --> "N" SupplierApplication : submits
+Supplier "1" --> "1" Address : has an
+
+Canteen "1" --> "N" Product : has stock of
+
+ProductBatch "1" --> "1" Product : is a batch of
+
+Consumer --|> User
+Dietician --|> User
+Supplier --|> User
+CanteenManager --|> User
+DiningHallManager --|> User
+
+Delivery "1" --> "1" DeliveryStatus : has
+Delivery "1" --> "N" ProductBatch : includes
+
+Canteen "1" --> "N" Waste : produces
+
+Canteen "1" --> "N" ProductRequest : can make
+ProductRequest "1" --> "N" Delivery : has
+
+@enduml
