@@ -30,9 +30,10 @@ rectangle BioCantinas {
 
     CentralCanteenManager -- (UC8: Receive low stock alerts)
     CentralCanteenManager -- (UC9: Visualize KPIs of the central canteen)
-    CentralCanteenManager -- (UC10: Order products from suppliers)
+    CentralCanteenManager -- (UC10: View dishes reservations history)
+    CentralCanteenManager -- (UC11: Order products from suppliers)
 
-    CanteenManager -- (UC11: Visualize KPIs of the canteen)
+    CanteenManager -- (UC12: Visualize KPIs of the canteen)
 
 }
 
