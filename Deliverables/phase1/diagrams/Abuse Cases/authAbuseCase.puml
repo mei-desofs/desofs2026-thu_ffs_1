@@ -1,0 +1,59 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+actor User
+actor Attacker
+
+package "AMAPP System" {
+
+    usecase "Register" as RegisterUC
+    usecase "Log In" as LoginUC
+    usecase "Change Password" as ChangePasswordUC
+    usecase "Recover Password" as RecoverPasswordUC
+
+    usecase "Register Multiple Accounts" as RegisterAbuse #FFCDD2
+    usecase "Brute Force Login Attack" as LoginAbuse #FFCDD2
+    usecase "Unauthorized Password Change" as ChangePasswordAbuse #FFCDD2
+    usecase "Password Recovery Abuse" as RecoveryAbuse #FFCDD2
+    usecase "Authentication Bypass" as AuthBypassAbuse #FFCDD2
+    usecase "Privilege Escalation" as PrivEscalationAbuse #FFCDD2
+
+    usecase "Apply Rate Limiting" as RateLimitingMitigate #C8E6C9
+    usecase "Enforce Strong Authentication" as StrongAuthMitigate #C8E6C9
+    usecase "Session Verification on Password Change" as SessionVerifyMitigate #C8E6C9
+    usecase "Secure Password Recovery Workflow" as SecureRecoveryMitigate #C8E6C9
+    usecase "Validate JWT Signature and Claims" as JWTValidationMitigate #C8E6C9
+    usecase "Enforce Authorization per Resource" as AuthorizationCheckMitigate #C8E6C9
+
+    User --> RegisterUC
+    User --> LoginUC
+    User --> ChangePasswordUC
+    User --> RecoverPasswordUC
+
+    RegisterUC .[#green].> LoginUC : includes
+    LoginUC .[#green].> ChangePasswordUC : includes
+    LoginUC .[#green].> RecoverPasswordUC : includes
+
+    Attacker --> RegisterAbuse
+    Attacker --> LoginAbuse
+    Attacker --> ChangePasswordAbuse
+    Attacker --> RecoveryAbuse
+    Attacker --> AuthBypassAbuse
+    Attacker --> PrivEscalationAbuse
+
+    RegisterUC -[#red,bold]-> RegisterAbuse : threatens
+    LoginUC -[#red,bold]-> LoginAbuse : threatens
+    ChangePasswordUC -[#red,bold]-> ChangePasswordAbuse : threatens
+    RecoverPasswordUC -[#red,bold]-> RecoveryAbuse : threatens
+    LoginUC -[#red,bold]-> AuthBypassAbuse : threatens
+    ChangePasswordUC -[#red,bold]-> PrivEscalationAbuse : threatens
+
+    RateLimitingMitigate -[#green,dashed]-> RegisterAbuse : mitigates
+    StrongAuthMitigate -[#green,dashed]-> LoginAbuse : mitigates
+    SessionVerifyMitigate -[#green,dashed]-> ChangePasswordAbuse : mitigates
+    SecureRecoveryMitigate -[#green,dashed]-> RecoveryAbuse : mitigates
+    JWTValidationMitigate -[#green,dashed]-> AuthBypassAbuse : mitigates
+    AuthorizationCheckMitigate -[#green,dashed]-> PrivEscalationAbuse : mitigates
+}
+@enduml
