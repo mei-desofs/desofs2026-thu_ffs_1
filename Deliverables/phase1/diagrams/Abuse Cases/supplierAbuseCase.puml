@@ -1,0 +1,70 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+actor UnregisteredSupplier as "Unregistered Supplier"
+actor Admin as "Administrator"
+actor Attacker
+
+package "BioCantinas System" {
+
+    usecase "Send a Supplier Application" as SupplierAppUC
+    usecase "Validate Application Data" as ValidateUC
+    usecase "Approve a Supplier Candidate" as ApproveUC
+    usecase "Review Application" as ReviewUC
+    usecase "Update Approval Status" as UpdateStatusUC
+
+    usecase "Flood System with Fake Applications" as FloodAbuse #FFCDD2
+    usecase "Inject Malicious Data in Application" as InjectionAbuse #FFCDD2
+    usecase "Submit Fraudulent Credentials" as FraudAbuse #FFCDD2
+    usecase "Intercept Application Data in Transit" as InterceptAbuse #FFCDD2
+    usecase "Approve Fraudulent Supplier" as FraudApprovalAbuse #FFCDD2
+    usecase "Unauthorized Approval Action" as UnauthorizedAbuse #FFCDD2
+    usecase "Tamper with Approval Workflow" as TamperAbuse #FFCDD2
+    usecase "Privilege Escalation to Approve" as PrivEscAbuse #FFCDD2
+
+    usecase "Apply Rate Limiting on Submissions" as RateLimitMitigate #C8E6C9
+    usecase "Input Validation and Sanitization" as InputValidMitigate #C8E6C9
+    usecase "Manual Review of Applications" as ManualReviewMitigate #C8E6C9
+    usecase "Enforce Secure Communication (HTTPS)" as HTTPSMitigate #C8E6C9
+    usecase "Enforce Role-Based Access Control" as RBACMitigate #C8E6C9
+    usecase "Multi-Level Approval Review" as MultiLevelMitigate #C8E6C9
+    usecase "Approval Audit Logging and Alerts" as AuditMitigate #C8E6C9
+    usecase "Enforce Strong Authentication (MFA)" as MFAMitigate #C8E6C9
+
+    UnregisteredSupplier --> SupplierAppUC
+    Admin -left-> ApproveUC
+
+    SupplierAppUC .[#green].> ValidateUC : includes
+    ApproveUC .[#green].> ReviewUC : includes
+    ApproveUC .[#green].> UpdateStatusUC : includes
+    SupplierAppUC .[#green].> ApproveUC : includes
+
+    Attacker --> FloodAbuse
+    Attacker --> InjectionAbuse
+    Attacker --> FraudAbuse
+    Attacker --> InterceptAbuse
+    Attacker --> FraudApprovalAbuse
+    Attacker --> UnauthorizedAbuse
+    Attacker --> TamperAbuse
+    Attacker --> PrivEscAbuse
+
+    SupplierAppUC -[#red,bold]-> FloodAbuse : threatens
+    ValidateUC -[#red,bold]-> InjectionAbuse : threatens
+    SupplierAppUC -[#red,bold]-> FraudAbuse : threatens
+    SupplierAppUC -[#red,bold]-> InterceptAbuse : threatens
+    ReviewUC -[#red,bold]-> FraudApprovalAbuse : threatens
+    UpdateStatusUC -[#red,bold]-> UnauthorizedAbuse : threatens
+    UpdateStatusUC -[#red,bold]-> TamperAbuse : threatens
+    ApproveUC -[#red,bold]-> PrivEscAbuse : threatens
+
+    RateLimitMitigate -[#green,dashed]-> FloodAbuse : mitigates
+    InputValidMitigate -[#green,dashed]-> InjectionAbuse : mitigates
+    ManualReviewMitigate -[#green,dashed]-> FraudAbuse : mitigates
+    HTTPSMitigate -[#green,dashed]-> InterceptAbuse : mitigates
+    MultiLevelMitigate -[#green,dashed]-> FraudApprovalAbuse : mitigates
+    RBACMitigate -[#green,dashed]-> UnauthorizedAbuse : mitigates
+    AuditMitigate -[#green,dashed]-> TamperAbuse : mitigates
+    MFAMitigate -[#green,dashed]-> PrivEscAbuse : mitigates
+}
+@enduml
