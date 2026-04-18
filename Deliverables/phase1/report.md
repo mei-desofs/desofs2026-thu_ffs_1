@@ -117,6 +117,8 @@ Exit points represent interfaces through which data leaves the system:
 
 ### Use Cases
 
+[uc.puml](diagrams/uc.puml)
+
 ### Requirements
 
 TODO functional and non functional requirements
@@ -301,11 +303,27 @@ This project will rely on external libraries and tools to provide key features:
 
 All of these will be managed as **NuGet packages**, API integrations, and GitHub Actions workflows, under the umbrella of the **.NET 8.0 SDK** and runtime. Proper version control, security audits (especially for the School Portal API connection), and update processes will be applied to maintain system stability and integrity.
 
-### Abuse and Misuse cases
+### Data Flow Diagrams 
 
-## Project Design
+### Threat Identification and Analysis (STRIDE)
 
-### Threat Modeling
+STRIDE is an approach to categorize and analyze security threats in software applications. It assists on identifying potential vulnerabilities 
+by assigning them into six main categories, each representing a specific type of threat.
+
+STRIDE is the mnemonic of:
+- **S**poofing: Pretending to be something or someone other than yourself
+- **T**ampering: Modifying something on disk, network,memory, or elsewhere
+- **R**epudiation: Claiming that you did not do something, or you were not responsible. Can be honest or false
+- **I**nformation Disclosure: Providing information to someone not authorized to access it
+- **D**enial of Service (DoS): Exhausting resources needed to provide service
+- **E**levation of Privilege: Allowing someone to do something that they are not authorized to do
+
+After analyzing the ASVS 5.0 Tracker, the most significant and potential threats were identified in each BioCantinas system
+per distinct flow
+
+### Risk Assessment
+
+### Abuse cases
 
 ### Secure Design
 
