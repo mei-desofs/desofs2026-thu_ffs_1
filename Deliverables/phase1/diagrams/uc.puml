@@ -13,25 +13,21 @@ rectangle BioCantinas {
     Dietitian -- (UC1: Authenticate in the system)
     Admin -- (UC1: Authenticate in the system)
 
-    CentralCanteenManager -- (UC2: Recover my password)
-    Dietitian -- (UC2: Recover my password)
-    Admin -- (UC2: Recover my password)
-
-    CentralCanteenManager -- (UC3: Change my password)
-    Dietitian -- (UC3: Change my password)
-    Admin -- (UC3: Change my password)
+    CentralCanteenManager -- (UC3: Manage my password)
+    Dietitian -- (UC3: Manage my password)
+    Admin -- (UC3: Manage my password)
 
     UnregisteredSupplier -- (UC4: Send a Supplier Application)
 
     Admin -- (UC5: Approve a Supplier Candidate)
+    Admin -- (Visualize system logs)
 
     Dietitian -- (UC6: Edit proposed meal planning)
     Dietitian -- (UC7: Publish meal planning)
 
-    CentralCanteenManager -- (UC8: Receive low stock alerts)
-    CentralCanteenManager -- (UC9: View dishes reservations history)
     CentralCanteenManager -- (UC10: Order products from suppliers)
 
+    Admin -- (Manage supplier data)
 }
 
 @enduml
