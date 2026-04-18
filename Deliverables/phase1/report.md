@@ -243,7 +243,63 @@ The system must support communication with external platforms relevant to the do
 - All integrations must use secure communication mechanisms and must not compromise the confidentiality or integrity of the system.
 - The architecture should support future integrations with supplier databases, certification bodies, or reporting platforms.
 
-### Secure development requirements
+### Secure Development Requirements
+
+These are required activities during software development to ensure that the CantinasCinfães application does not contain vulnerabilities.
+
+#### 1. Secure Coding Guidelines
+Follow recognized standards such as **OWASP Secure Coding Practices**, **CERT Secure Coding Standards**, or **Microsoft's Secure Coding Guidelines**.
+Apply best practices:
+* **Strict input validation:** Ensure all data coming from the Mobile and Web Applications is validated, particularly in critical forms like Menu Creation, Meals and Reservations Management, and Stock Operations.
+* **Strong authentication and secure session management:** Implement JWT tokens securely to handle User Authentication and Password Recovery across all user roles (students, canteen staff, and suppliers).
+* **Proper use of cryptography:** Encrypt sensitive data at rest in PostgreSQL, such as passwords and Payment History.
+* **Secure error and exception handling:** Ensure no stack traces or database structures are exposed to the end-user, especially during integrations with the **School Portal**.
+* **Principle of least privilege:** Implement strict Role-Based Access Control (RBAC) so that, for example, suppliers can only access the Supplier Application and not the internal Food Waste Monitoring or Reports.
+
+#### 2. Dependency Management
+* Monitor third-party libraries and frameworks, particularly **NuGet packages** for the **.NET 8.0 SDK**.
+* Quickly update vulnerable dependencies (e.g., PDF generation libraries or PostgreSQL connectors).
+* Avoid using unmaintained or suspicious packages.
+
+#### 3. Secure Code Review
+Perform security-focused code reviews for all new code and major changes. Use automated tools (e.g., **SonarQube**) to assist but not replace manual review.
+Focus areas:
+* **Critical components:** JWT authentication, authorization mechanisms, and PostgreSQL data access layers.
+* **Common vulnerability patterns:** SQL Injection (especially in dynamic queries for Reports and Performance Indicators), XSS in the Web Application, and CSRF.
+* **Business logic errors that could be exploited:** e.g., manipulating the Delivery Reception and Validation process, bypassing payment requirements for Meals, or unauthorized data sync with the **School Portal**.
+
+#### 4. Static Application Security Testing (SAST)
+* Use static code analysis tools (e.g., **SonarQube**) integrated directly into the **GitHub Actions** CI/CD pipelines to detect vulnerabilities early in the C# codebase.
+
+#### 5. Secure Build and Deployment
+* Ensure builds are automated, reproducible, and conducted in controlled environments via **GitHub Actions** workflows.
+* **Prevent secret exposure:** Strictly use **GitHub Secrets** to manage sensitive data such as JWT secret keys, PostgreSQL connection strings, and **School Portal API keys/certificates**. Never hardcode these in the repository.
+
+#### 6. Logging and Monitoring
+* Implement secure logging of security-relevant events, such as User Authentication logins, unauthorized access attempts to Delivery History, or errors during communication with the **School Portal**.
+* Ensure logs do not contain sensitive information (e.g., plain-text passwords or personal student data from the portal).
+
+#### 7. Development of Automated Security Tests
+Create and maintain automated security tests as part of the development lifecycle.
+* Integrate security tests into the **GitHub Actions** CI/CD pipeline to continuously validate code security.
+* Cover common vulnerabilities such as injection flaws, authentication issues, and access control weaknesses.
+* Include **unit tests** focused on validating security-related functions (e.g., testing the JWT generation and validation logic).
+* Implement **integration tests** to verify secure interactions between the .NET 8 backend, the PostgreSQL database, and the **School Portal API**.
+* Develop **end-to-end tests** to simulate real-world security scenarios and verify protection mechanisms across the Web and Mobile Interfaces.
+
+> **Note:** These requirements must be continuously reviewed and updated to adapt to evolving security threats.
+
+---
+
+### External Dependencies
+This project will rely on external libraries and tools to provide key features:
+* **School Portal:** External platform integration for student data synchronization and potentially federated authentication.
+* **Authentication:** JWT (JSON Web Tokens).
+* **Reporting:** PDF generation libraries for Reports and Performance Indicators.
+* **Data Persistence:** PostgreSQL connectivity and migrations (via Entity Framework Core).
+* **CI/CD:** Automation via **GitHub Actions**.
+
+All of these will be managed as **NuGet packages**, API integrations, and GitHub Actions workflows, under the umbrella of the **.NET 8.0 SDK** and runtime. Proper version control, security audits (especially for the School Portal API connection), and update processes will be applied to maintain system stability and integrity.
 
 ### Abuse and Misuse cases
 
