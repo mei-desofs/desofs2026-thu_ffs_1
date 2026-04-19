@@ -343,11 +343,11 @@ It shows the basic interaction between the user and the internal BioCantinas aut
 
   - **User**: Represents any user of the system (e.g., dietitian, suppliers) who attempts to authenticate.
 
-- **Process**:
+- **Internal Component**:
 
   - **BioCantinas API**: The internal service responsible for validating user credentials, managing authentication logic, and issuing JWT tokens upon successful authentication.
 
-- **Data Store**:
+- **Process**:
 
   - **Submit login credentials**: The user submits their login credentials (username and password) to the BioCantinas API via a secure HTTPS connection for validation.
   - **Authentication JWT Token**: If the credentials are valid, the BioCantinas API generates a JWT (JSON Web Token) token and returns it to the user, which can be used for subsequent authenticated requests.
@@ -445,6 +445,54 @@ It includes database server components to represent the storage and retrieval of
   - **Internet**: External communication between the unregistered supplier and the BioCantinas API occurs over the internet, which is a trust boundary that requires secure protocols (e.g., HTTPS) to protect data in transit.
   - **Database Server**: The communication between the BioCantinas API and the database server is a trust boundary that must be secured to prevent unauthorized access to sensitive supplier application data.
   - **Email System**: The communication between the BioCantinas System and the external Notification Service for sending email notifications is a trust boundary that requires secure protocols and proper authentication to prevent unauthorized access or tampering with notification messages.
+
+### Supplier Management
+
+#### Level 0
+
+![Supplier_Management_level0.png](diagrams/DFD/Supplier%20Management/Supplier_Management_level0.png)
+
+The Level 0 DFD for Supplier Management illustrates the high-level flow of the **supplier management process** in the BioCantinas system.
+It shows the basic interaction between the administrator and the internal BioCantinas system, which is responsible for managing supplier information.
+
+- **External Entity**:
+
+  - **Administrator**: Represents the system administrator responsible for managing supplier information, including reviewing and updating supplier details.
+
+- **Internal Component**:
+
+  - **BioCantinas System**: The internal service responsible for handling supplier management operations, such as retrieving supplier information, updating details, and maintaining the supplier database.
+
+- **Process**:
+
+  - **Send request to manage supplier**: The administrator sends a request to the BioCantinas System to manage supplier information, which may include viewing, editing, or updating supplier details.
+  - **Send operation result or data**: The BioCantinas system returns result data to the administrator, such as the current supplier information or confirmation of updates made to the supplier details.
+
+#### Level 1
+
+![Supplier_Management_level1.png](diagrams/DFD/Supplier%20Management/Supplier_Management_level1.png)
+
+The Level 1 DFD for Supplier Management provides a detailed flow of the **supplier management process** by decomposing the **BioCantinas System** process into its internal components and interactions.
+It includes database server components to represent the storage and retrieval of supplier information and establishes well-defined trust boundaries to highlight security considerations in the supplier management flow.
+
+- **External Entity**:
+
+  - **Administrator**: A user with administrative privileges responsible for supplier management operations (e.g. view/edit/delete supplier).
+
+- **Internal Components**:
+
+  - **BioCantinas API**: The internal component responsible for processing supplier management requests.
+
+- **Data Store**:
+
+  - **Database Server**: The database server stores supplier information, including contact details, name, address, and application status. It is accessed securely by the BioCantinas API during supplier management operations.
+
+- **Processes**:
+
+  - **Submit supplier management request**: The administrator submits a request to the BioCantinas API to manage supplier information, which may include viewing, editing, or updating supplier details.
+  - **View/Edit/Delete supplier account**: The BioCantinas API processes the request and performs the appropriate operations on the supplier information stored in the secure database.
+  - **Return user data**: The database server returns the requested supplier information to the BioCantinas API.
+  - **Send operation confirmation or results**: The BioCantinas API returns the results of the supplier management operation to the administrator.
 
 ### Threat Identification and Analysis (STRIDE)
 
