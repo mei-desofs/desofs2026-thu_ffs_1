@@ -456,6 +456,47 @@ The main goal is to identify potential threats to the creation and publication o
 
 ---
 
+#### Abuse Case 4 : Order Product (Denial of Service — Order Flood)
+
+This section analyses abuse scenarios targeting the ordering functionality (POST /orders). The content below is aligned with the `orderAbuseCase.puml` diagram and lists the exact abuse cases and mapped mitigations shown there.
+
+![Order Flood Abuse Case](diagrams/Abuse%20Cases/orderAbuseCase.svg)
+
+##### Use Cases
+
+| Use Case               | Description                                                                                                  |
+|------------------------|--------------------------------------------------------------------------------------------------------------|
+| **Place Order**        | Authenticated user submits an order for one or more products (POST /orders).                                 |
+| **Validate Order**     | Server validates payload, product IDs, quantity limits and contractual constraints before persisting.         |
+| **Persist Order**      | Create order record in the database (atomic with outbox entry when applicable).                              |
+| **Send to Supplier**   | Internal background worker sends order messages to supplier endpoints (asynchronous).                        |
+| **Cancel Order**       | User or system cancels an order and triggers compensating operations where required.                         |
+
+##### Abuse Cases
+
+| Abuse Case                                     | Description                                                                                                |
+|------------------------------------------------|------------------------------------------------------------------------------------------------------------|
+| **Unauthorized Order / Account Takeover**      | Attacker uses stolen or compromised credentials/tokens to place orders.                                    |
+| **Replay / Duplicate Order**                   | Replayed or duplicated requests create multiple identical orders and consume resources.                    |
+| **Malformed / Injection Payload**              | Malformed JSON or injection payloads force expensive parsing/validation or attempt injection attacks.      |
+| **Privilege Escalation / Order Outside Scope** | User attempts to create orders outside their allowed cost-centers or privileges.                           |
+| **Denial of Service (Order Flood)**            | High-rate or distributed requests that aim to exhaust CPU, DB, outbox, or worker capacity on POST /orders. |
+| **High-value / Excess Quantity Abuse**         | Orders with extreme quantities that violate business limits.                                               |
+
+##### Countermeasures (mapped to abuse cases)
+
+| Countermeasure                                                      | Mitigates / Notes                                                                                                                           |
+|---------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Idempotency Keys & Deduplication**                                | Prevents **Replay / Duplicate Order** by deduplicating requests server-side (Idempotency-Key header).                                       |
+| **Short-lived Tokens + Revocation**                                 | Reduces impact of **Unauthorized Order / Account Takeover** by limiting token lifetime and enabling revocation.                              |
+| **Strong Auth & RBAC (MFA, role checks)**                           | Prevents **Unauthorized Order** and **Privilege Escalation** by enforcing MFA for sensitive accounts and strict server-side RBAC.           |
+| **Schema Validation & Rate Limits**                                 | Early reject of malformed payloads and limit request rates to mitigate **Malformed / Injection Payload** and low-volume DoS.               |
+| **Server-side Authorization Checks**                                | Validate cost-center and permission constraints to block **Order Outside Scope** attempts.                                                 |
+| **IP & User Rate Limiting**                                           | Enforce per-IP and per-user quotas at the API or reverse-proxy layer to throttle abusive traffic and protect the ordering endpoint.         |
+| **Audit Logging & Anomaly Detection**                               | Detects suspicious spikes (high-value orders, unusual patterns) and supports investigation and automated responses.                         |
+
+---
+
 ### Secure Design
 
 ### Secure Architecture

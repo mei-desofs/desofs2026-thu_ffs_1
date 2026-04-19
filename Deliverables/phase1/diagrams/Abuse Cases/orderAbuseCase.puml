@@ -23,7 +23,7 @@ package "BioCantinas Order System" {
     usecase "Strong Auth & RBAC" as AuthMitigate #C8E6C9
     usecase "Schema Validation & Rate Limits" as ValidationMitigate #C8E6C9
     usecase "Server-side Authorization Checks" as ServerAuthzMitigate #C8E6C9
-    usecase "Transactional Outbox + Background Worker (retries/backoff)" as QueueMitigate #C8E6C9
+    usecase "IP & User Rate Limiting" as RateLimitMitigate #C8E6C9
     usecase "Audit Logging & Anomaly Detection" as AuditMitigate #C8E6C9
 
     User --> PlaceOrderUC
@@ -49,7 +49,7 @@ package "BioCantinas Order System" {
     AuthMitigate -[#green,dashed]-> TokenTheftAbuse : mitigates
     ValidationMitigate -[#green,dashed]-> InjectionAbuse : mitigates
     ServerAuthzMitigate -[#green,dashed]-> PrivEscalationAbuse : mitigates
-    QueueMitigate -[#green,dashed]-> DoSAbuse : mitigates
+    RateLimitMitigate -[#green,dashed]-> DoSAbuse : mitigates
     AuditMitigate -[#green,dashed]-> BusinessLogicAbuse : mitigates
 
 }
