@@ -381,13 +381,13 @@ Furthermore, it includes database server components to represent the storage and
   - **Internet**: External communication between the user and the BioCantinas API occurs over the internet, which is a trust boundary that requires secure protocols (e.g., HTTPS) to protect data in transit.
   - **Database Access**: The communication between the BioCantinas API and the database server is also a trust boundary that must be secured to prevent unauthorized access to sensitive user data.
 
-### Registration Supplier
+### Supplier Approval
 
 #### Level 0
 
 ![Registration_level0.png](diagrams/DFD/Registration/Registration_level0.png)
 
-The Level 0 DFD for Registration Supplier illustrates the high-level flow of the **supplier registration process** in the BioCantinas system.
+The Level 0 DFD for Supplier Approval illustrates the high-level flow of the **supplier registration process** in the BioCantinas system.
 It shows the basic interaction between an unregistered supplier and the internal BioCantinas registration service, which is responsible for processing supplier applications and managing the approval workflow.
 
 - **External Entity**:
@@ -401,7 +401,7 @@ It shows the basic interaction between an unregistered supplier and the internal
 
 - **Processes**:
 
-  - **Submit registration request**: The unregistered supplier submits their application, including contact details, name, address, and a PDF of their BIO certificate, to the BioCantinas System for processing.
+  - **Send supplier application**: The unregistered supplier submits their application, including contact details, name, address, and a PDF of their BIO certificate, to the BioCantinas System for processing.
   - **Send approval request**: The BioCantinas System sends the supplier application details to the administrator for review and decision-making.
   - **Approval decision**: The administrator reviews the application and sends an approval or rejection decision back to the BioCantinas System, which then notifies the supplier of the outcome.
   - **Notify decision**: The BioCantinas System sends an email to the supplier regarding the approval or rejection of their application, along with instructions to set up their credentials if approved.´
@@ -432,7 +432,7 @@ It includes database server components to represent the storage and retrieval of
 
 - **Processes**:
 
-  - **Submit supplier registration data**: The unregistered supplier submits their application data, including contact details, name, address, and a PDF of their BIO certificate, to the BioCantinas API for processing.
+  - **Send supplier application**: The unregistered supplier submits their application data, including contact details, name, address, and a PDF of their BIO certificate, to the BioCantinas API for processing.
   - **Review registration data**: The BioCantinas API validates the submitted data and documents for completeness, correctness, and integrity before proceeding with the approval workflow.
   - **Store user data**: Stored securely in the database server for later retrieval during the approval process.
   - **Update approval status**: Approval or rejection decisions made by the administrator are updated in the database to reflect the current status of the supplier application.
