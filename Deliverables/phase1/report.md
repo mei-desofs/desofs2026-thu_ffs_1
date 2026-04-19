@@ -328,7 +328,58 @@ This project will rely on external libraries and tools to provide key features:
 
 All of these will be managed as **NuGet packages**, API integrations, and GitHub Actions workflows, under the umbrella of the **.NET 8.0 SDK** and runtime. Proper version control, security audits (especially for the School Portal API connection), and update processes will be applied to maintain system stability and integrity.
 
-### Data Flow Diagrams 
+## Data Flow Diagrams 
+
+### Authentication
+
+#### Level 0
+
+![Authentication_level0.png](diagrams/DFD/Authentication/Authentication_level0.png)
+
+The Level 0 DFD for Authentication illustrates the high-level flow of **user authentication process** in the BioCantinas system. 
+It shows the basic interaction between the user and the internal BioCantinas authentication service, which is responsible for validating credentials and issuing authentication tokens.
+
+- **External Entity**:
+
+  - **User**: Represents any user of the system (e.g., dietitian, suppliers) who attempts to authenticate.
+
+- **Process**:
+
+  - **BioCantinas API**: The internal service responsible for validating user credentials, managing authentication logic, and issuing JWT tokens upon successful authentication.
+
+- **Data Store**:
+
+  - **Submit login credentials**: The user submits their login credentials (username and password) to the BioCantinas API via a secure HTTPS connection for validation.
+  - **Authentication JWT Token**: If the credentials are valid, the BioCantinas API generates a JWT (JSON Web Token) token and returns it to the user, which can be used for subsequent authenticated requests.
+
+#### Level 1
+
+![Authentication_level1.png](diagrams/DFD/Authentication/Authentication_level1.png)
+
+The Level 1 DFD for Authentication provides the detailed flow of **user authentication process** by decomposing the **BioCantinas API** process into its internal components and interactions.
+Furthermore, it includes database server components to represent the storage and retrieval of user credentials and establishes well-defined trust boundaries to highlight security considerations in the authentication flow.
+
+- **External Entity**:
+
+  - **User**: Represents any user of the system (e.g., dietitian, suppliers) who attempts to authenticate in the BioCatinas system.
+
+- **Processes**:
+
+  - **Receive Credentials**: The BioCantinas API receives the login credentials (email and password) from the user.
+  - **Fetch User Data**: The API queries the database to retrieve the stored user data corresponding to the provided email.
+  - **Validate Credentials**: The API compares the provided password with the stored password hash to validate the user's identity.
+  - **Generate JWT Token**: If the credentials are valid, the API generates a JWT token containing user information and permissions.
+  - **Return Token**: The API sends the generated JWT token back to the user for use in authenticated requests.
+
+- **Data Store**:
+
+  - **Database Server**: The database server stores user credentials, including email and password hashes, and is accessed securely by the BioCantinas API during the authentication process.
+
+- **Trust Boundaries**:
+
+  - **BioCantinas System**: The internal components of the BioCantinas system, including the API and database server, are within a trust boundary that assumes secure communication and proper access controls.
+  - **Internet**: External communication between the user and the BioCantinas API occurs over the internet, which is a trust boundary that requires secure protocols (e.g., HTTPS) to protect data in transit.
+  - **Database Access**: The communication between the BioCantinas API and the database server is also a trust boundary that must be secured to prevent unauthorized access to sensitive user data.
 
 ### Threat Identification and Analysis (STRIDE)
 
