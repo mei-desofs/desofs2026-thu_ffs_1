@@ -1,0 +1,44 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+actor Dietitian
+actor Attacker
+
+package "BioCantinas System" {
+
+    usecase "Manage Meal Planning" as ManageMealUC
+    usecase "Edit Proposed Meal Planning" as EditMealUC
+    usecase "Publish Meal Planning" as PublishMealUC
+
+    usecase "Unauthorized Edit of Meal Plan" as UnauthorizedEditAbuse #FFCDD2
+    usecase "Inject Fraudulent Nutritional Data" as InjectionAbuse #FFCDD2
+    usecase "Publish Without Validation" as PublishAbuse #FFCDD2
+    usecase "Privilege Escalation to Publish" as PrivEscAbuse #FFCDD2
+
+    usecase "Enforce Role-Based Access Control" as RBACMitigate #C8E6C9
+    usecase "Input Validation and Sanitization" as InputValidMitigate #C8E6C9
+    usecase "Require Review Before Publishing" as ReviewMitigate #C8E6C9
+    usecase "Audit Log of All Meal Plan Changes" as AuditMitigate #C8E6C9
+
+    Dietitian --> ManageMealUC
+
+    ManageMealUC .[#green].> EditMealUC : includes
+    ManageMealUC .[#green].> PublishMealUC : includes
+
+    Attacker --> UnauthorizedEditAbuse
+    Attacker --> InjectionAbuse
+    Attacker --> PublishAbuse
+    Attacker --> PrivEscAbuse
+
+    EditMealUC -[#red,bold]-> UnauthorizedEditAbuse : threatens
+    EditMealUC -[#red,bold]-> InjectionAbuse : threatens
+    PublishMealUC -[#red,bold]-> PublishAbuse : threatens
+    PublishMealUC -[#red,bold]-> PrivEscAbuse : threatens
+
+    RBACMitigate -[#green,dashed]-> UnauthorizedEditAbuse : mitigates
+    InputValidMitigate -[#green,dashed]-> InjectionAbuse : mitigates
+    ReviewMitigate -[#green,dashed]-> PublishAbuse : mitigates
+    AuditMitigate -[#green,dashed]-> PrivEscAbuse : mitigates
+}
+@enduml

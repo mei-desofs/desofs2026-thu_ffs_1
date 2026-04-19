@@ -5,9 +5,8 @@ skinparam packageStyle rectangle
 actor User
 actor Attacker
 
-package "AMAPP System" {
+package "BioCantinas System" {
 
-    usecase "Register" as RegisterUC
     usecase "Log In" as LoginUC
     usecase "Change Password" as ChangePasswordUC
     usecase "Recover Password" as RecoverPasswordUC
@@ -26,12 +25,10 @@ package "AMAPP System" {
     usecase "Validate JWT Signature and Claims" as JWTValidationMitigate #C8E6C9
     usecase "Enforce Authorization per Resource" as AuthorizationCheckMitigate #C8E6C9
 
-    User --> RegisterUC
     User --> LoginUC
     User --> ChangePasswordUC
     User --> RecoverPasswordUC
 
-    RegisterUC .[#green].> LoginUC : includes
     LoginUC .[#green].> ChangePasswordUC : includes
     LoginUC .[#green].> RecoverPasswordUC : includes
 
@@ -42,7 +39,6 @@ package "AMAPP System" {
     Attacker --> AuthBypassAbuse
     Attacker --> PrivEscalationAbuse
 
-    RegisterUC -[#red,bold]-> RegisterAbuse : threatens
     LoginUC -[#red,bold]-> LoginAbuse : threatens
     ChangePasswordUC -[#red,bold]-> ChangePasswordAbuse : threatens
     RecoverPasswordUC -[#red,bold]-> RecoveryAbuse : threatens
