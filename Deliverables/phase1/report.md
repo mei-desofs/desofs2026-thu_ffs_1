@@ -44,6 +44,31 @@ to the preparation and distribution of meals to assure an efficient and sustaina
 
 ### Domain Model
 
+This diagram shows the main components of the BioCantinas system and how they interact.
+
+Components:
+- BioCantinas System: The main container that groups the application components.
+- BioCantinas Backend: Implements business logic (orders, suppliers, meal planning, stock and reservation management). The Backend uses external services and the Database API to access persistent data.
+- BioCantinas Frontend: The user-facing application (web or mobile). The Frontend consumes the Backend API to perform operations and also exposes its own API for clients/integrations where applicable.
+- External Portal: External system(s) (e.g., School Portal) that the Backend calls via an external API to synchronize or retrieve authoritative data.
+- BioCantinas Database: The persistent store (PostgreSQL) that keeps users, suppliers, products, orders, reservations and audit logs. Access is performed via the Database API used by the Backend.
+
+Connections:
+- The BioCantinas Frontend calls the Backend API to request operations and retrieve data.
+- The BioCantinas Backend calls the External Portal API to synchronize external data and to perform external checks.
+- The BioCantinas Backend uses the Database API to read and write data in the BioCantinas Database.
+- The Frontend may expose a public or internal API for lightweight integrations or for mobile clients that require a direct interface.
+
+Deployment:
+- The system runs with the Backend (API + business logic) and the Frontend (SPA or mobile apps). Both are deployed as services or containers.
+- The BioCantinas Database is hosted on a remote server or managed DB service and is accessed securely by the Backend through the Database API.
+- External Portal(s) are hosted outside the system and accessed over TLS by the Backend.
+
+### Component Diagram
+
+![Component Diagram](diagrams/componentDiagram.svg)
+
+
 
 ### Entry and Exit Points
 
