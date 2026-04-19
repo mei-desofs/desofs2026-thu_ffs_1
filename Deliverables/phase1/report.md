@@ -494,6 +494,16 @@ It includes database server components to represent the storage and retrieval of
   - **Return user data**: The database server returns the requested supplier information to the BioCantinas API.
   - **Send operation confirmation or results**: The BioCantinas API returns the results of the supplier management operation to the administrator.
 
+### Meal Planning Management
+
+#### Level 0
+
+![MealsPlanning_level0.png](diagrams/DFD/Meals%20Planning/MealsPlanning_level0.png)
+
+#### Level 1
+
+![MealsPlanning_level1.png](diagrams/DFD/Meals%20Planning/MealsPlanning_level1.png)
+
 ### Threat Identification and Analysis (STRIDE)
 
 STRIDE is an approach to categorize and analyze security threats in software applications. It assists on identifying potential vulnerabilities 
