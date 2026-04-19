@@ -455,42 +455,43 @@ The main goal is to identify potential threats across the full candidate lifecyc
 
 ##### Use Cases
 
-| Use Case                         | Description                                                                                                                              |
-|----------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
-| **Send a Supplier Application**  | An unregistered supplier submits their candidacy, providing the required business and contact information.                               |
-| **Validate Application Data**    | The submitted data is checked for structure, completeness, and integrity before processing. Included in the application submission flow. |
-| **Approve a Supplier Candidate** | An administrator reviews pending applications and makes approval decisions.                                                              |
-| **Review Application**           | The administrator inspects the details of a candidate's submission before deciding. Included in the approval flow.                       |
-| **Update Approval Status**       | The system records the administrator's decision, updating the candidate's status. Included in the approval flow.                         |
+| Use Case                         | Description                                                                                                                                                                                       |
+|----------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Send a Supplier Application**  | An unregistered supplier from Cinfães submits their candidacy, providing mandatory contact details, name, address, and a PDF of their BIO certificate.                                            |
+| **Validate Application Data**    | The submitted data and uploaded files are checked for completeness, real file type (not just extension), file size, and integrity before processing. Included in the application submission flow. |
+| **Approve a Supplier Candidate** | An administrator reviews pending applications after the interview stage and makes approval or rejection decisions.                                                                                |
+| **Review Application**           | The administrator inspects the details of a candidate's submission before deciding. Included in the approval flow.                                                                                |
+| **Update Approval Status**       | The system records the administrator's decision. If approved, the supplier receives a link to set their credentials and access the system. Included in the approval flow.                         |
 
 ##### Abuse Cases
 
-| Abuse Case                                | Description                                                                                                                                 |
-|-------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
-| **Flood System with Fake Applications**   | An attacker scripts mass submission of fabricated applications to overload the system or pollute the candidate queue.                       |
-| **Inject Malicious Data in Application**  | An attacker embeds malicious content (such as SQL commands or script payloads) inside application fields, exploiting weak validation logic. |
-| **Submit Fraudulent Credentials**         | An attacker submits an application with false or stolen business credentials to gain supplier access under a fake identity.                 |
-| **Intercept Application Data in Transit** | An attacker captures sensitive application data while it is being transmitted to the server.                                                |
-| **Approve Fraudulent Supplier**           | A malicious or compromised administrator approves a fabricated candidate, granting them illegitimate access to the system.                  |
-| **Unauthorized Approval Action**          | An attacker attempts to trigger the approval flow without holding the required administrative role.                                         |
-| **Tamper with Approval Workflow**         | An attacker manipulates the approval process itself — for example, modifying requests to change the outcome of a decision.                  |
-| **Privilege Escalation to Approve**       | An attacker elevates their role or abuses a misconfigured permission to access approval functionality without authorisation.                |
+| Abuse Case                                | Description                                                                                                                     |
+|-------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
+| **Flood System with Fake Applications**   | An attacker scripts mass submission of fabricated applications to overload the system or pollute the candidate queue.           |
+| **Upload Malicious File**                 | An attacker uploads a file disguised as a PDF that contains malware or malicious scripts, exploiting weak file type validation. |
+| **Path Traversal via File Upload**        | An attacker crafts a filename with path sequences (e.g. `../../etc/passwd`) to write files to unintended server locations.      |
+| **Submit Fraudulent Credentials**         | An attacker submits an application with false or stolen business credentials to gain supplier access under a fake identity.     |
+| **Approve Fraudulent Supplier**           | A malicious or compromised administrator approves a fabricated candidate, granting them illegitimate access to the system.      |
+| **Unauthorized Approval Action**          | An attacker attempts to trigger the approval flow without holding the required administrative role.                             |
+| **Tamper with Approval Workflow**         | An attacker manipulates the approval process itself — for example, modifying requests to change the outcome of a decision.      |
+| **Privilege Escalation to Approve**       | An attacker elevates their role or abuses a misconfigured permission to access approval functionality without authorisation.    |
 
 ##### Countermeasures
 
-| Countermeasure                           | Mitigates                                                                                                                                                  |
-|------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Apply Rate Limiting on Submissions**   | Throttles the number of applications submitted from a single source, preventing mass fake submissions. Mitigates **Flood System with Fake Applications**.  |
-| **Input Validation and Sanitization**    | All application fields are validated and sanitized server-side before processing. Mitigates **Inject Malicious Data in Application**.                      |
-| **Manual Review of Applications**        | Administrators inspect each application before approving, making fraudulent submissions harder to overlook. Mitigates **Submit Fraudulent Credentials**.   |
-| **Enforce Secure Communication (HTTPS)** | All data in transit is encrypted with TLS, preventing interception and tampering. Mitigates **Intercept Application Data in Transit**.                     |
-| **Multi-Level Approval Review**          | Approval decisions require more than one step or reviewer, reducing the impact of a single compromised actor. Mitigates **Approve Fraudulent Supplier**.   |
-| **Enforce Role-Based Access Control**    | Approval actions are strictly restricted to users holding the Administrator role. Mitigates **Unauthorized Approval Action**.                              |
-| **Approval Audit Logging and Alerts**    | All approval actions are logged and anomalous activity triggers automated alerts. Mitigates **Tamper with Approval Workflow**.                             |
-| **Enforce Strong Authentication (MFA)**  | Administrators require a second factor before performing sensitive actions. Mitigates **Privilege Escalation to Approve**.                                 |
+| Countermeasure                                   | Mitigates                                                                                                                                                           |
+|--------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Apply Rate Limiting on Submissions**           | Throttles the number of applications submitted from a single source within a given timeframe. Mitigates **Flood System with Fake Applications**.                    |
+| **Validate Real File Type (not just extension)** | Inspects the actual file content and magic bytes to confirm the upload is a genuine PDF, regardless of the filename extension. Mitigates **Upload Malicious File**. |
+| **Scan Uploads for Malware**                     | Runs uploaded files through a malware scanner before they are stored or processed. Mitigates **Upload Malicious File**.                                             |
+| **Rename Uploaded Files on Server**              | Replaces the original filename with a randomly generated name upon upload, neutralising path traversal attempts. Mitigates **Path Traversal via File Upload**.      |
+| **Manual Review of Applications**                | Administrators inspect each application before approving, making fraudulent submissions harder to overlook. Mitigates **Submit Fraudulent Credentials**.            |
+| **Multi-Level Approval Review**                  | Approval decisions require more than one step or reviewer, reducing the impact of a single compromised actor. Mitigates **Approve Fraudulent Supplier**.            |
+| **Enforce Role-Based Access Control**            | Approval actions are strictly restricted to users holding the Administrator role. Mitigates **Unauthorized Approval Action**.                                       |
+| **Approval Audit Logging and Alerts**            | All approval actions are logged and anomalous activity triggers automated alerts. Mitigates **Tamper with Approval Workflow**.                                      |
+| **Enforce Strong Authentication (MFA)**          | Administrators require a second factor before performing sensitive actions. Mitigates **Privilege Escalation to Approve**.                                          |
 
 > This model provides a clear foundation for threat analysis, illustrating how both the supplier application and administrative approval flows could be exploited and what preventive measures are in place.
-
+ 
 ---
 
 #### Abuse Case 3 : Meal Planning Management
@@ -502,30 +503,31 @@ The main goal is to identify potential threats to the creation and publication o
 
 ##### Use Cases
 
-| Use Case                        | Description                                                                                                                                      |
-|---------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Manage Meal Planning**        | The dietitian accesses the meal planning module to create and maintain periodic meal plans.                                                      |
-| **Edit Proposed Meal Planning** | The dietitian modifies draft entries, including meals, nutritional values, and scheduling. Included in the meal planning management flow.        |
-| **Publish Meal Planning**       | The dietitian finalises and publishes an approved meal plan, making it visible to relevant users. Included in the meal planning management flow. |
+| Use Case                        | Description                                                                                                                                                      |
+|---------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Manage Meal Planning**        | The dietitian accesses the meal planning module to create and maintain the weekly menu.                                                                          |
+| **Edit Proposed Meal Planning** | The dietitian modifies draft entries, including meals, nutritional values, and scheduling. Included in the meal planning management flow.                        |
+| **Publish Meal Planning**       | The dietitian finalises and publishes the weekly menu, which must be made available at least one week in advance. Included in the meal planning management flow. |
 
 ##### Abuse Cases
 
-| Abuse Case                             | Description                                                                                                                                         |
-|----------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Unauthorized Edit of Meal Plan**     | An attacker or unauthorised user modifies meal plan entries without holding the Dietitian role.                                                     |
-| **Inject Fraudulent Nutritional Data** | An attacker injects false nutritional information into meal plan fields, potentially misleading consumers or administrators who rely on that data.  |
-| **Publish Without Validation**         | An attacker or misconfigured user triggers the publish action on a plan that has not passed the required review or validation steps.                |
-| **Privilege Escalation to Publish**    | An attacker abuses a permission misconfiguration to gain publishing access without the required role.                                               |
-
+| Abuse Case                             | Description                                                                                                                                                                                       |
+|----------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Unauthorized Edit of Meal Plan**     | An attacker or unauthorised user modifies meal plan entries without holding the Dietitian role.                                                                                                   |
+| **Inject Fraudulent Nutritional Data** | An attacker injects false nutritional information into meal plan fields, potentially misleading consumers or administrators who rely on that data.                                                |
+| **Publish Without Validation**         | An attacker or misconfigured user triggers the publish action on a plan that has not passed the required review or validation steps.                                                              |
+| **Publish Menu Too Late**              | An attacker or a process fault forces or bypasses the publication deadline, resulting in a menu being published with less than one week of advance notice, violating the operational requirement. |
+| **Privilege Escalation to Publish**    | An attacker abuses a permission misconfiguration to gain publishing access without the required role.                                                                                             |
 
 ##### Countermeasures
 
-| Countermeasure                         | Mitigates                                                                                                                                                                                |
-|----------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Enforce Role-Based Access Control**  | Editing and publishing actions are restricted to users holding the Dietitian role. Mitigates **Unauthorized Edit of Meal Plan** and **Privilege Escalation to Publish**.                 |
-| **Input Validation and Sanitization**  | All meal plan data fields (including nutritional values) are validated server-side before storage or publication. Mitigates **Inject Fraudulent Nutritional Data**.                      |
-| **Require Review Before Publishing**   | A validation step is enforced before a meal plan can be published, ensuring incomplete or tampered plans cannot reach production. Mitigates **Publish Without Validation**.              |
-| **Audit Log of All Meal Plan Changes** | All edit and publish actions are recorded with actor identity and timestamp, enabling detection and investigation of suspicious activity. Mitigates **Privilege Escalation to Publish**. |
+| Countermeasure                            | Mitigates                                                                                                                                                                                             |
+|-------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Enforce Role-Based Access Control**     | Editing and publishing actions are restricted to users holding the Dietitian role. Mitigates **Unauthorized Edit of Meal Plan** and **Privilege Escalation to Publish**.                              |
+| **Input Validation and Sanitization**     | All meal plan data fields (including nutritional values) are validated server-side before storage or publication. Mitigates **Inject Fraudulent Nutritional Data**.                                   |
+| **Require Review Before Publishing**      | A validation step is enforced before a meal plan can be published, ensuring incomplete or tampered plans cannot reach production. Mitigates **Publish Without Validation**.                           |
+| **Enforce Minimum Publication Lead Time** | The system blocks publication of any menu that does not meet the one-week advance notice requirement, rejecting attempts to publish with insufficient lead time. Mitigates **Publish Menu Too Late**. |
+| **Audit Log of All Meal Plan Changes**    | All edit and publish actions are recorded with actor identity and timestamp, enabling detection and investigation of suspicious activity. Mitigates **Privilege Escalation to Publish**.              |
 
 > This model provides a clear foundation for threat analysis, illustrating how the meal planning management flow could be exploited and what preventive measures are in place.
 
@@ -574,36 +576,40 @@ Fix- This diagram represents a security-focused approach using both **Use Cases*
 
 #### Abuse Case 5 : Supplier Data Management
 
-![Use and Abuse Cases - Supplier Data Management](diagrams/Abuse%20Cases/uc7-manage-supplier-data-abuse-case.png)
+![Supplier Data Management Abuse Case](diagrams/Abuse%20Cases/manageSupplierDataAbuseCase.png)
 
-This diagram represents a security-focused approach using both **Use Cases** and **Abuse Cases** within the supplier data management feature of the BioCantinas System. The main goal is to identify potential threats to the creation, modification, retrieval, and deletion of supplier records and link them with appropriate countermeasures.
+This diagram represents a security-focused approach using both **Use Cases** and **Abuse Cases** within the supplier data management feature of the BioCantinas System. 
+The main goal is to identify potential threats to the creation, modification, retrieval, and deletion of supplier records and link them with appropriate countermeasures.
 
-### Use Cases
+##### Use Cases
 
 | Use Case                     | Description                                                                                                           |
 |------------------------------|-----------------------------------------------------------------------------------------------------------------------|
 | **Manage Supplier Data**     | The administrator accesses the supplier management module to maintain the registry of approved suppliers.             |
 | **Create / Update Supplier** | The administrator adds new supplier records or modifies existing ones. Included in the supplier data management flow. |
+| **Edit Own Profile**         | A supplier edits their own profile information, such as contact details or address.                                   |
 | **Delete Supplier**          | The administrator removes a supplier record from the system. Included in the supplier data management flow.           |
 | **Retrieve Supplier Data**   | The administrator queries and views supplier information. Included in the supplier data management flow.              |
 
-### Abuse Cases
+##### Abuse Cases
 
 | Abuse Case                                     | Description                                                                                                                              |
 |------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
 | **Supplier Data Breach**                       | A malicious actor extracts sensitive supplier information (such as contact details or pricing) from the system without authorisation.    |
 | **Unauthorized Modification of Supplier Data** | An attacker alters supplier records, for example changing bank details or contact information, without holding the required permissions. |
+| **Supplier Edits Another Supplier's Data**     | A logged-in supplier manipulates a request to modify another supplier's profile, bypassing ownership checks.                             |
 | **Delete Supplier Without Permission**         | An attacker removes supplier records without authorisation, aiming to disrupt operations or erase evidence.                              |
 | **Scrape Supplier Information**                | An attacker repeatedly queries the API to collect supplier data in bulk, gathering intelligence that may support further attacks.        |
 
-### Countermeasures
+##### Countermeasures
 
-| Countermeasure                   | Mitigates                                                                                                                                                           |
-|----------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Restrict Access by Role**      | All create, update, and delete operations are restricted to users holding the Administrator role. Mitigates **Unauthorized Modification of Supplier Data**.         |
-| **Log and Alert on Access**      | All read and write operations on supplier records are logged, and anomalous access patterns trigger automated alerts. Mitigates **Supplier Data Breach**.           |
-| **Hide Sensitive Data from API** | The API returns only the fields necessary for each operation, reducing the volume of data exposed to scraping attempts. Mitigates **Scrape Supplier Information**.  |
-| **Confirm Before Deleting**      | Deletion operations require explicit confirmation — such as verifying no active orders exist — before proceeding. Mitigates **Delete Supplier Without Permission**. |
+| Countermeasure                      | Mitigates                                                                                                                                                                                                                                     |
+|-------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Restrict Access by Role**         | All create, update, and delete operations are restricted to users holding the Administrator role. Mitigates **Unauthorized Modification of Supplier Data**.                                                                                   |
+| **Enforce Ownership Check on Edit** | When a supplier edits their profile, the system verifies that the record being modified belongs to the authenticated supplier, rejecting any attempt to modify another supplier's data. Mitigates **Supplier Edits Another Supplier's Data**. |
+| **Log and Alert on Access**         | All read and write operations on supplier records are logged, and anomalous access patterns trigger automated alerts. Mitigates **Supplier Data Breach**.                                                                                     |
+| **Hide Sensitive Data from API**    | The API returns only the fields necessary for each operation, reducing the volume of data exposed to scraping attempts. Mitigates **Scrape Supplier Information**.                                                                            |
+| **Confirm Before Deleting**         | Deletion operations require explicit confirmation (such as verifying no active orders exist) before proceeding. Mitigates **Delete Supplier Without Permission**.                                                                             |
 
 > This model provides a clear foundation for threat analysis, illustrating how the supplier data management functionality could be exploited and what preventive measures are in place.
 

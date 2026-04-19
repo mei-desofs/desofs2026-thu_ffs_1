@@ -14,11 +14,13 @@ package "BioCantinas System" {
     usecase "Unauthorized Edit of Meal Plan" as UnauthorizedEditAbuse #FFCDD2
     usecase "Inject Fraudulent Nutritional Data" as InjectionAbuse #FFCDD2
     usecase "Publish Without Validation" as PublishAbuse #FFCDD2
+    usecase "Publish Menu Too Late" as LatePubAbuse #FFCDD2
     usecase "Privilege Escalation to Publish" as PrivEscAbuse #FFCDD2
 
     usecase "Enforce Role-Based Access Control" as RBACMitigate #C8E6C9
     usecase "Input Validation and Sanitization" as InputValidMitigate #C8E6C9
     usecase "Require Review Before Publishing" as ReviewMitigate #C8E6C9
+    usecase "Enforce Minimum Publication Lead Time" as LeadTimeMitigate #C8E6C9
     usecase "Audit Log of All Meal Plan Changes" as AuditMitigate #C8E6C9
 
     Dietitian --> ManageMealUC
@@ -29,16 +31,19 @@ package "BioCantinas System" {
     Attacker --> UnauthorizedEditAbuse
     Attacker --> InjectionAbuse
     Attacker --> PublishAbuse
+    Attacker --> LatePubAbuse
     Attacker --> PrivEscAbuse
 
     EditMealUC -[#red,bold]-> UnauthorizedEditAbuse : threatens
     EditMealUC -[#red,bold]-> InjectionAbuse : threatens
     PublishMealUC -[#red,bold]-> PublishAbuse : threatens
+    PublishMealUC -[#red,bold]-> LatePubAbuse : threatens
     PublishMealUC -[#red,bold]-> PrivEscAbuse : threatens
 
     RBACMitigate -[#green,dashed]-> UnauthorizedEditAbuse : mitigates
     InputValidMitigate -[#green,dashed]-> InjectionAbuse : mitigates
     ReviewMitigate -[#green,dashed]-> PublishAbuse : mitigates
+    LeadTimeMitigate -[#green,dashed]-> LatePubAbuse : mitigates
     AuditMitigate -[#green,dashed]-> PrivEscAbuse : mitigates
 }
 @enduml
