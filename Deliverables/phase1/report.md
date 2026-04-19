@@ -500,9 +500,62 @@ It includes database server components to represent the storage and retrieval of
 
 ![MealsPlanning_level0.png](diagrams/DFD/Meals%20Planning/MealsPlanning_level0.png)
 
+The Level 0 DFD for Meal Planning Management illustrates the high-level flow of the **meal planning management process** in the BioCantinas system.
+It shows the basic interaction between the dietitian and the internal BioCantinas system, which is responsible for managing meal planning operations.
+
+- **External Entity**:
+
+  - **Dietitian**: Represents the user responsible for planning meals, creating menus, and ensuring that the meal plans meet nutritional and sustainability requirements.
+
+- **Internal Component**:
+
+  - **BioCantinas System**: The internal service responsible for handling meal planning management operations, such as creating and updating meal plans, managing menus, and ensuring that the meal plans are aligned with the available ingredients and supplier information.
+
+- **Process**:
+
+  - **Publish meal planning**: The dietitian publishes a meal plan for a specific period (e.g., weekly) to the BioCantinas System, which may include details about the meals, ingredients, and nutritional information.
+  - **Confirmation meals planning**: The BioCantinas System processes the meal planning information and confirms that the meal plan has been successfully published.
+
 #### Level 1
 
 ![MealsPlanning_level1.png](diagrams/DFD/Meals%20Planning/MealsPlanning_level1.png)
+
+The Level 1 DFD for Meal Planning Management provides a detailed flow of the **meal planning management process** by decomposing the **BioCantinas System** process into its internal components and interactions.
+It includes database server components to represent the storage and retrieval of meal planning information and establishes well-defined trust boundaries to highlight security considerations in the meal planning flow.
+
+- **External Entity**:
+
+  - **Dietitian**: A user responsible for meal planning operations, such as creating and publishing meal plans.
+
+- **Internal Components**:
+
+  - **Dishes Catalog**: Manages the catalog of dishes and their associated ingredients, nutritional information, and sustainability attributes.
+  - **Meals Management**: Handles the creation, updating, and management of meal plans based on the dishes catalog and supplier information.
+  - **Publication Processing**: Manages the publication of meal plans and ensures that they are available to other system components and users.
+
+- **Data Store**:
+
+  - **Database Server**: The database server stores meal planning information, including meal details, ingredients, nutritional information, and publication status. It is accessed securely by the BioCantinas System during meal planning management operations.
+
+- **Processes**:
+  
+  - **Send request to create dish**: The dietitian sends a request to the Dishes Catalog to create a new dish, including details such as ingredients, nutritional information, and sustainability attributes.
+  - **Store dish data**: The Dishes Catalog processes the request and stores the dish information securely in the database server.
+  - **Request automatic generation**: The dietitian may request the Meals Management component to automatically generate meal plans based on the dishes catalog and supplier information.
+  - **Fetch dish list**: The Meals Management component retrieves the list of dishes from the Dishes Catalog to create meal plans.
+  - **Save generate/validate plan**: The Meals Management component generates meal plans and saves them securely in the database server.
+  - **Publish meal plan**: The dietitian sends a request to the Publication Processing component to publish the meal plan, making it available to other system components and users.
+  - **Confirm publication**: The Publication Processing component confirms that the meal plan has been successfully published and is accessible to the relevant users.
+  - **Return operation result**: The BioCantinas System returns the result of the meal planning management operation to the dietitian, confirming the successful creation and publication of the meal plan.
+  - **Review plan**: The dietitian may review the published meal plan and make adjustments as necessary, which would involve interactions with the Meals Management component to update the meal plan details.
+  - **Update meal plan**: If adjustments are needed, the dietitian sends a request to the Meals Management component to update the meal plan, which then processes the changes and updates the information securely in the database server.
+  - **Confirm update**: The Meals Management component confirms that the meal plan has been successfully updated and returns the result to the dietitian.
+
+- **Trust Boundaries**:
+
+  - **BioCantinas System**: The internal components that run the meal planning management process, including the Dishes Catalog, Meals Management, and Publication Processing, are within a trust boundary that assumes secure communication and proper access controls.
+  - **Internet**: External communication between the dietitian and the BioCantinas System occurs over the internet, which is a trust boundary that requires secure protocols (e.g., HTTPS) to protect data in transit.
+  - **Database Server**: The communication between the BioCantinas System and the database server is a trust boundary that must be secured to prevent unauthorized access to sensitive meal planning information.
 
 ### Threat Identification and Analysis (STRIDE)
 
