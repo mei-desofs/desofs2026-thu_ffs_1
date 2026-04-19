@@ -377,9 +377,74 @@ Furthermore, it includes database server components to represent the storage and
 
 - **Trust Boundaries**:
 
-  - **BioCantinas System**: The internal components of the BioCantinas system, including the API and database server, are within a trust boundary that assumes secure communication and proper access controls.
+  - **BioCantinas System**: The internal components of the BioCantinas system, including the API, are within a trust boundary that assumes secure communication and proper access controls.
   - **Internet**: External communication between the user and the BioCantinas API occurs over the internet, which is a trust boundary that requires secure protocols (e.g., HTTPS) to protect data in transit.
   - **Database Access**: The communication between the BioCantinas API and the database server is also a trust boundary that must be secured to prevent unauthorized access to sensitive user data.
+
+### Registration Supplier
+
+#### Level 0
+
+![Registration_level0.png](diagrams/DFD/Registration/Registration_level0.png)
+
+The Level 0 DFD for Registration Supplier illustrates the high-level flow of the **supplier registration process** in the BioCantinas system.
+It shows the basic interaction between an unregistered supplier and the internal BioCantinas registration service, which is responsible for processing supplier applications and managing the approval workflow.
+
+- **External Entity**:
+
+  - **Unregistered Supplier**: Represents a supplier who is not yet registered in the system and wishes to apply for registration in the Bio Cantinas System.
+  - **Administrator**: Represents the system administrator responsible for reviewing and approving or rejecting supplier applications.
+
+- **Internal Component**:
+
+  - **BioCantinas System**: The internal service that communicates with the administrator, responsible for receiving supplier applications, validating the submitted data and documents, and notifying the users of the final decision.
+
+- **Processes**:
+
+  - **Submit registration request**: The unregistered supplier submits their application, including contact details, name, address, and a PDF of their BIO certificate, to the BioCantinas System for processing.
+  - **Send approval request**: The BioCantinas System sends the supplier application details to the administrator for review and decision-making.
+  - **Approval decision**: The administrator reviews the application and sends an approval or rejection decision back to the BioCantinas System, which then notifies the supplier of the outcome.
+  - **Notify decision**: The BioCantinas System sends an email to the supplier regarding the approval or rejection of their application, along with instructions to set up their credentials if approved.´
+  
+#### Level 1
+
+![Registration_level1.png](diagrams/DFD/Registration/Registration_level1.png)
+
+The Level 1 DFD for Registration Supplier provides a detailed flow of the **supplier registration process** by decomposing the **BioCantinas System** process into its internal components and interactions.
+It includes database server components to represent the storage and retrieval of supplier application data and establishes well-defined trust boundaries to highlight security considerations in the registration flow.
+
+- **External Entity:**
+
+  - **Unregistered Supplier**: Represents a supplier who is not yet registered in the system and wishes to apply for registration in the Bio Cantinas System.
+  - **Administrator**: Represents the system administrator responsible for reviewing and approving or rejecting supplier applications.
+
+- **Internal Components**:
+
+  - **BioCantinas API**: The internal service responsible for receiving supplier applications, validating the submitted data and documents, and managing the approval workflow.
+
+- **External System**:
+
+  - **Notification Service**: An external service used by the BioCantinas System to send email notifications to suppliers regarding the status of their applications.
+
+- **Data Store**:
+
+  - **Database Server**: The database server stores supplier application data, including contact details, name, address, and the uploaded PDF of the BIO certificate. It is accessed securely by the BioCantinas System during the registration process.
+
+- **Processes**:
+
+  - **Submit supplier registration data**: The unregistered supplier submits their application data, including contact details, name, address, and a PDF of their BIO certificate, to the BioCantinas API for processing.
+  - **Review registration data**: The BioCantinas API validates the submitted data and documents for completeness, correctness, and integrity before proceeding with the approval workflow.
+  - **Store user data**: Stored securely in the database server for later retrieval during the approval process.
+  - **Update approval status**: Approval or rejection decisions made by the administrator are updated in the database to reflect the current status of the supplier application.
+  - **Notify approval decision**: Message send to the supplier with the approval or rejection decision.
+  - **Send decision**: Email send to the supplier regarding the approval or rejection of their application, along with instructions to set up their credentials if approved, using the external Notification Service.
+
+- **Trust Boundaries**:
+
+  - **BioCantinas System**: The internal components that runs the supplier registration process, including the API, are within a trust boundary that assumes secure communication and proper access controls.
+  - **Internet**: External communication between the unregistered supplier and the BioCantinas API occurs over the internet, which is a trust boundary that requires secure protocols (e.g., HTTPS) to protect data in transit.
+  - **Database Server**: The communication between the BioCantinas API and the database server is a trust boundary that must be secured to prevent unauthorized access to sensitive supplier application data.
+  - **Email System**: The communication between the BioCantinas System and the external Notification Service for sending email notifications is a trust boundary that requires secure protocols and proper authentication to prevent unauthorized access or tampering with notification messages.
 
 ### Threat Identification and Analysis (STRIDE)
 
