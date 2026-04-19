@@ -1,0 +1,57 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+actor User
+actor Attacker
+
+package "BioCantinas Order System" {
+
+    usecase "Place Order" as PlaceOrderUC
+    usecase "View Order" as ViewOrderUC
+    usecase "Cancel Order" as CancelOrderUC
+
+    usecase "Unauthorized Order / Account Takeover" as TokenTheftAbuse #FFCDD2
+    usecase "Replay / Duplicate Order" as ReplayAbuse #FFCDD2
+    usecase "Malformed / Injection Payload" as InjectionAbuse #FFCDD2
+    usecase "Privilege Escalation / Order Outside Scope" as PrivEscalationAbuse #FFCDD2
+    usecase "Denial of Service (Order Flood)" as DoSAbuse #FFCDD2
+    usecase "High-value / Excess Quantity Abuse" as BusinessLogicAbuse #FFCDD2
+
+    usecase "Idempotency Keys & Deduplication" as IdempotencyMitigate #C8E6C9
+    usecase "Short-lived Tokens + Revocation" as TokenMitigate #C8E6C9
+    usecase "Strong Auth & RBAC" as AuthMitigate #C8E6C9
+    usecase "Schema Validation & Rate Limits" as ValidationMitigate #C8E6C9
+    usecase "Server-side Authorization Checks" as ServerAuthzMitigate #C8E6C9
+    usecase "Transactional Outbox + Background Worker (retries/backoff)" as QueueMitigate #C8E6C9
+    usecase "Audit Logging & Anomaly Detection" as AuditMitigate #C8E6C9
+
+    User --> PlaceOrderUC
+    User --> ViewOrderUC
+    User --> CancelOrderUC
+
+    Attacker --> TokenTheftAbuse
+    Attacker --> ReplayAbuse
+    Attacker --> InjectionAbuse
+    Attacker --> PrivEscalationAbuse
+    Attacker --> DoSAbuse
+    Attacker --> BusinessLogicAbuse
+
+    PlaceOrderUC -[#red,bold]-> TokenTheftAbuse : threatened by
+    PlaceOrderUC -[#red,bold]-> ReplayAbuse : threatened by
+    PlaceOrderUC -[#red,bold]-> InjectionAbuse : threatened by
+    PlaceOrderUC -[#red,bold]-> PrivEscalationAbuse : threatened by
+    PlaceOrderUC -[#red,bold]-> DoSAbuse : threatened by
+    PlaceOrderUC -[#red,bold]-> BusinessLogicAbuse : threatened by
+
+    IdempotencyMitigate -[#green,dashed]-> ReplayAbuse : mitigates
+    TokenMitigate -[#green,dashed]-> TokenTheftAbuse : mitigates
+    AuthMitigate -[#green,dashed]-> TokenTheftAbuse : mitigates
+    ValidationMitigate -[#green,dashed]-> InjectionAbuse : mitigates
+    ServerAuthzMitigate -[#green,dashed]-> PrivEscalationAbuse : mitigates
+    QueueMitigate -[#green,dashed]-> DoSAbuse : mitigates
+    AuditMitigate -[#green,dashed]-> BusinessLogicAbuse : mitigates
+
+}
+
+@enduml
