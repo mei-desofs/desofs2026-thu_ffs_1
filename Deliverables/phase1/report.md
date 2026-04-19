@@ -458,7 +458,7 @@ The main goal is to identify potential threats to the creation and publication o
 
 #### Abuse Case 4 : Order Product (Denial of Service — Order Flood)
 
-This section analyses abuse scenarios targeting the ordering functionality (POST /orders). The content below is aligned with the `orderAbuseCase.puml` diagram and lists the exact abuse cases and mapped mitigations shown there.
+Fix- This diagram represents a security-focused approach using both **Use Cases** and **Abuse Cases** within the order/product procurement process of the BioCantinas System. The main goal is to identify potential threats across the full ordering lifecycle (from order creation by an authenticated user through to processing and supplier delivery) and link them with appropriate countermeasures.
 
 ![Order Flood Abuse Case](diagrams/Abuse%20Cases/orderAbuseCase.svg)
 

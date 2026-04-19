@@ -1,4 +1,5 @@
 @startuml
+' Reverted layout: left to right, compact style; Cancel Order includes View Order
 left to right direction
 skinparam packageStyle rectangle
 
@@ -43,6 +44,16 @@ package "BioCantinas Order System" {
     PlaceOrderUC -[#red,bold]-> PrivEscalationAbuse : threatened by
     PlaceOrderUC -[#red,bold]-> DoSAbuse : threatened by
     PlaceOrderUC -[#red,bold]-> BusinessLogicAbuse : threatened by
+
+    ViewOrderUC -[#red,bold]-> TokenTheftAbuse : threatened by
+    ViewOrderUC -[#red,bold]-> PrivEscalationAbuse : threatened by
+
+    CancelOrderUC -[#red,bold]-> PrivEscalationAbuse : threatened by
+    CancelOrderUC -[#red,bold]-> ReplayAbuse : threatened by
+    CancelOrderUC -[#red,bold]-> DoSAbuse : threatened by
+
+    ' Cancel includes View: to cancel an order user must be able to view it first
+    CancelOrderUC .[#green].> ViewOrderUC : includes
 
     IdempotencyMitigate -[#green,dashed]-> ReplayAbuse : mitigates
     TokenMitigate -[#green,dashed]-> TokenTheftAbuse : mitigates
