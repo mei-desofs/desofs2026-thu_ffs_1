@@ -27,7 +27,7 @@ package "BioCantinas System" {
 
     User --> LoginUC
     User --> ChangePasswordUC
-    User --> RecoverPasswordUC
+    User -> RecoverPasswordUC
 
     LoginUC .[#green].> ChangePasswordUC : includes
     LoginUC .[#green].> RecoverPasswordUC : includes
@@ -39,7 +39,7 @@ package "BioCantinas System" {
     Attacker --> AuthBypassAbuse
     Attacker --> PrivEscalationAbuse
 
-    LoginUC -[#red,bold]-> LoginAbuse : threatens
+    LoginUC -[#red,bold]- LoginAbuse : threatens
     ChangePasswordUC -[#red,bold]-> ChangePasswordAbuse : threatens
     RecoverPasswordUC -[#red,bold]-> RecoveryAbuse : threatens
     LoginUC -[#red,bold]-> AuthBypassAbuse : threatens

@@ -1,0 +1,46 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+actor Admin as "Administrator"
+actor Attacker
+
+package "BioCantinas System" {
+
+    usecase "Manage Supplier Data" as ManageSupplierUC
+    usecase "Create / Update Supplier" as CreateUpdateUC
+    usecase "Delete Supplier" as DeleteUC
+    usecase "Retrieve Supplier Data" as RetrieveUC
+
+    usecase "Supplier Data Breach" as ExfilAbuse #FFCDD2
+    usecase "Unauthorized Modification of Supplier Data" as UnauthorizedEditAbuse #FFCDD2
+    usecase "Delete Supplier Without Permission" as DeleteAbuse #FFCDD2
+    usecase "Scrape Supplier Information" as EnumAbuse #FFCDD2
+
+    usecase "Restrict Access by Role" as RBACMitigate #C8E6C9
+    usecase "Log and Alert on Access" as LoggingMitigate #C8E6C9
+    usecase "Hide Sensitive Data from API" as APILimitMitigate #C8E6C9
+    usecase "Confirm Before Deleting" as IntegrityMitigate #C8E6C9
+
+    Admin --> ManageSupplierUC
+
+    ManageSupplierUC .[#green].> CreateUpdateUC : includes
+    ManageSupplierUC .[#green].> DeleteUC : includes
+    ManageSupplierUC .[#green].> RetrieveUC : includes
+
+    Attacker --> ExfilAbuse
+    Attacker --> UnauthorizedEditAbuse
+    Attacker --> DeleteAbuse
+    Attacker --> EnumAbuse
+
+    RetrieveUC -[#red,bold]-> ExfilAbuse : threatens
+    CreateUpdateUC -[#red,bold]-> UnauthorizedEditAbuse : threatens
+    DeleteUC -[#red,bold]-> DeleteAbuse : threatens
+    RetrieveUC -[#red,bold]-> EnumAbuse : threatens
+
+    RBACMitigate -[#green,dashed]-> UnauthorizedEditAbuse : mitigates
+    LoggingMitigate -[#green,dashed]-> ExfilAbuse : mitigates
+    APILimitMitigate -[#green,dashed]-> EnumAbuse : mitigates
+    IntegrityMitigate -[#green,dashed]-> DeleteAbuse : mitigates
+}
+@enduml

@@ -440,7 +440,6 @@ The main goal is to identify potential threats across the full candidate lifecyc
 
 > This model provides a clear foundation for threat analysis, illustrating how both the supplier application and administrative approval flows could be exploited and what preventive measures are in place.
 
-
 ---
 
 #### Abuse Case 3 : Meal Planning Management
@@ -489,13 +488,13 @@ Fix- This diagram represents a security-focused approach using both **Use Cases*
 
 ##### Use Cases
 
-| Use Case               | Description                                                                                                  |
-|------------------------|--------------------------------------------------------------------------------------------------------------|
-| **Place Order**        | Authenticated user submits an order for one or more products (POST /orders).                                 |
-| **Validate Order**     | Server validates payload, product IDs, quantity limits and contractual constraints before persisting.         |
-| **Persist Order**      | Create order record in the database (atomic with outbox entry when applicable).                              |
-| **Send to Supplier**   | Internal background worker sends order messages to supplier endpoints (asynchronous).                        |
-| **Cancel Order**       | User or system cancels an order and triggers compensating operations where required.                         |
+| Use Case             | Description                                                                                           |
+|----------------------|-------------------------------------------------------------------------------------------------------|
+| **Place Order**      | Authenticated user submits an order for one or more products (POST /orders).                          |
+| **Validate Order**   | Server validates payload, product IDs, quantity limits and contractual constraints before persisting. |
+| **Persist Order**    | Create order record in the database (atomic with outbox entry when applicable).                       |
+| **Send to Supplier** | Internal background worker sends order messages to supplier endpoints (asynchronous).                 |
+| **Cancel Order**     | User or system cancels an order and triggers compensating operations where required.                  |
 
 ##### Abuse Cases
 
@@ -510,17 +509,52 @@ Fix- This diagram represents a security-focused approach using both **Use Cases*
 
 ##### Countermeasures (mapped to abuse cases)
 
-| Countermeasure                                                      | Mitigates / Notes                                                                                                                           |
-|---------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Idempotency Keys & Deduplication**                                | Prevents **Replay / Duplicate Order** by deduplicating requests server-side (Idempotency-Key header).                                       |
-| **Short-lived Tokens + Revocation**                                 | Reduces impact of **Unauthorized Order / Account Takeover** by limiting token lifetime and enabling revocation.                              |
-| **Strong Auth & RBAC (MFA, role checks)**                           | Prevents **Unauthorized Order** and **Privilege Escalation** by enforcing MFA for sensitive accounts and strict server-side RBAC.           |
-| **Schema Validation & Rate Limits**                                 | Early reject of malformed payloads and limit request rates to mitigate **Malformed / Injection Payload** and low-volume DoS.               |
-| **Server-side Authorization Checks**                                | Validate cost-center and permission constraints to block **Order Outside Scope** attempts.                                                 |
-| **IP & User Rate Limiting**                                           | Enforce per-IP and per-user quotas at the API or reverse-proxy layer to throttle abusive traffic and protect the ordering endpoint.         |
-| **Audit Logging & Anomaly Detection**                               | Detects suspicious spikes (high-value orders, unusual patterns) and supports investigation and automated responses.                         |
+| Countermeasure                                | Mitigates / Notes                                                                                                                   |
+|-----------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| **Idempotency Keys & Deduplication**          | Prevents **Replay / Duplicate Order** by deduplicating requests server-side (Idempotency-Key header).                               |
+| **Short-lived Tokens + Revocation**           | Reduces impact of **Unauthorized Order / Account Takeover** by limiting token lifetime and enabling revocation.                     |
+| **Strong Auth & RBAC (MFA, role checks)**     | Prevents **Unauthorized Order** and **Privilege Escalation** by enforcing MFA for sensitive accounts and strict server-side RBAC.   |
+| **Schema Validation & Rate Limits**           | Early reject of malformed payloads and limit request rates to mitigate **Malformed / Injection Payload** and low-volume DoS.        |
+| **Server-side Authorization Checks**          | Validate cost-center and permission constraints to block **Order Outside Scope** attempts.                                          |
+| **IP & User Rate Limiting**                   | Enforce per-IP and per-user quotas at the API or reverse-proxy layer to throttle abusive traffic and protect the ordering endpoint. |
+| **Audit Logging & Anomaly Detection**         | Detects suspicious spikes (high-value orders, unusual patterns) and supports investigation and automated responses.                 |
 
 ---
+
+#### Abuse Case 5 : Supplier Data Management
+
+![Use and Abuse Cases - Supplier Data Management](diagrams/Abuse%20Cases/uc7-manage-supplier-data-abuse-case.png)
+
+This diagram represents a security-focused approach using both **Use Cases** and **Abuse Cases** within the supplier data management feature of the BioCantinas System. The main goal is to identify potential threats to the creation, modification, retrieval, and deletion of supplier records and link them with appropriate countermeasures.
+
+### Use Cases
+
+| Use Case                     | Description                                                                                                           |
+|------------------------------|-----------------------------------------------------------------------------------------------------------------------|
+| **Manage Supplier Data**     | The administrator accesses the supplier management module to maintain the registry of approved suppliers.             |
+| **Create / Update Supplier** | The administrator adds new supplier records or modifies existing ones. Included in the supplier data management flow. |
+| **Delete Supplier**          | The administrator removes a supplier record from the system. Included in the supplier data management flow.           |
+| **Retrieve Supplier Data**   | The administrator queries and views supplier information. Included in the supplier data management flow.              |
+
+### Abuse Cases
+
+| Abuse Case                                     | Description                                                                                                                              |
+|------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
+| **Supplier Data Breach**                       | A malicious actor extracts sensitive supplier information (such as contact details or pricing) from the system without authorisation.    |
+| **Unauthorized Modification of Supplier Data** | An attacker alters supplier records, for example changing bank details or contact information, without holding the required permissions. |
+| **Delete Supplier Without Permission**         | An attacker removes supplier records without authorisation, aiming to disrupt operations or erase evidence.                              |
+| **Scrape Supplier Information**                | An attacker repeatedly queries the API to collect supplier data in bulk, gathering intelligence that may support further attacks.        |
+
+### Countermeasures
+
+| Countermeasure                   | Mitigates                                                                                                                                                           |
+|----------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Restrict Access by Role**      | All create, update, and delete operations are restricted to users holding the Administrator role. Mitigates **Unauthorized Modification of Supplier Data**.         |
+| **Log and Alert on Access**      | All read and write operations on supplier records are logged, and anomalous access patterns trigger automated alerts. Mitigates **Supplier Data Breach**.           |
+| **Hide Sensitive Data from API** | The API returns only the fields necessary for each operation, reducing the volume of data exposed to scraping attempts. Mitigates **Scrape Supplier Information**.  |
+| **Confirm Before Deleting**      | Deletion operations require explicit confirmation — such as verifying no active orders exist — before proceeding. Mitigates **Delete Supplier Without Permission**. |
+
+> This model provides a clear foundation for threat analysis, illustrating how the supplier data management functionality could be exploited and what preventive measures are in place.
 
 ### Secure Design
 
