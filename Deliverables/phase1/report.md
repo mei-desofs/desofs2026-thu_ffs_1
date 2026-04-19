@@ -44,6 +44,12 @@ to the preparation and distribution of meals to assure an efficient and sustaina
 
 ### Domain Model
 
+![domainModel.png](diagrams/Domain%20Model/domainModel.png)
+
+### Component Diagram
+
+![Component Diagram](diagrams/Component%20Diagram/componentDiagram.svg)
+
 This diagram shows the main components of the BioCantinas system and how they interact.
 
 Components:
@@ -63,12 +69,6 @@ Deployment:
 - The system runs with the Backend (API + business logic) and the Frontend (SPA or mobile apps). Both are deployed as services or containers.
 - The BioCantinas Database is hosted on a remote server or managed DB service and is accessed securely by the Backend through the Database API.
 - External Portal(s) are hosted outside the system and accessed over TLS by the Backend.
-
-### Component Diagram
-
-![Component Diagram](diagrams/componentDiagram.svg)
-
-
 
 ### Entry and Exit Points
 
@@ -142,7 +142,7 @@ Exit points represent interfaces through which data leaves the system:
 
 ### Use Cases
 
-[uc.puml](diagrams/uc.puml)
+[uc.puml](diagrams/Use%20Cases/uc.puml)
 
 ### Requirements
 
