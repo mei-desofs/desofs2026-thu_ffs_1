@@ -5,7 +5,7 @@ actor UnregisteredSupplier as "Unregistered Supplier"
 actor Admin as "Administrator"
 actor Dietitian
 actor CentralCanteenManager as "Central Canteen Manager"
-
+actor Supplier
 
 rectangle BioCantinas {
 
