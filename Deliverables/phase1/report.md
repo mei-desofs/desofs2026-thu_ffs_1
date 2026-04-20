@@ -408,7 +408,7 @@ All of these will be managed as **NuGet packages**, API integrations, and GitHub
 
 #### Level 0
 
-![Authentication_level0.png](diagrams/DFD/Authentication/Authentication_level0.png)
+![Authentication_level0.png](diagrams/DFD/Supplier%20Approval/Supplier_Approval_level0.png)
 
 The Level 0 DFD for Authentication illustrates the high-level flow of **user authentication process** in the BioCantinas system. 
 It shows the basic interaction between the user and the internal BioCantinas authentication service, which is responsible for validating credentials and issuing authentication tokens.
@@ -428,7 +428,7 @@ It shows the basic interaction between the user and the internal BioCantinas aut
 
 #### Level 1
 
-![Authentication_level1.png](diagrams/DFD/Authentication/Authentication_level1.png)
+![Authentication_level1.png](diagrams/DFD/Supplier%20Approval/Supplier_Approval_level1.png)
 
 The Level 1 DFD for Authentication provides the detailed flow of **user authentication process** by decomposing the **BioCantinas API** process into its internal components and interactions.
 Furthermore, it includes database server components to represent the storage and retrieval of user credentials and establishes well-defined trust boundaries to highlight security considerations in the authentication flow.
@@ -459,7 +459,7 @@ Furthermore, it includes database server components to represent the storage and
 
 #### Level 0
 
-![Registration_level0.png](diagrams/DFD/Registration/Registration_level0.png)
+![Supplier_Approval_level0.png](diagrams/DFD/Supplier%20Approval/Supplier_Approval_level0.png)
 
 The Level 0 DFD for Supplier Approval illustrates the high-level flow of the **supplier registration process** in the BioCantinas system.
 It shows the basic interaction between an unregistered supplier and the internal BioCantinas registration service, which is responsible for processing supplier applications and managing the approval workflow.
@@ -482,9 +482,9 @@ It shows the basic interaction between an unregistered supplier and the internal
   
 #### Level 1
 
-![Registration_level1.png](diagrams/DFD/Registration/Registration_level1.png)
+![Supplier_Approval_level1.png](diagrams/DFD/Supplier%20Approval/Supplier_Approval_level1.png)
 
-The Level 1 DFD for Registration Supplier provides a detailed flow of the **supplier registration process** by decomposing the **BioCantinas System** process into its internal components and interactions.
+The Level 1 DFD for Supplier Approval provides a detailed flow of the **supplier registration process** by decomposing the **BioCantinas System** process into its internal components and interactions.
 It includes database server components to represent the storage and retrieval of supplier application data and establishes well-defined trust boundaries to highlight security considerations in the registration flow.
 
 - **External Entity:**
@@ -666,7 +666,37 @@ STRIDE is the mnemonic of:
 - **E**levation of Privilege: Allowing someone to do something that they are not authorized to do
 
 After analyzing the ASVS 5.0 Tracker, the most significant and potential threats were identified in each BioCantinas system
-per distinct flow
+per distinct flow. The following table summarizes the identified threats for each flow, categorized according to the STRIDE model:
+
+#### Authentication
+
+|               Threat                |   Targeted Element   |     STRIDE Category     |                                        Description                                         |                                             Mitigation                                             |
+|:-----------------------------------:|:--------------------:|:-----------------------:|:------------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------------:|
+|  **Auth Bypass via SQL Injection**  |   Database Server    |        Tampering        |  Malicious input in login fields used to bypass the password check in the PostgreSQL DB.   |    **V1.2.3**: Use parameterized queries and input sanitization for all database interactions.     |
+| **Brute Force/Credential Stuffing** |    Login Endpoint    |        Spoofing         |   Attackers use automated scripts to test leaked passwords against the BioCantinas API.    | **V6.1.1**: Implement rate limiting, anti-automation, and account lockout after 3 failed attempts. |
+|        **Session Hijacking**        |   Browser Storage    |        Spoofing         |     An attacker steals an active session token from a shared computer's LocalStorage.      |       **V7.4.1**: Implement absolute session timeouts (20 min) and clear tokens upon logout.       |
+|      **Privilege Escalation**       |      Admin API       | Elevation of Privilege  | A Supplier attempts to call the `ApproveSupplier` endpoint directly without Admin rights.  |             **V8.1.1**: Implement strict server-side Role-Based Access Control (RBAC).             |
+|      **JWT Payload Tampering**      |     Access Token     |        Tampering        |   A user modifies the claims in their JWT (e.g., changing role: `Dietitian` to `Admin`).   |    **V9.1.1**: Always validate the digital signature of the JWT before accepting its contents.     |
+|       **Credential Sniffing**       |   Network Traffic    | Information Disclosure  | Plaintext credentials (email/password) intercepted during transmission over the Internet.  |       **V12.1.1**: Enforce TLS 1.2/1.3 for all communications between Frontend and Backend.        |
+|   **Insecure Password Creation**    |     User Profile     | Elevation of Privilege  |      Users choose easily guessable passwords, making accounts vulnerable to takeover.      |    **V6.2.1**: Enforce a 10-character minimum with uppercase, numbers, and special characters.     |
+|       **Action Repudiation**        |      Audit Logs      |       Repudiation       |  An admin denies rejecting a valid supplier, and there is no trace of the specific action  |   **V16.2.1**: Ensure every security-relevant event includes metadata (Who, What, When, Where).    |
+
+#### Supplier Approval
+
+|              Threat              |    Targeted Element    |    STRIDE Category     |                                                         Description                                                          |                                                           Mitigation                                                            |
+|:--------------------------------:|:----------------------:|:----------------------:|:----------------------------------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------------------:|
+| **Registration Flooding (DoS)**  |    BioCantinas API     |   Denial of Service    |      An attacker submits thousands of fake applications or oversized files to exhaust CPU, Memory, or Database storage.      |             **V2.4.1**: Implement rate limiting and anti-automation (CAPTCHA) on the public registration endpoint.              |
+|    **Malicious File Upload**     |    BioCantinas API     |       Tampering        |                           A supplier uploads a PDF containing a malicious script (XSS) or a virus.                           |          **V5.2.2**: Validate magic bytes for PDF format and enforce a 5MB size limit, restrict extensions to **.PDF**          |
+|      **PDF Path Traversal**      |        Database        |       Tampering        |                   An attacker uses a malicious filename during upload to overwrite critical system files.                    |      **V5.3.2**: Use internally generated filenames (e.g., GUIDs) for storage instead of the original user-submitted name.      |
+| **Unauthorized Approval Bypass** | Update Approval Status | Elevation of Privilege | An attacker or unauthorized user calls the approval endpoint directly to approve their own application without Admin review. | **V8.1.1**: Enforce strict server-side Role-Based Access Control (RBAC). Only the Administrator role can modify SupplierStatus. |
+|  **Supplier Data Interception**  |   Internet Boundary    | Information Disclosure |          Sensitive data (NIF, Address, BIO Certificate) is intercepted in transit between the Supplier and the API.          |                       **V12.2.1**: Mandate the use of TLS 1.2/1.3 (HTTPS) for all external communication.                       |
+|   **Decision Email Tampering**   | Email System Boundary  |       Tampering        |           An attacker intercepts the "Approved" email and replaces the credential setup link with a phishing URL.            |   **V12.3.1**: Secure communication with the Notification Service; REQ4.3: Use short-lived (24h) and single-use setup tokens.   |
+|  **Denial of Approval Action**   |  Administrator Action  |      Repudiation       |       An Administrator approves a supplier without a proper interview (violating REQ4.2) and later denies the action.        |       **V16.2.1**: Log all status changes with metadata: Actor ID, Target Supplier ID, Timestamp, and previous/new state.       |
+
+
+####  Supplier Management
+
+#### Meal Planning Management
 
 ### Risk Assessment
 
