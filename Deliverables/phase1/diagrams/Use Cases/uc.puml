@@ -12,10 +12,12 @@ rectangle BioCantinas {
     CentralCanteenManager -- (UC1: Authenticate in the system)
     Dietitian -- (UC1: Authenticate in the system)
     Admin -- (UC1: Authenticate in the system)
+    Supplier -- (UC1: Authenticate in the system)
 
     CentralCanteenManager -- (UC2: Manage my password)
     Dietitian -- (UC3: Manage my password)
     Admin -- (UC3: Manage my password)
+    Supplier -- (UC3: Manage my password)
 
     UnregisteredSupplier -- (UC3: Send a Supplier Application)
 

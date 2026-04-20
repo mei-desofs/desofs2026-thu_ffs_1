@@ -144,14 +144,63 @@ Exit points represent interfaces through which data leaves the system:
 
 The Use Cases Diagram below demonstrates the interactions between the actor and the BioCantinas system, reflecting
 their roles and responsibilities within the platform.
-
-[uc.puml](diagrams/Use%20Cases/uc.puml)
+![uc.png](diagrams%2FUse%20Cases%2Fuc.png)
 
 ### Functional Requirements
 
 The functional requirements are grouped by use case and outline the key system functionalities to be implemented.
 Each functional requirement represents an action or capability that the system must support in order to accomplish the system needs, according to their roles and permissions.
 
+**UC1: Authenticate in the system**
+
+- REQ1.1: The system must allow users to log in using their email and password.
+- REQ1.2: The system must validate user credentials and issue a JWT token upon successful authentication.
+- REQ1.3: After 3 failed attempts. the user has to wait 5 minutes before attempting to log in again and receives
+an alert notification by email.
+- REQ1.4: Whenever a log in for the same account is done on another device an alert notification email is sent.
+- REQ1.5: The system must invalidate all sessions after a password change.
+- REQ1.6: The system must end the session after 20 minutes of inactivity and require re-authentication.
+
+**UC2: Manage my password**
+
+- REQ2.1: The system must allow users to change their password.
+- REQ2.2: When a password is altered, it can not be the same as 5 last passwords before.
+- REQ2.3: The system provides the user with an email with a link to recover their password, that is online active for 20 minutes.
+- REQ2.4: The password must contain at least 10 characters, including at least one uppercase letter, one number, and one special character.
+- REQ2.5: The system obliges the user to alter their password every 6 months.
+- REQ2.6: No common passwords are allowed (e.g., "password", "123456", etc.).
+
+**UC3: Send a supplier application**
+
+- REQ3.1: The system must allow every unregistered user to apply (no role is required)
+- REQ3.2: The system must validate that the fields of name, NIF, contact information, residence, productive capability and the BIO certificate are filled in and valid.
+- REQ3.3: The system must validate that the uploaded BIO certificate is a valid PDF file and does not exceed 5MB in size.
+- REQ3.4: The candidate must be a resident of Cinfães, strictly.
+
+**UC4: Approve a supplier application**
+
+- REQ4.1: The system must allow administrators to review pending supplier applications.
+- REQ4.2: Only the candidates that have passed the interview phase can be approved by the administrator.
+- REQ4.3: After an approval, the system sends an email to the supplier with their email credentials and a link to set up their password, the link is active for 24 hours.
+- REQ4.4: After a rejection, the system sends an email to the supplier with the reason for the rejection.
+
+**UC5: Manage meal planning**
+
+- REQ5.1: The system allows the dietitian to alter the weekly meal planning with the other alternative dishes available.
+- REQ5.2: The weekly meal planning has to be published by the dietitian a week before of the monday of the week that the meal planning is for.
+- REQ5.3: The system allows the dietitian to create new dishes, according to the available stock, season and must follow include protein and side dish.
+- REQ5.4: The system always provide five types of dishes: meat, fish, vegetarian, kosher and diet.
+
+**UC6: Order products from suppliers**
+
+- REQ6.1: The system lists, by product, the suppliers that can provide it ordered by inscription date.
+- REQ6.2: The system must calculate .... ver com carlos
+
+**UC7: Manage supplier data**
+
+- REQ7.1: The system allows the administrator to view and edit supplier information, such as contact information, residence, and product capability.
+- REQ7.2: The system allows the administrator to deactivate a supplier account if necessary.
+- REQ7.3: The system allows the supplier to request to update their contact information, residence and product capability, which must be approved by the administrator.
 
 ### Non-Functional Requirements
 
