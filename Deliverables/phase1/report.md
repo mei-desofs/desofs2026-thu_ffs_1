@@ -113,7 +113,7 @@ Components:
 - BioCantinas System: The main container that groups the application components.
 - BioCantinas Backend: Implements business logic (orders, suppliers, meal planning, stock and reservation management). The Backend uses external services and the Database API to access persistent data.
 - BioCantinas Frontend: The user-facing application (web or mobile). The Frontend consumes the Backend API to perform operations and also exposes its own API for clients/integrations where applicable.
-- External Portal: External system(s) (e.g., School Portal) that the Backend calls via an external API to synchronize or retrieve authoritative data.
+- External Portal: External system(s) (e.g., External Portal) that the Backend calls via an external API to synchronize or retrieve authoritative data.
 - BioCantinas Database: The persistent store (MySQL) that keeps users, suppliers, products, orders, reservations and audit logs. Access is performed via the Database API used by the Backend.
 
 Connections:
@@ -390,7 +390,7 @@ Apply best practices:
 * **Strict input validation:** Ensure all data coming from the Mobile and Web Applications is validated, particularly in critical forms like Menu Creation, Meals and Reservations Management, and Stock Operations.
 * **Strong authentication and secure session management:** Implement JWT tokens securely to handle User Authentication and Password Recovery across all user roles (students, canteen staff, and suppliers).
 * **Proper use of cryptography:** Encrypt sensitive data at rest in MySQL, such as passwords and Payment History.
-* **Secure error and exception handling:** Ensure no stack traces or database structures are exposed to the end-user, especially during integrations with the **School Portal**.
+* **Secure error and exception handling:** Ensure no stack traces or database structures are exposed to the end-user, especially during integrations with the **External Portal**.
 * **Principle of least privilege:** Implement strict Role-Based Access Control (RBAC) so that, for example, suppliers can only access the Supplier Application and not the internal Food Waste Monitoring or Reports.
 
 #### 2. Dependency Management
@@ -1146,7 +1146,7 @@ The main goal is to identify potential threats to the creation, modification, re
 | **Fail Securely**               | On any error or unexpected condition, the system returns a generic message to the client and writes detailed diagnostics only to internal logs. No stack traces, database structures, or sensitive data are ever surfaced to the end user.                                                                 |
 | **Session Binding and Entropy** | JWTs are signed using a secret with sufficient entropy, managed exclusively through GitHub Secrets. Tokens expire after 20 minutes of inactivity, are invalidated on password change, and are never stored in LocalStorage.                                                                                |
 | **Separation of Concerns**      | Business logic, authentication, authorization, and data access are implemented as distinct layers. Security-critical functions (e.g., JWT validation, password hashing) are centralized and not duplicated across the codebase.                                                                            |
-| **Third-Party Dependency Risk** | External dependencies (School Portal, Notification Service, NuGet packages) are treated as untrusted by default. All integrations use TLS, and third-party packages are continuously audited for CVEs via automated dependency scanning in the CI/CD pipeline.                                             |
+| **Third-Party Dependency Risk** | External dependencies (External Portal, Notification Service, NuGet packages) are treated as untrusted by default. All integrations use TLS, and third-party packages are continuously audited for CVEs via automated dependency scanning in the CI/CD pipeline.                                           |
 | **Safe Deployment and CI/CD**   | All production changes require an approved Pull Request before merging. The CI/CD pipeline enforces automated tests, static analysis, and CVE scanning — deployments are blocked if any check fails. Secrets are managed exclusively via GitHub Secrets and Spring Profiles, never hardcoded or committed. |
 
 ## Conclusion
