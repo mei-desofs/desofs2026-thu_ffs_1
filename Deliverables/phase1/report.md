@@ -730,6 +730,59 @@ per distinct flow. The following table summarizes the identified threats for eac
 
 ### Risk Assessment
 
+#### Methodology
+
+##### 1. Threat Identification
+Threats are enumerated through **STRIDE analysis**, covering **Spoofing**, **Tampering**, **Repudiation**, **Information Disclosure**, **Denial of Service**, and **Elevation of Privilege** across all BioCantinas flows.
+
+##### 2. Scoring Criteria
+Each threat is scored on **four dimensions**, each rated **1–5**:
+
+- **Severity**: The potential damage if the threat is exploited (1 = Negligible, 5 = Catastrophic).
+- **Asset Criticality**: The importance of the affected asset to the business (1 = Low, 5 = High).
+- **Likelihood**: The probability of the threat being exploited (1 = Rare, 5 = Almost Certain).
+- **Business Impact**: The overall impact on business operations, reputation, and compliance (1 = Minimal, 5 = Severe).
+
+##### 3. Risk Calculation
+
+```
+Risk Score = Likelihood × ((Severity + Asset Criticality) ÷ 2)
+```
+
+##### 4. Risk Prioritization
+
+| Priority Level                                | Score Threshold |
+|:----------------------------------------------|:---------------:|
+| <span style="color:#FF746C">**High**</span>   |      ≥ 15       |
+| <span style="color:#FFA500">**Medium**</span> |     8 – 14      |
+| <span style="color:#80EF80">**Low**</span>    |       < 8       |
+
+#### Risk Register
+
+##### <span style="color:#FF746C"> High Priority — Score ≥ 15</span>
+
+| Threat  | Category  | ASVS Ref  | Likelihood  | Severity  | Asset Criticality  | Score  |
+|:--------|:----------|:---------:|:-----------:|:---------:|:------------------:|:------:|
+
+---
+
+##### <span style="color:#FFA500">Medium Priority - Score 8–14</span>
+
+| Threat   | Category  | ASVS Ref  | Likelihood  | Severity  | Asset Criticality  | Score  |
+|:---------|:----------|:---------:|:-----------:|:---------:|:------------------:|:------:|
+
+---
+
+##### <span style="color:#80EF80">Low Priority - Score < 8</span>
+
+| Threat | Category | ASVS Ref | Likelihood | Severity | Asset Criticality | Score |
+|:-------|:---------|:--------:|:----------:|:--------:|:-----------------:|:-----:|
+
+---
+
+#### Summary & Remediation Notes
+
+
 ### Abuse cases
 
 Abuse cases are scenarios that describe how an attacker might misuse the system to achieve malicious goals. 
