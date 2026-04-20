@@ -4,6 +4,43 @@
 
 ## Table of Contents
 
+- [Introduction](#introduction)
+- [Project Analysis](#project-analysis)
+  - [Project Description](#project-description)
+  - [Domain Model](#domain-model)
+  - [Component Diagram](#component-diagram)
+  - [Entry and Exit Points](#entry-and-exit-points)
+  - [Application Users](#application-users)
+  - [Use Cases](#use-cases)
+  - [Functional Requirements](#functional-requirements)
+  - [Non-Functional Requirements](#non-functional-requirements)
+  - [Secure Development Requirements](#secure-development-requirements)
+  - [External Dependencies](#external-dependencies)
+- [Data Flow Diagrams](#data-flow-diagrams-)
+  - [Authentication](#authentication)
+  - [Supplier Approval](#supplier-approval)
+  - [Supplier Management](#supplier-management)
+  - [Meal Planning Management](#meal-planning-management)
+  - [Order Product](#order-product)
+- [Threat Identification and Analysis (STRIDE)](#threat-identification-and-analysis-stride)
+  - [Authentication](#authentication-1)
+  - [Supplier Approval](#supplier-approval-1)
+  - [Supplier Management](#supplier-management-1)
+  - [Meal Planning Management](#meal-planning-management-1)
+  - [Order Product](#order-product-1)
+- [Risk Assessment](#risk-assessment)
+  - [Methodology](#methodology)
+  - [Risk Register](#risk-register)
+  - [Summary & Remediation Notes](#summary--remediation-notes)
+- [Abuse Cases](#abuse-cases)
+  - [Abuse Case 1 : Authentication](#abuse-case-1--authentication)
+  - [Abuse Case 2 : Supplier Application and Approval](#abuse-case-2--supplier-application-and-approval)
+  - [Abuse Case 3 : Meal Planning Management](#abuse-case-3--meal-planning-management)
+  - [Abuse Case 4 : Order Product (Denial of Service — Order Flood)](#abuse-case-4--order-product-denial-of-service--order-flood)
+  - [Abuse Case 5 : Supplier Data Management](#abuse-case-5--supplier-data-management)
+- [Secure Design Patterns](#secure-design-patterns)
+- [Conclusion](#conclusion)
+
 ------
 
 ## Introduction
@@ -164,7 +201,7 @@ Exit points represent interfaces through which data leaves the system:
 
 The Use Cases Diagram below demonstrates the interactions between the actor and the BioCantinas system, reflecting
 their roles and responsibilities within the platform.
-![uc.png](diagrams%2FUse%20Cases%2Fuc.png)
+![uc.png](diagrams/Use%20Cases/uc.png)
 
 ### Functional Requirements
 
@@ -409,7 +446,7 @@ All of these will be managed as **NuGet packages**, API integrations, and GitHub
 
 #### Level 0
 
-![Authentication_level0.png](diagrams/DFD/Supplier%20Approval/Supplier_Approval_level0.png)
+![Authentication_level0.png](diagrams/DFD/Supplier%20Approval/SupplierApproval_level0.png)
 
 The Level 0 DFD for Authentication illustrates the high-level flow of **user authentication process** in the BioCantinas system. 
 It shows the basic interaction between the user and the internal BioCantinas authentication service, which is responsible for validating credentials and issuing authentication tokens.
@@ -429,7 +466,7 @@ It shows the basic interaction between the user and the internal BioCantinas aut
 
 #### Level 1
 
-![Authentication_level1.png](diagrams/DFD/Supplier%20Approval/Supplier_Approval_level1.png)
+![Authentication_level1.png](diagrams/DFD/Supplier%20Approval/SupplierApproval_level1.png)
 
 The Level 1 DFD for Authentication provides the detailed flow of **user authentication process** by decomposing the **BioCantinas API** process into its internal components and interactions.
 Furthermore, it includes database server components to represent the storage and retrieval of user credentials and establishes well-defined trust boundaries to highlight security considerations in the authentication flow.
@@ -1021,7 +1058,7 @@ The main goal is to identify potential threats to the creation and publication o
 
 #### Abuse Case 4 : Order Product (Denial of Service — Order Flood)
 
-Fix- This diagram represents a security-focused approach using both **Use Cases** and **Abuse Cases** within the order/product procurement process of the BioCantinas System. The main goal is to identify potential threats across the full ordering lifecycle (from order creation by an authenticated user through to processing and supplier delivery) and link them with appropriate countermeasures.
+This diagram represents a security-focused approach using both **Use Cases** and **Abuse Cases** within the order/product procurement process of the BioCantinas System. The main goal is to identify potential threats across the full ordering lifecycle (from order creation by an authenticated user through to processing and supplier delivery) and link them with appropriate countermeasures.
 
 ![Order Flood Abuse Case](diagrams/Abuse%20Cases/orderAbuseCase.svg)
 
@@ -1114,3 +1151,13 @@ The main goal is to identify potential threats to the creation, modification, re
 | **Safe Deployment and CI/CD**   | All production changes require an approved Pull Request before merging. The CI/CD pipeline enforces automated tests, static analysis, and CVE scanning — deployments are blocked if any check fails. Secrets are managed exclusively via GitHub Secrets and Spring Profiles, never hardcoded or committed. |
 
 ## Conclusion
+
+The work developed in this first phase of the Secure Software Development Life Cycle for BioCantinas demonstrates the importance of integrating security before development begins. 
+
+Through a structured Requirements and Design analysis, functional and non-functional requirements were defined, alongside the identification of entry and exit points, application roles, and external dependencies, establishing a traceable foundation for reasoning about security boundaries.
+
+The STRIDE-based Threat Modeling, guided by OWASP ASVS 5.0, identified 36 threats across five system flows. Two were rated high priority (Authentication Bypass and Brute Force/Credential Stuffing) with the remainder covering injection attacks, session management weaknesses, privilege escalation, CSRF, and repudiation risks, each paired with a concrete mitigation. 
+
+Data Flow Diagrams, Abuse Cases, and Secure Design Patterns complemented this analysis by mapping attack surfaces, misuse scenarios, and architectural principles to guide implementation.
+
+Together, these outputs provide the development team with a solid security baseline, ensuring the platform is built to be functional, compliant, and resilient from the ground up.
