@@ -4,6 +4,43 @@
 
 ## Table of Contents
 
+- [Introduction](#introduction)
+- [Project Analysis](#project-analysis)
+  - [Project Description](#project-description)
+  - [Domain Model](#domain-model)
+  - [Component Diagram](#component-diagram)
+  - [Entry and Exit Points](#entry-and-exit-points)
+  - [Application Users](#application-users)
+  - [Use Cases](#use-cases)
+  - [Functional Requirements](#functional-requirements)
+  - [Non-Functional Requirements](#non-functional-requirements)
+  - [Secure Development Requirements](#secure-development-requirements)
+  - [External Dependencies](#external-dependencies)
+- [Data Flow Diagrams](#data-flow-diagrams-)
+  - [Authentication](#authentication)
+  - [Supplier Approval](#supplier-approval)
+  - [Supplier Management](#supplier-management)
+  - [Meal Planning Management](#meal-planning-management)
+  - [Order Product](#order-product)
+- [Threat Identification and Analysis (STRIDE)](#threat-identification-and-analysis-stride)
+  - [Authentication](#authentication-1)
+  - [Supplier Approval](#supplier-approval-1)
+  - [Supplier Management](#supplier-management-1)
+  - [Meal Planning Management](#meal-planning-management-1)
+  - [Order Product](#order-product-1)
+- [Risk Assessment](#risk-assessment)
+  - [Methodology](#methodology)
+  - [Risk Register](#risk-register)
+  - [Summary & Remediation Notes](#summary--remediation-notes)
+- [Abuse Cases](#abuse-cases)
+  - [Abuse Case 1 : Authentication](#abuse-case-1--authentication)
+  - [Abuse Case 2 : Supplier Application and Approval](#abuse-case-2--supplier-application-and-approval)
+  - [Abuse Case 3 : Meal Planning Management](#abuse-case-3--meal-planning-management)
+  - [Abuse Case 4 : Order Product (Denial of Service — Order Flood)](#abuse-case-4--order-product-denial-of-service--order-flood)
+  - [Abuse Case 5 : Supplier Data Management](#abuse-case-5--supplier-data-management)
+- [Secure Design Patterns](#secure-design-patterns)
+- [Conclusion](#conclusion)
+
 ------
 
 ## Introduction
@@ -167,7 +204,7 @@ Exit points represent interfaces through which data leaves the system:
 
 The Use Cases Diagram below demonstrates the interactions between the actor and the BioCantinas system, reflecting
 their roles and responsibilities within the platform.
-![uc.png](diagrams%2FUse%20Cases%2Fuc.png)
+![uc.png](diagrams/Use%20Cases/uc.png)
 
 ### Functional Requirements
 
@@ -392,6 +429,7 @@ Create and maintain automated security tests as part of the development lifecycl
 ---
 
 ### External Dependencies
+
 This project will rely on external libraries and tools to provide key features:
 * **External Portal:** External platform integration for student data synchronization and potentially federated authentication.
 * **Authentication:** JWT (JSON Web Tokens).
@@ -407,7 +445,7 @@ All of these will be managed as **NuGet packages**, API integrations, and GitHub
 
 #### Level 0
 
-![Authentication_level0.png](diagrams/DFD/Supplier%20Approval/Supplier_Approval_level0.png)
+![Authentication_level0.png](diagrams/DFD/Supplier%20Approval/SupplierApproval_level0.png)
 
 The Level 0 DFD for Authentication illustrates the high-level flow of **user authentication process** in the BioCantinas system. 
 It shows the basic interaction between the user and the internal BioCantinas authentication service, which is responsible for validating credentials and issuing authentication tokens.
@@ -427,7 +465,7 @@ It shows the basic interaction between the user and the internal BioCantinas aut
 
 #### Level 1
 
-![Authentication_level1.png](diagrams/DFD/Supplier%20Approval/Supplier_Approval_level1.png)
+![Authentication_level1.png](diagrams/DFD/Supplier%20Approval/SupplierApproval_level1.png)
 
 The Level 1 DFD for Authentication provides the detailed flow of **user authentication process** by decomposing the **BioCantinas API** process into its internal components and interactions.
 Furthermore, it includes database server components to represent the storage and retrieval of user credentials and establishes well-defined trust boundaries to highlight security considerations in the authentication flow.
@@ -458,7 +496,7 @@ Furthermore, it includes database server components to represent the storage and
 
 #### Level 0
 
-![Supplier_Approval_level0.png](diagrams/DFD/Supplier%20Approval/Supplier_Approval_level0.png)
+![Registration_level0.png](diagrams/DFD/Supplier%20Approval/SupplierApproval_level0.png)
 
 The Level 0 DFD for Supplier Approval illustrates the high-level flow of the **supplier registration process** in the BioCantinas system.
 It shows the basic interaction between an unregistered supplier and the internal BioCantinas registration service, which is responsible for processing supplier applications and managing the approval workflow.
@@ -481,7 +519,7 @@ It shows the basic interaction between an unregistered supplier and the internal
   
 #### Level 1
 
-![Supplier_Approval_level1.png](diagrams/DFD/Supplier%20Approval/Supplier_Approval_level1.png)
+![Registration_level1.png](diagrams/DFD/Supplier%20Approval/SupplierApproval_level1.png)
 
 The Level 1 DFD for Supplier Approval provides a detailed flow of the **supplier registration process** by decomposing the **BioCantinas System** process into its internal components and interactions.
 It includes database server components to represent the storage and retrieval of supplier application data and establishes well-defined trust boundaries to highlight security considerations in the registration flow.
@@ -567,6 +605,12 @@ It includes database server components to represent the storage and retrieval of
   - **Return user data**: The database server returns the requested supplier information to the BioCantinas API.
   - **Send operation confirmation or results**: The BioCantinas API returns the results of the supplier management operation to the administrator.
 
+- **Trust Boundaries**:
+    
+  - **BioCantinas System**: The internal components that run the supplier management process, including the API, are within a trust boundary that assumes secure communication and proper access controls.
+  - **Internet**: External communication between the administrator and the BioCantinas API occurs over the internet, which is a trust boundary that requires secure protocols (e.g., HTTPS) to protect data in transit.
+  - **Database Server**: The communication between the BioCantinas API and the database server is a trust boundary that must be secured to prevent unauthorized access to sensitive supplier information.
+
 ### Meal Planning Management
 
 #### Level 0
@@ -593,6 +637,43 @@ It shows the basic interaction between the dietitian and the internal BioCantina
 
 ![MealsPlanning_level1.png](diagrams/DFD/Meals%20Planning/MealsPlanning_level1.png)
 
+The Level 1 DFD for Meal Planning Management provides a detailed flow of the **meal planning management process** by decomposing the **BioCantinas System** process into its internal components and interactions.
+It includes database server components to represent the storage and retrieval of meal planning information and establishes well-defined trust boundaries to highlight security considerations in the meal planning flow.
+
+- **External Entity**:
+
+  - **Dietitian**: Represents the user responsible for planning meals, creating menus, and ensuring that the meal plans meet nutritional and sustainability requirements.
+
+- **Internal Components**:
+
+  - **Dishes Catalog**: Manages the catalog of available dishes, including their ingredients, nutritional information, and suitability for different dietary requirements (e.g., vegetarian, kosher, diet).
+  - **Meals Management**: Handles the creation and management of meal plans, ensuring that they are aligned with the available dishes and ingredients.
+  - **Edition Processing**: Manages the editing and updating of meal plans, allowing the dietitian to make changes as needed.
+
+- **Data Store**:
+
+  - **Database Server**: The database server stores meal planning information, including details about meals, ingredients, nutritional information, and the published meal plans. It is accessed securely by the BioCantinas System during meal planning management operations.
+
+- **Processes**:
+
+  - **Send request to create dish**: The dietitian sends a request to the Dishes Catalog to create a new dish, providing details such as ingredients, nutritional information, and dietary suitability.
+  - **Store dish data**: The Dishes Catalog stores the new dish information in the database server for later retrieval and use in meal planning.
+  - **Request automatic generation**: The dietitian may request the Meals Management component to automatically generate meal plans based on the seasonal and product stock criteria.
+  - **Fetch dish list**: The Meals Management component retrieves the list of available dishes from the Dishes Catalog to create meal plans.
+  - **Save generate/validate meals**: The Meals Management component saves the generated meal plans in the database server and validates them against nutritional and sustainability criteria.
+  - **Edit meal planning**: The dietitian can send requests to the Edition Processing component to edit and update existing meal plans as needed.
+  - **Confirm update**: The Edition Processing component processes the edit requests and confirms that the meal plan has been successfully updated in the database server.
+  - **Return operation result**: The DB Server returns the result of the meal planning management operations to the BioCantinas System, which then communicates the results back to the dietitian.
+  - **Review plan**: The dietitian reviews the meal plan and confirms that it meets the necessary criteria before finalizing it for publication.
+  - **Publish plan**: The dietitian publishes the finalized meal plan to the BioCantinas System, making it available for canteen managers and other stakeholders to view and use for ordering and meal preparation.
+  - **Confirm publish**: The Meals Management processes the meal plan publication and confirms that the meal plan has been successfully published and is now available for use.
+
+- **Trust Boundaries**:
+
+  - **BioCantinas System**: The internal components that run the meal planning management process, including the Dishes Catalog, Meals Management, and Edition Processing, are within a trust boundary that assumes secure communication and proper access controls.
+  - **Internet**: External communication between the dietitian and the BioCantinas System occurs over the internet, which is a trust boundary that requires secure protocols (e.g., HTTPS) to protect data in transit.
+  - **Database Server**: The communication between the BioCantinas System and the database server is a trust boundary that must be secured to prevent unauthorized access to sensitive meal planning information.
+  
 ### Order Product
 
 #### Level 0
@@ -976,7 +1057,7 @@ The main goal is to identify potential threats to the creation and publication o
 
 #### Abuse Case 4 : Order Product (Denial of Service — Order Flood)
 
-Fix- This diagram represents a security-focused approach using both **Use Cases** and **Abuse Cases** within the order/product procurement process of the BioCantinas System. The main goal is to identify potential threats across the full ordering lifecycle (from order creation by an authenticated user through to processing and supplier delivery) and link them with appropriate countermeasures.
+This diagram represents a security-focused approach using both **Use Cases** and **Abuse Cases** within the order/product procurement process of the BioCantinas System. The main goal is to identify potential threats across the full ordering lifecycle (from order creation by an authenticated user through to processing and supplier delivery) and link them with appropriate countermeasures.
 
 ![Order Flood Abuse Case](diagrams/Abuse%20Cases/orderAbuseCase.svg)
 
@@ -1069,3 +1150,13 @@ The main goal is to identify potential threats to the creation, modification, re
 | **Safe Deployment and CI/CD**   | All production changes require an approved Pull Request before merging. The CI/CD pipeline enforces automated tests, static analysis, and CVE scanning — deployments are blocked if any check fails. Secrets are managed exclusively via GitHub Secrets and Spring Profiles, never hardcoded or committed. |
 
 ## Conclusion
+
+The work developed in this first phase of the Secure Software Development Life Cycle for BioCantinas demonstrates the importance of integrating security before development begins. 
+
+Through a structured Requirements and Design analysis, functional and non-functional requirements were defined, alongside the identification of entry and exit points, application roles, and external dependencies, establishing a traceable foundation for reasoning about security boundaries.
+
+The STRIDE-based Threat Modeling, guided by OWASP ASVS 5.0, identified 36 threats across five system flows. Two were rated high priority (Authentication Bypass and Brute Force/Credential Stuffing) with the remainder covering injection attacks, session management weaknesses, privilege escalation, CSRF, and repudiation risks, each paired with a concrete mitigation. 
+
+Data Flow Diagrams, Abuse Cases, and Secure Design Patterns complemented this analysis by mapping attack surfaces, misuse scenarios, and architectural principles to guide implementation.
+
+Together, these outputs provide the development team with a solid security baseline, ensuring the platform is built to be functional, compliant, and resilient from the ground up.
