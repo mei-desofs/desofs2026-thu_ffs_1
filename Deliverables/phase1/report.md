@@ -1055,13 +1055,17 @@ The main goal is to identify potential threats to the creation, modification, re
 
 > This model provides a clear foundation for threat analysis, illustrating how the supplier data management functionality could be exploited and what preventive measures are in place.
 
-### Secure Design
+### Secure Design Patterns
 
-### Secure Architecture
-
-### Secure Test Planning
+| **Pattern**                     | **BioCantinas Adaptation**                                                                                                                                                                                                                                     |
+|---------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Secure by Default**           | All API endpoints require a valid JWT token by default. Access is denied unless explicitly granted by the user's role. Public endpoints (e.g., supplier application submission) are the exception, not the rule.                                               |
+| **Layered Security**            | Security is applied at every layer of the stack: TLS 1.2/1.3 at the network level, rate limiting at the API gateway, JWT validation and RBAC at the application level, and parameterized queries and encryption at the data layer.                             |
+| **Minimal Access Rights**       | Each role (Administrator, Dietitian, Canteen Manager, Supplier) is granted only the permissions required for its responsibilities. A Supplier cannot access meal planning; a Dietitian cannot approve supplier applications.                                   |
+| **Transparent Security Design** | The system does not rely on security through obscurity. Controls such as RBAC enforcement, input validation, and audit logging are explicitly implemented and testable, independent of whether internal logic is exposed.                                      |
+| **Fail Securely**               | On any error or unexpected condition, the system returns a generic message to the client and writes detailed diagnostics only to internal logs. No stack traces, database structures, or sensitive data are ever surfaced to the end user.                     |
+| **Session Binding and Entropy** | JWTs are signed using a secret with sufficient entropy, managed exclusively through GitHub Secrets. Tokens expire after 20 minutes of inactivity, are invalidated on password change, and are never stored in LocalStorage.                                    |
+| **Separation of Concerns**      | Business logic, authentication, authorization, and data access are implemented as distinct layers. Security-critical functions (e.g., JWT validation, password hashing) are centralized and not duplicated across the codebase.                                |
+| **Third-Party Dependency Risk** | External dependencies (School Portal, Notification Service, NuGet packages) are treated as untrusted by default. All integrations use TLS, and third-party packages are continuously audited for CVEs via automated dependency scanning in the CI/CD pipeline. |
 
 ## Conclusion
-
-
-
