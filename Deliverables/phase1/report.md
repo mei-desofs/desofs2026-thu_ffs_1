@@ -760,7 +760,7 @@ Risk Score = Likelihood × ((Severity + Asset Criticality) ÷ 2)
 
 #### Risk Register
 
-##### <span style="color:#FF746C"> High Priority — Score ≥ 15</span>
+##### <span style="color:#FF746C"> High Priority - Score ≥ 15 </span>
 
 | Threat                  | Category          | Likelihood | Severity | Asset Criticality | Impact (avg) | Risk Score |
 |:------------------------|:------------------|:----------:|:--------:|:-----------------:|:------------:|:----------:|
@@ -769,7 +769,7 @@ Risk Score = Likelihood × ((Severity + Asset Criticality) ÷ 2)
 
 ---
 
-##### <span style="color:#FFA500">Medium Priority - Score 8–14</span>
+##### <span style="color:#FFA500"> Medium Priority - Score 8-14 </span>
 
 | Threat                             | Category                           | Likelihood | Severity | Asset Criticality | Impact (avg) | Risk Score |
 |:-----------------------------------|:-----------------------------------|:----------:|:--------:|:-----------------:|:------------:|:----------:|
@@ -791,15 +791,36 @@ Risk Score = Likelihood × ((Severity + Asset Criticality) ÷ 2)
 | Sniffing Attacks                   | Information Disclosure             |     2      |    4     |         4         |     4.0      |    8.0     |
 | Admin Impersonation                | Spoofing                           |     2      |    4     |         4         |     4.0      |    8.0     |
 | Audit Log Manipulation             | Repudiation                        |     2      |    4     |         4         |     4.0      |    8.0     |
+
 ---
 
-##### <span style="color:#80EF80">Low Priority - Score < 8</span>
+##### <span style="color:#80EF80"> Low Priority - Score < 8 </span>
 
->There are not Low Priority cenas
+> Based on the scoring methodology defined above, no threats in the current BioCantinas risk register fall below a score of 8. 
+> 
+> This reflects the sensitivity of the data handled by the platform (including personal data, organic certification documents, and supplier contracts) which raises the baseline asset criticality across all identified threats.
+> 
+> This result should not be interpreted as an absence of low-risk issues in general, but rather as a consequence of the domain context: even threats with a low likelihood of exploitation carry a non-trivial impact given the data in scope. 
+
 ---
 
 #### Summary & Remediation Notes
 
+The STRIDE analysis across all five BioCantinas flows (Authentication, Supplier Approval, Supplier Management, Meal Planning, and Order Product) identified a total of **36 distinct threats**, distributed as follows:
+
+| Priority                                    | Count | Score Range |
+|---------------------------------------------|-------|-------------|
+| <span style="color:#FF746C"> High </span>   | 2     | ≥ 15        |
+| <span style="color:#FFA500"> Medium </span> | 18    | 8 - 14      |
+| <span style="color:#80EF80"> Low </span>    | 0     | < 8         |
+
+The two high-priority threats, **Authentication Bypass** and **Password Brute Force**, target the authentication layer and must be addressed before any production deployment. 
+
+Their high scores reflect both a significant likelihood of exploitation and the catastrophic business and compliance consequences of a full authentication compromise in a system handling personal data under GDPR.
+
+The medium-priority cluster is broad and covers cross-cutting concerns including session management, injection attacks, privilege escalation, and CSRF. 
+
+Remediation should be addressed systematically, prioritising the higher-scored threats within this band and applying shared controls, such as parameterized queries, server-side RBAC, and TLS enforcement, that mitigate multiple threats simultaneously.
 
 ### Abuse cases
 
