@@ -77,7 +77,7 @@ Components:
 - BioCantinas Backend: Implements business logic (orders, suppliers, meal planning, stock and reservation management). The Backend uses external services and the Database API to access persistent data.
 - BioCantinas Frontend: The user-facing application (web or mobile). The Frontend consumes the Backend API to perform operations and also exposes its own API for clients/integrations where applicable.
 - External Portal: External system(s) (e.g., School Portal) that the Backend calls via an external API to synchronize or retrieve authoritative data.
-- BioCantinas Database: The persistent store (PostgreSQL) that keeps users, suppliers, products, orders, reservations and audit logs. Access is performed via the Database API used by the Backend.
+- BioCantinas Database: The persistent store (MySQL) that keeps users, suppliers, products, orders, reservations and audit logs. Access is performed via the Database API used by the Backend.
 
 Connections:
 - The BioCantinas Frontend calls the Backend API to request operations and retrieve data.
@@ -353,19 +353,19 @@ Follow recognized standards such as **OWASP Secure Coding Practices**, **CERT Se
 Apply best practices:
 * **Strict input validation:** Ensure all data coming from the Mobile and Web Applications is validated, particularly in critical forms like Menu Creation, Meals and Reservations Management, and Stock Operations.
 * **Strong authentication and secure session management:** Implement JWT tokens securely to handle User Authentication and Password Recovery across all user roles (students, canteen staff, and suppliers).
-* **Proper use of cryptography:** Encrypt sensitive data at rest in PostgreSQL, such as passwords and Payment History.
+* **Proper use of cryptography:** Encrypt sensitive data at rest in MySQL, such as passwords and Payment History.
 * **Secure error and exception handling:** Ensure no stack traces or database structures are exposed to the end-user, especially during integrations with the **School Portal**.
 * **Principle of least privilege:** Implement strict Role-Based Access Control (RBAC) so that, for example, suppliers can only access the Supplier Application and not the internal Food Waste Monitoring or Reports.
 
 #### 2. Dependency Management
 * Monitor third-party libraries and frameworks, particularly **NuGet packages** for the **.NET 8.0 SDK**.
-* Quickly update vulnerable dependencies (e.g., PDF generation libraries or PostgreSQL connectors).
+* Quickly update vulnerable dependencies (e.g., PDF generation libraries or MySQL connectors).
 * Avoid using unmaintained or suspicious packages.
 
 #### 3. Secure Code Review
 Perform security-focused code reviews for all new code and major changes. Use automated tools (e.g., **SonarQube**) to assist but not replace manual review.
 Focus areas:
-* **Critical components:** JWT authentication, authorization mechanisms, and PostgreSQL data access layers.
+* **Critical components:** JWT authentication, authorization mechanisms, and MySQL data access layers.
 * **Common vulnerability patterns:** SQL Injection (especially in dynamic queries for Reports and Performance Indicators), XSS in the Web Application, and CSRF.
 * **Business logic errors that could be exploited:** e.g., manipulating the Delivery Reception and Validation process, bypassing payment requirements for Meals, or unauthorized data sync with the **School Portal**.
 
@@ -374,7 +374,7 @@ Focus areas:
 
 #### 5. Secure Build and Deployment
 * Ensure builds are automated, reproducible, and conducted in controlled environments via **GitHub Actions** workflows.
-* **Prevent secret exposure:** Strictly use **GitHub Secrets** to manage sensitive data such as JWT secret keys, PostgreSQL connection strings, and **School Portal API keys/certificates**. Never hardcode these in the repository.
+* **Prevent secret exposure:** Strictly use **GitHub Secrets** to manage sensitive data such as JWT secret keys, MySQL connection strings, and **School Portal API keys/certificates**. Never hardcode these in the repository.
 
 #### 6. Logging and Monitoring
 * Implement secure logging of security-relevant events, such as User Authentication logins, unauthorized access attempts to Delivery History, or errors during communication with the **School Portal**.
@@ -385,7 +385,7 @@ Create and maintain automated security tests as part of the development lifecycl
 * Integrate security tests into the **GitHub Actions** CI/CD pipeline to continuously validate code security.
 * Cover common vulnerabilities such as injection flaws, authentication issues, and access control weaknesses.
 * Include **unit tests** focused on validating security-related functions (e.g., testing the JWT generation and validation logic).
-* Implement **integration tests** to verify secure interactions between the .NET 8 backend, the PostgreSQL database, and the **School Portal API**.
+* Implement **integration tests** to verify secure interactions between the .NET 8 backend, the MySQL database, and the **School Portal API**.
 * Develop **end-to-end tests** to simulate real-world security scenarios and verify protection mechanisms across the Web and Mobile Interfaces.
 
 > **Note:** These requirements must be continuously reviewed and updated to adapt to evolving security threats.
@@ -397,7 +397,7 @@ This project will rely on external libraries and tools to provide key features:
 * **School Portal:** External platform integration for student data synchronization and potentially federated authentication.
 * **Authentication:** JWT (JSON Web Tokens).
 * **Reporting:** PDF generation libraries for Reports and Performance Indicators.
-* **Data Persistence:** PostgreSQL connectivity and migrations (via Entity Framework Core).
+* **Data Persistence:** MySQL connectivity and migrations (via Entity Framework Core).
 * **CI/CD:** Automation via **GitHub Actions**.
 
 All of these will be managed as **NuGet packages**, API integrations, and GitHub Actions workflows, under the umbrella of the **.NET 8.0 SDK** and runtime. Proper version control, security audits (especially for the School Portal API connection), and update processes will be applied to maintain system stability and integrity.
@@ -670,16 +670,17 @@ per distinct flow. The following table summarizes the identified threats for eac
 
 #### Authentication
 
-|               Threat                |   Targeted Element   |     STRIDE Category     |                                        Description                                         |                                             Mitigation                                             |
-|:-----------------------------------:|:--------------------:|:-----------------------:|:------------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------------:|
-|  **Auth Bypass via SQL Injection**  |   Database Server    |        Tampering        |  Malicious input in login fields used to bypass the password check in the PostgreSQL DB.   |    **V1.2.3**: Use parameterized queries and input sanitization for all database interactions.     |
-| **Brute Force/Credential Stuffing** |    Login Endpoint    |        Spoofing         |   Attackers use automated scripts to test leaked passwords against the BioCantinas API.    | **V6.1.1**: Implement rate limiting, anti-automation, and account lockout after 3 failed attempts. |
-|        **Session Hijacking**        |   Browser Storage    |        Spoofing         |     An attacker steals an active session token from a shared computer's LocalStorage.      |       **V7.4.1**: Implement absolute session timeouts (20 min) and clear tokens upon logout.       |
-|      **Privilege Escalation**       |      Admin API       | Elevation of Privilege  | A Supplier attempts to call the `ApproveSupplier` endpoint directly without Admin rights.  |             **V8.1.1**: Implement strict server-side Role-Based Access Control (RBAC).             |
-|      **JWT Payload Tampering**      |     Access Token     |        Tampering        |   A user modifies the claims in their JWT (e.g., changing role: `Dietitian` to `Admin`).   |    **V9.1.1**: Always validate the digital signature of the JWT before accepting its contents.     |
-|       **Credential Sniffing**       |   Network Traffic    | Information Disclosure  | Plaintext credentials (email/password) intercepted during transmission over the Internet.  |       **V12.1.1**: Enforce TLS 1.2/1.3 for all communications between Frontend and Backend.        |
-|   **Insecure Password Creation**    |     User Profile     | Elevation of Privilege  |      Users choose easily guessable passwords, making accounts vulnerable to takeover.      |    **V6.2.1**: Enforce a 10-character minimum with uppercase, numbers, and special characters.     |
-|       **Action Repudiation**        |      Audit Logs      |       Repudiation       |  An admin denies rejecting a valid supplier, and there is no trace of the specific action  |   **V16.2.1**: Ensure every security-relevant event includes metadata (Who, What, When, Where).    |
+|                    Threat                     |   Targeted Element    |     STRIDE Category     |                                        Description                                        |                                             Mitigation                                             |
+|:---------------------------------------------:|:---------------------:|:-----------------------:|:-----------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------------:|
+|       **Auth Bypass via SQL Injection**       |    Database Server    |        Tampering        |    Malicious input in login fields used to bypass the password check in the MySQL DB.     |    **V1.2.3**: Use parameterized queries and input sanitization for all database interactions.     |
+| **SMTP/IMAP Injection via unsanitized input** | Mail System Interface |        Tampering        |                                                                                           |                                           **V1.2.3**:                                              |
+|      **Brute Force/Credential Stuffing**      |    Login Endpoint     |        Spoofing         |   Attackers use automated scripts to test leaked passwords against the BioCantinas API.   | **V6.1.1**: Implement rate limiting, anti-automation, and account lockout after 3 failed attempts. |
+|             **Session Hijacking**             |    Browser Storage    |        Spoofing         |     An attacker steals an active session token from a shared computer's LocalStorage.     |       **V7.4.1**: Implement absolute session timeouts (20 min) and clear tokens upon logout.       |
+|           **Privilege Escalation**            |       Admin API       | Elevation of Privilege  | A Supplier attempts to call the `ApproveSupplier` endpoint directly without Admin rights. |             **V8.1.1**: Implement strict server-side Role-Based Access Control (RBAC).             |
+|           **JWT Payload Tampering**           |     Access Token      |        Tampering        |  A user modifies the claims in their JWT (e.g., changing role: `Dietitian` to `Admin`).   |    **V9.1.1**: Always validate the digital signature of the JWT before accepting its contents.     |
+|            **Credential Sniffing**            |    Network Traffic    | Information Disclosure  | Plaintext credentials (email/password) intercepted during transmission over the Internet. |       **V12.1.1**: Enforce TLS 1.2/1.3 for all communications between Frontend and Backend.        |
+|        **Insecure Password Creation**         |     User Profile      | Elevation of Privilege  |     Users choose easily guessable passwords, making accounts vulnerable to takeover.      |    **V6.2.1**: Enforce a 10-character minimum with uppercase, numbers, and special characters.     |
+|            **Action Repudiation**             |      Audit Logs       |       Repudiation       | An admin denies rejecting a valid supplier, and there is no trace of the specific action  |   **V16.2.1**: Ensure every security-relevant event includes metadata (Who, What, When, Where).    |
 
 #### Supplier Approval
 
