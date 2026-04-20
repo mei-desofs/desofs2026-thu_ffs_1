@@ -670,17 +670,22 @@ per distinct flow. The following table summarizes the identified threats for eac
 
 #### Authentication
 
-|                    Threat                     |   Targeted Element    |     STRIDE Category     |                                        Description                                        |                                             Mitigation                                             |
-|:---------------------------------------------:|:---------------------:|:-----------------------:|:-----------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------------:|
-|       **Auth Bypass via SQL Injection**       |    Database Server    |        Tampering        |    Malicious input in login fields used to bypass the password check in the MySQL DB.     |    **V1.2.3**: Use parameterized queries and input sanitization for all database interactions.     |
-| **SMTP/IMAP Injection via unsanitized input** | Mail System Interface |        Tampering        |                                                                                           |                                           **V1.2.3**:                                              |
-|      **Brute Force/Credential Stuffing**      |    Login Endpoint     |        Spoofing         |   Attackers use automated scripts to test leaked passwords against the BioCantinas API.   | **V6.1.1**: Implement rate limiting, anti-automation, and account lockout after 3 failed attempts. |
-|             **Session Hijacking**             |    Browser Storage    |        Spoofing         |     An attacker steals an active session token from a shared computer's LocalStorage.     |       **V7.4.1**: Implement absolute session timeouts (20 min) and clear tokens upon logout.       |
-|           **Privilege Escalation**            |       Admin API       | Elevation of Privilege  | A Supplier attempts to call the `ApproveSupplier` endpoint directly without Admin rights. |             **V8.1.1**: Implement strict server-side Role-Based Access Control (RBAC).             |
-|           **JWT Payload Tampering**           |     Access Token      |        Tampering        |  A user modifies the claims in their JWT (e.g., changing role: `Dietitian` to `Admin`).   |    **V9.1.1**: Always validate the digital signature of the JWT before accepting its contents.     |
-|            **Credential Sniffing**            |    Network Traffic    | Information Disclosure  | Plaintext credentials (email/password) intercepted during transmission over the Internet. |       **V12.1.1**: Enforce TLS 1.2/1.3 for all communications between Frontend and Backend.        |
-|        **Insecure Password Creation**         |     User Profile      | Elevation of Privilege  |     Users choose easily guessable passwords, making accounts vulnerable to takeover.      |    **V6.2.1**: Enforce a 10-character minimum with uppercase, numbers, and special characters.     |
-|            **Action Repudiation**             |      Audit Logs       |       Repudiation       | An admin denies rejecting a valid supplier, and there is no trace of the specific action  |   **V16.2.1**: Ensure every security-relevant event includes metadata (Who, What, When, Where).    |
+|                                        Threat                                         |   Targeted Element    |     STRIDE Category     |                                                                                                              Description                                                                                                               |                                                                                                                                                  Mitigation                                                                                                                                                   |
+|:-------------------------------------------------------------------------------------:|:---------------------:|:-----------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
+|                           **Auth Bypass via SQL Injection**                           |    Database Server    |        Tampering        |                                                                           Malicious input in login fields used to bypass the password check in the MySQL DB.                                                                           |                                                                                                          **V1.2.3**: Use parameterized queries and input sanitization for all database interactions.                                                                                                          |
+|                     **SMTP/IMAP Injection via unsanitized input**                     | Mail System Interface |        Tampering        |   User input (e.g., email fields, subject, headers) is not properly sanitized before being used in mail protocols, allowing attackers to inject additional commands or headers (e.g., adding recipients, altering message content).    |                                          **V1.3.11**: Sanitize and validate all user inputs used in email construction; strip CRLF characters; use safe mail libraries; enforce strict input validation and encoding; avoid direct concatenation into mail headers.                                           |
+|                          **Brute Force/Credential Stuffing**                          |    Login Endpoint     |        Spoofing         |                                                                         Attackers use automated scripts to test leaked passwords against the BioCantinas API.                                                                          |                                                                                                      **V6.1.1**: Implement rate limiting, anti-automation, and account lockout after 3 failed attempts.                                                                                                       |
+|                **Weak passwords due to use of context-specific words**                | Authentication System |        Spoofing         |              Users create passwords using predictable, organization-related terms (e.g., company name, project names, roles), making them easier to guess or brute-force by attackers with knowledge of the organization.              | **V6.1.2**: Maintain and enforce a deny-list of context-specific words (organization name, products, internal terms); integrate with password validation mechanisms; combine with strong password policies (length, complexity, banned passwords list); periodically update the list and document it clearly. |
+|            **Account compromise via weak knowledge-based authentication**             | Authentication System |        Spoofing         |  The application uses password hints or security questions (e.g., “mother’s maiden name”), which are often easily guessable or obtainable via social engineering or public information, allowing attackers to bypass authentication.   |                                         **V6.4.1**: Eliminate password hints and security questions; replace with stronger recovery mechanisms (e.g., MFA, email-based reset with secure tokens, identity verification); follow modern authentication best practices.                                         |
+| **Account lockout or forced insecure recovery due to expired authentication factors** | Authentication System |    Denial of Service    |            Users are not notified in advance about expiring credentials (e.g., passwords, tokens, certificates), leading to sudden expiration, potential service disruption, or reliance on less secure recovery processes.            |                                                 **V6.4.5**: Send advance notifications before expiration (multiple reminders); implement automated renewal alerts; allow secure self-service renewal; define appropriate validity periods and grace windows.                                                  |
+|            **Unauthorized access due to admin-controlled password reset**             | Authentication System | Elevation of Privilege  |                                  Administrative users can reset and set a user’s password directly, allowing them to know the password and potentially access the account without the user’s consent.                                  |                                     **V6.4.6**: Ensure admins can only trigger reset workflows (e.g., send reset link/token) without setting the password; enforce user-controlled password creation; log and audit all reset actions; apply least privilege principles.                                      |
+|           **Unauthorized access due to lack of session inactivity timeout**           |  Session Management   | Elevation of Privilege  | The application does not enforce an inactivity timeout, allowing sessions to remain active indefinitely. An attacker with access to an unattended device or stolen session can continue to use the session without re-authentication.  |                       **V6.7.3** Implement inactivity timeouts based on risk (e.g., shorter for sensitive operations); enforce automatic session expiration; require re-authentication after timeout; document timeout values and rationale; consider absolute session lifetime limits.                       |
+|                                 **Session Hijacking**                                 |    Browser Storage    |        Spoofing         |                                                                           An attacker steals an active session token from a shared computer's LocalStorage.                                                                            |                                                                                                            **V7.4.1**: Implement absolute session timeouts (20 min) and clear tokens upon logout.                                                                                                             |
+|                               **Privilege Escalation**                                |       Admin API       | Elevation of Privilege  |                                                                       A Supplier attempts to call the `ApproveSupplier` endpoint directly without Admin rights.                                                                        |                                                                                                                  **V8.1.1**: Implement strict server-side Role-Based Access Control (RBAC).                                                                                                                   |
+|                               **JWT Payload Tampering**                               |     Access Token      |        Tampering        |                                                                         A user modifies the claims in their JWT (e.g., changing role: `Dietitian` to `Admin`).                                                                         |                                                                                                          **V9.1.1**: Always validate the digital signature of the JWT before accepting its contents.                                                                                                          |
+|                                **Credential Sniffing**                                |    Network Traffic    | Information Disclosure  |                                                                       Plaintext credentials (email/password) intercepted during transmission over the Internet.                                                                        |                                                                                                             **V12.1.1**: Enforce TLS 1.2/1.3 for all communications between Frontend and Backend.                                                                                                             |
+|                            **Insecure Password Creation**                             |     User Profile      | Elevation of Privilege  |                                                                            Users choose easily guessable passwords, making accounts vulnerable to takeover.                                                                            |                                                                                                          **V6.2.1**: Enforce a 10-character minimum with uppercase, numbers, and special characters.                                                                                                          |
+|                                **Action Repudiation**                                 |      Audit Logs       |       Repudiation       |                                                                        An admin denies rejecting a valid supplier, and there is no trace of the specific action                                                                        |                                                                                                         **V16.2.1**: Ensure every security-relevant event includes metadata (Who, What, When, Where).                                                                                                         |
 
 #### Supplier Approval
 
@@ -734,9 +739,13 @@ per distinct flow. The following table summarizes the identified threats for eac
 #### Methodology
 
 ##### 1. Threat Identification
+
 Threats are enumerated through **STRIDE analysis**, covering **Spoofing**, **Tampering**, **Repudiation**, **Information Disclosure**, **Denial of Service**, and **Elevation of Privilege** across all BioCantinas flows.
 
+Additionally, threats are mapped to **OWASP ASVS controls** (e.g., V1, V6, V7, V8), ensuring traceability between identified risks and required security controls, particularly for authentication, session management, and input validation.
+
 ##### 2. Scoring Criteria
+
 Each threat is scored on **four dimensions**, each rated **1–5**:
 
 - **Severity**: The potential damage if the threat is exploited (1 = Negligible, 5 = Catastrophic).
@@ -762,45 +771,55 @@ Risk Score = Likelihood × ((Severity + Asset Criticality) ÷ 2)
 
 ##### <span style="color:#FF746C"> High Priority - Score ≥ 15 </span>
 
-| Threat                  | Category          | Likelihood | Severity | Asset Criticality | Impact (avg) | Risk Score |
-|:------------------------|:------------------|:----------:|:--------:|:-----------------:|:------------:|:----------:|
-| Authentication Bypass   | Spoofing          |     4      |    5     |         5         |     5.0      |    20.0    |
-| Password Brute Force    | Denial of Service |     5      |    4     |         3         |     3.5      |    17.5    |
+| Threat                                       | Category                    | Likelihood | Severity | Asset Criticality | Impact (avg) | Risk Score |
+|:---------------------------------------------|:----------------------------|:----------:|:--------:|:-----------------:|:------------:|:----------:|
+| Authentication Bypass                        | Spoofing                    |     4      |    5     |         5         |     5.0      |    20.0    |
+| Auth Bypass via SQL Injection                | Tampering                   |     4      |    5     |         5         |     5.0      |    20.0    |
+| Brute Force / Credential Stuffing            | Spoofing                    |     5      |    4     |         4         |     4.0      |    20.0    |
+| Session Hijacking                            | Spoofing                    |     4      |    4     |         4         |     4.0      |    16.0    |
 
 ---
 
 ##### <span style="color:#FFA500"> Medium Priority - Score 8-14 </span>
 
-| Threat                             | Category                           | Likelihood | Severity | Asset Criticality | Impact (avg) | Risk Score |
-|:-----------------------------------|:-----------------------------------|:----------:|:--------:|:-----------------:|:------------:|:----------:|
-| Authentication Abuse/Bypass        | Spoofing                           |     3      |    4     |         4         |     4.0      |    12.0    |
-| Buffer Overflow                    | Tampering                          |     3      |    4     |         4         |     4.0      |    12.0    |
-| Session Hijacking                  | Spoofing                           |     3      |    4     |         4         |     4.0      |    12.0    |
-| Privilege Escalation               | Elevation of Privilege             |     3      |    4     |         4         |     4.0      |    12.0    |
-| Session Replay                     | Tampering                          |     3      |    4     |         4         |     4.0      |    12.0    |
-| Cross-Site Request Forgery         | Spoofing/Tampering                 |     3      |    3     |         3         |     3.0      |    9.0     |
-| Fake Registration                  | Spoofing                           |     3      |    3     |         3         |     3.0      |    9.0     |
-| LDAP Injection                     | Tampering                          |     3      |    3     |         3         |     3.0      |    9.0     |
-| File Content Injection             | Tampering                          |     3      |    3     |         3         |     3.0      |    9.0     |
-| Format String Injection            | Tampering                          |     3      |    3     |         3         |     3.0      |    9.0     |
-| Argument Injection                 | Tampering                          |     3      |    3     |         3         |     3.0      |    9.0     |
-| XML Injection                      | Tampering / Information Disclosure |     3      |    3     |         3         |     3.0      |    9.0     |
-| Command Delimiters                 | Tampering / Elevation of Privilege |     3      |    3     |         3         |     3.0      |    9.0     |
-| Principal Spoof                    | Spoofing                           |     3      |    3     |         3         |     3.0      |    9.0     |
-| Communication Channel Manipulation | Information Disclosure             |     3      |    3     |         3         |     3.0      |    9.0     |
-| Sniffing Attacks                   | Information Disclosure             |     2      |    4     |         4         |     4.0      |    8.0     |
-| Admin Impersonation                | Spoofing                           |     2      |    4     |         4         |     4.0      |    8.0     |
-| Audit Log Manipulation             | Repudiation                        |     2      |    4     |         4         |     4.0      |    8.0     |
+| Threat                                                       | Category                           | Likelihood | Severity | Asset Criticality | Impact (avg) | Risk Score |
+|:-------------------------------------------------------------|:-----------------------------------|:----------:|:--------:|:-----------------:|:------------:|:----------:|
+| Authentication Abuse/Bypass                                  | Spoofing                           |     3      |    4     |         4         |     4.0      |    12.0    |
+| Buffer Overflow                                              | Tampering                          |     3      |    4     |         4         |     4.0      |    12.0    |
+| Session Hijacking                                            | Spoofing                           |     3      |    4     |         4         |     4.0      |    12.0    |
+| Privilege Escalation                                         | Elevation of Privilege             |     3      |    4     |         4         |     4.0      |    12.0    |
+| Session Replay                                               | Tampering                          |     3      |    4     |         4         |     4.0      |    12.0    |
+| Cross-Site Request Forgery                                   | Spoofing/Tampering                 |     3      |    3     |         3         |     3.0      |    9.0     |
+| Fake Registration                                            | Spoofing                           |     3      |    3     |         3         |     3.0      |    9.0     |
+| LDAP Injection                                               | Tampering                          |     3      |    3     |         3         |     3.0      |    9.0     |
+| File Content Injection                                       | Tampering                          |     3      |    3     |         3         |     3.0      |    9.0     |
+| Format String Injection                                      | Tampering                          |     3      |    3     |         3         |     3.0      |    9.0     |
+| Argument Injection                                           | Tampering                          |     3      |    3     |         3         |     3.0      |    9.0     |
+| XML Injection                                                | Tampering / Information Disclosure |     3      |    3     |         3         |     3.0      |    9.0     |
+| Command Delimiters                                           | Tampering / Elevation of Privilege |     3      |    3     |         3         |     3.0      |    9.0     |
+| Principal Spoof                                              | Spoofing                           |     3      |    3     |         3         |     3.0      |    9.0     |
+| Communication Channel Manipulation                           | Information Disclosure             |     3      |    3     |         3         |     3.0      |    9.0     |
+| Sniffing Attacks                                             | Information Disclosure             |     2      |    4     |         4         |     4.0      |    8.0     |
+| Admin Impersonation                                          | Spoofing                           |     2      |    4     |         4         |     4.0      |    8.0     |
+| Audit Log Manipulation                                       | Repudiation                        |     2      |    4     |         4         |     4.0      |    8.0     |
+| SMTP/IMAP Injection                                          | Tampering                          |     3      |    4     |         4         |     4.0      |    12.0    |
+| Weak passwords (context-specific words)                      | Spoofing                           |     3      |    4     |         4         |     4.0      |    12.0    |
+| Weak knowledge-based authentication                          | Spoofing                           |     3      |    4     |         4         |     4.0      |    12.0    |
+| Admin-controlled password reset                              | Elevation of Privilege             |     3      |    4     |         4         |     4.0      |    12.0    |
+| Missing session inactivity timeout                           | Elevation of Privilege             |     3      |    4     |         4         |     4.0      |    12.0    |
+| Credential sniffing (no TLS)                                 | Information Disclosure             |     3      |    4     |         4         |     4.0      |    12.0    |
 
 ---
 
 ##### <span style="color:#80EF80"> Low Priority - Score < 8 </span>
 
-> Based on the scoring methodology defined above, no threats in the current BioCantinas risk register fall below a score of 8. 
-> 
-> This reflects the sensitivity of the data handled by the platform (including personal data, organic certification documents, and supplier contracts) which raises the baseline asset criticality across all identified threats.
-> 
-> This result should not be interpreted as an absence of low-risk issues in general, but rather as a consequence of the domain context: even threats with a low likelihood of exploitation carry a non-trivial impact given the data in scope. 
+| Threat                                                   | Category                     | Likelihood | Severity | Asset Criticality | Impact (avg) | Risk Score |
+|:---------------------------------------------------------|:-----------------------------|:----------:|:--------:|:-----------------:|:------------:|:----------:|
+| Account lockout due to expired authentication factors    | Denial of Service            |     2      |    3     |         4         |     3.5      |    7.0     |
+
+Even though few threats fall into the low category, they are still tracked due to their potential to degrade user experience and trigger insecure recovery paths.
+
+Given the sensitivity of the platform (personal data, supplier contracts, certification data), most threats remain Medium to High priority.
 
 ---
 
