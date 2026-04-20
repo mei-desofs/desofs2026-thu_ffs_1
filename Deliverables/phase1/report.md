@@ -525,6 +525,64 @@ It shows the basic interaction between the dietitian and the internal BioCantina
 
 ![MealsPlanning_level1.png](diagrams/DFD/Meals%20Planning/MealsPlanning_level1.png)
 
+### Order Product
+
+#### Level 0
+
+![OrderProduct_level0.png](diagrams/DFD/Order%20Product/OrderProduct_level0.png)
+
+The Level 0 DFD for Order Product illustrates the high-level flow of the **order product process** in the BioCantinas system.
+It shows the basic interaction between the canteen manager and the internal BioCantinas system, which is responsible for managing product orders from suppliers.
+
+- **External Entity**:
+
+    - **Canteen Manager**: Represents the user responsible for managing product orders, including placing orders with suppliers and tracking order status.
+
+- **Internal Component**:
+
+    - **BioCantinas System**: The internal service responsible for handling product order operations, such as creating and managing orders, communicating with suppliers, and ensuring that the ordered products are delivered on time.
+
+- **Process**:
+
+    - **Request to order products**: The canteen manager sends a request to the BioCantinas System to order products from suppliers, which may include details about the products, quantities, and delivery requirements.
+    - **Confirm order**: The BioCantinas System processes the order request and confirms that the order has been successfully placed with the suppliers.
+
+#### Level 1
+
+![OrderProduct_level1.png](diagrams/DFD/Order%20Product/OrderProduct_level1.png)
+
+The Level 1 DFD for Order Product provides a detailed flow of the **order product process** by decomposing the **BioCantinas System** process into its internal components and interactions.
+It includes database server components to represent the storage and retrieval of order information and establishes well-defined trust boundaries to highlight security considerations in the order product flow.
+
+- **External Entity**:
+
+    - **Canteen Manager**: The user responsible for managing product orders, such as placing orders with suppliers and tracking order status.
+
+- **Internal Components**:
+  
+    - **Supplier Manager**: Manages supplier information and interactions, including order placement and communication with canteen manager.
+    - **Order Calculator**: Performs the calculation of adjusted order quantities by analyzing current stock levels, menu planning, historical consumption, and supplier availability, ensuring optimized orders that meet the canteen’s needs.
+
+- **Data Store**:
+
+    - **Database Server**: The database server stores order information, including product details, quantities, supplier information, and order status. It is accessed securely by the BioCantinas System during the order product process.
+
+- **Processes**:
+  
+    - **Request to order products**: The canteen manager sends a request to the Supplier Manager to order products from suppliers, which may include details about the products, quantities, and delivery requirements.
+    - **Return supplier info by product**: The Supplier Manager retrieves the relevant supplier information for the requested products from the database server and returns it to the canteen manager.
+    - **Sorted supplier list**: The Supplier Manager may provide a sorted list of suppliers based on criteria such as registration order for each product, which can help the canteen manager make informed decisions about which suppliers to order from.
+    - **Review dish history**: The Order Calculator reviews historical consumption data from the database to identify trends and support decision-making.
+    - **Adjust order quantities**: The Order Calculator analyzes the order request and dynamically adjusts quantities based on the menu, historical consumption of each dish, and supplier availability, providing a reliable forecast of needs.
+    - **Register order**: The system registers the finalized order in the database and transmits it to the API, ensuring that all order details are stored and made available for further processing.
+    - **Confirm order processing**: The system sends the finalized order to the canteen manager for review and confirmation, ensuring visibility and allowing final validation before execution.
+
+- **Trust Boundaries**:
+
+    - **BioCantinas System**: The internal components that run the order product process within a trust boundary that assumes secure communication and proper access controls.
+    - **Internet**: External communication between the canteen manager and the BioCantinas System occurs over the internet, which is a trust boundary that requires secure protocols (e.g., HTTPS) to protect data in transit.
+    - **Database Server**: The communication between the BioCantinas System and the database server is a trust boundary that must be secured to prevent unauthorized access to sensitive order information.
+  
 ### Threat Identification and Analysis (STRIDE)
 
 STRIDE is an approach to categorize and analyze security threats in software applications. It assists on identifying potential vulnerabilities 
