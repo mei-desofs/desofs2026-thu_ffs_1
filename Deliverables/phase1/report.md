@@ -263,7 +263,7 @@ Each functional requirement represents an action or capability that the system m
 
 ### Non-Functional Requirements
 
-The non-functional requirements define the quality attributes and technical constraints that the **CantinasCinfães** system must satisfy to ensure that the platform is secure, reliable, efficient, and easy to use and maintain. These requirements support the operation of school and nursing home canteens, as well as the interaction between consumers, suppliers, dietitians, canteen managers, and administrators.
+The non-functional requirements define the quality attributes and technical constraints that the **BioCantinas** system must satisfy to ensure that the platform is secure, reliable, efficient, and easy to use and maintain. These requirements support the operation of school and nursing home canteens, as well as the interaction between consumers, suppliers, dietitians, canteen managers, and administrators.
 
 #### 1. Performance
 
