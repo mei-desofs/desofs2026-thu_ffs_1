@@ -761,23 +761,40 @@ Risk Score = Likelihood × ((Severity + Asset Criticality) ÷ 2)
 
 ##### <span style="color:#FF746C"> High Priority — Score ≥ 15</span>
 
-| Threat  | Category  | ASVS Ref  | Likelihood  | Severity  | Asset Criticality  | Score  |
-|:--------|:----------|:---------:|:-----------:|:---------:|:------------------:|:------:|
+| Threat                  | Category          | Likelihood | Severity | Asset Criticality | Impact (avg) | Risk Score |
+|:------------------------|:------------------|:----------:|:--------:|:-----------------:|:------------:|:----------:|
+| Authentication Bypass   | Spoofing          |     4      |    5     |         5         |     5.0      |    20.0    |
+| Password Brute Force    | Denial of Service |     5      |    4     |         3         |     3.5      |    17.5    |
 
 ---
 
 ##### <span style="color:#FFA500">Medium Priority - Score 8–14</span>
 
-| Threat   | Category  | ASVS Ref  | Likelihood  | Severity  | Asset Criticality  | Score  |
-|:---------|:----------|:---------:|:-----------:|:---------:|:------------------:|:------:|
-
+| Threat                             | Category                           | Likelihood | Severity | Asset Criticality | Impact (avg) | Risk Score |
+|:-----------------------------------|:-----------------------------------|:----------:|:--------:|:-----------------:|:------------:|:----------:|
+| Authentication Abuse/Bypass        | Spoofing                           |     3      |    4     |         4         |     4.0      |    12.0    |
+| Buffer Overflow                    | Tampering                          |     3      |    4     |         4         |     4.0      |    12.0    |
+| Session Hijacking                  | Spoofing                           |     3      |    4     |         4         |     4.0      |    12.0    |
+| Privilege Escalation               | Elevation of Privilege             |     3      |    4     |         4         |     4.0      |    12.0    |
+| Session Replay                     | Tampering                          |     3      |    4     |         4         |     4.0      |    12.0    |
+| Cross-Site Request Forgery         | Spoofing/Tampering                 |     3      |    3     |         3         |     3.0      |    9.0     |
+| Fake Registration                  | Spoofing                           |     3      |    3     |         3         |     3.0      |    9.0     |
+| LDAP Injection                     | Tampering                          |     3      |    3     |         3         |     3.0      |    9.0     |
+| File Content Injection             | Tampering                          |     3      |    3     |         3         |     3.0      |    9.0     |
+| Format String Injection            | Tampering                          |     3      |    3     |         3         |     3.0      |    9.0     |
+| Argument Injection                 | Tampering                          |     3      |    3     |         3         |     3.0      |    9.0     |
+| XML Injection                      | Tampering / Information Disclosure |     3      |    3     |         3         |     3.0      |    9.0     |
+| Command Delimiters                 | Tampering / Elevation of Privilege |     3      |    3     |         3         |     3.0      |    9.0     |
+| Principal Spoof                    | Spoofing                           |     3      |    3     |         3         |     3.0      |    9.0     |
+| Communication Channel Manipulation | Information Disclosure             |     3      |    3     |         3         |     3.0      |    9.0     |
+| Sniffing Attacks                   | Information Disclosure             |     2      |    4     |         4         |     4.0      |    8.0     |
+| Admin Impersonation                | Spoofing                           |     2      |    4     |         4         |     4.0      |    8.0     |
+| Audit Log Manipulation             | Repudiation                        |     2      |    4     |         4         |     4.0      |    8.0     |
 ---
 
 ##### <span style="color:#80EF80">Low Priority - Score < 8</span>
 
-| Threat | Category | ASVS Ref | Likelihood | Severity | Asset Criticality | Score |
-|:-------|:---------|:--------:|:----------:|:--------:|:-----------------:|:-----:|
-
+>There are not Low Priority cenas
 ---
 
 #### Summary & Remediation Notes
