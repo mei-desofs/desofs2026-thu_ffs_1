@@ -253,7 +253,6 @@ Each functional requirement represents an action or capability that the system m
 **UC6: Order products from suppliers**
 
 - REQ6.1: The system lists, by product, the suppliers that can provide it ordered by inscription date.
-- REQ6.2: The system must calculate .... ver com carlos
 
 **UC7: Manage supplier data**
 
