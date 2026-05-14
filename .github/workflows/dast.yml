@@ -42,8 +42,7 @@ jobs:
           curl --retry 10 --retry-delay 3 --retry-connrefused http://localhost:8080/actuator/health
 
       - name: "OWASP ZAP Baseline Scan"
-        uses: zaproxy/action-baseline@v0.10.0
+        uses: zaproxy/action-baseline@stable
         with:
           target: 'http://localhost:8080'
           fail_action: false
-          artifact_name: zap-scan
