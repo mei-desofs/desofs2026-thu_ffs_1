@@ -29,4 +29,21 @@ public class EmailService implements IEmailService {
         );
         mailSender.send(message);
     }
+
+    @Override
+    public void sendSupplierWelcomeEmail(String toEmail, String temporaryPassword) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(toEmail);
+        message.setSubject("BioCantinas — Your Supplier Account Has Been Approved");
+        message.setText(
+                "Hello,\n\n"
+                        + "Congratulations! Your supplier application has been approved.\n\n"
+                        + "Your account credentials are:\n"
+                        + "  Email: " + toEmail + "\n"
+                        + "  Temporary Password: " + temporaryPassword + "\n\n"
+                        + "Please log in and change your password immediately.\n\n"
+                        + "— The BioCantinas Team"
+        );
+        mailSender.send(message);
+    }
 }

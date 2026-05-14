@@ -1,5 +1,7 @@
 package bioCanteenApp.suppliers.service;
 
+import bioCanteenApp.email.service.EmailService;
+import bioCanteenApp.email.validator.EmailDomainValidator;
 import bioCanteenApp.products.domain.Product;
 import bioCanteenApp.products.domain.ProductBatch;
 import bioCanteenApp.products.repository.IProductRepo;
@@ -8,11 +10,15 @@ import bioCanteenApp.suppliers.dto.SupplierApplicationDTO;
 import bioCanteenApp.suppliers.dto.SupplierDTO;
 import bioCanteenApp.suppliers.mapper.ISupplierMapper;
 import bioCanteenApp.suppliers.repository.ISupplierRepo;
+import bioCanteenApp.users.domain.Role;
+import bioCanteenApp.users.domain.User;
 import bioCanteenApp.users.repository.IUserRepo;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -23,9 +29,15 @@ public class SupplierService implements ISupplierService {
     private final ISupplierMapper supplierMapper;
     private final ISupplierRepo supplierRepo;
     private final IProductRepo productRepo;
+    private final IUserRepo userRepo;
+    private final EmailService emailService;
+    private final PasswordEncoder passwordEncoder;
+    private final EmailDomainValidator emailDomainValidator;
 
     @Override
     public SupplierApplicationDTO applyToSupplierPosition(SupplierApplicationDTO dto) {
+
+        emailDomainValidator.validate(dto.getEmail());
 
         List<SupplierCapacity> capacities = dto.getSupplierCapacity().stream()
                 .map(c -> new SupplierCapacity(
@@ -53,11 +65,43 @@ public class SupplierService implements ISupplierService {
         application.setStatus(SupplierApplicationStatus.APPROVED);
         supplierRepo.save(application);
 
+        String temporaryPassword = generateTemporaryPassword();
+        userRepo.findByEmail(dto.getEmail()).orElseGet(() -> {
+            User supplierUser = new User(dto.getEmail(), application.getName(),
+                    passwordEncoder.encode(temporaryPassword), Role.USER);
+            return userRepo.save(supplierUser);
+        });
+
+        emailService.sendSupplierWelcomeEmail(dto.getEmail(), temporaryPassword);
+
         Optional<Supplier> supplier = supplierRepo.findAll().stream()
                 .filter(s -> s.getUser().getEmail().equals(dto.getEmail()))
                 .findFirst();
 
-        return supplierMapper.toDTO(supplier.get());
+        return supplier.map(supplierMapper::toDTO)
+                .orElseThrow(() -> new RuntimeException("Supplier record not found after approval for: " + dto.getEmail()));
+    }
+
+    private String generateTemporaryPassword() {
+        SecureRandom random = new SecureRandom();
+        String upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        String lower = "abcdefghijklmnopqrstuvwxyz";
+        String digits = "0123456789";
+        String special = "!@#$%^&*";
+
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 2; i++) sb.append(upper.charAt(random.nextInt(upper.length())));
+        for (int i = 0; i < 4; i++) sb.append(lower.charAt(random.nextInt(lower.length())));
+        for (int i = 0; i < 2; i++) sb.append(digits.charAt(random.nextInt(digits.length())));
+        for (int i = 0; i < 2; i++) sb.append(special.charAt(random.nextInt(special.length())));
+
+        List<Character> chars = new ArrayList<>();
+        for (char c : sb.toString().toCharArray()) chars.add(c);
+        Collections.shuffle(chars, random);
+
+        StringBuilder result = new StringBuilder();
+        for (char c : chars) result.append(c);
+        return result.toString();
     }
 
     @Override
