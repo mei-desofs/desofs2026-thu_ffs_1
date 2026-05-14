@@ -229,7 +229,8 @@ public class Bootstrapper implements CommandLineRunner {
     private void createHistoryAndFutureMenus() {
         if (menuRepository.findAll().iterator().hasNext()) return;
 
-        User dietitian = userRepository.findByEmail("dietitian@biocanteens.com").iterator().next();
+        User dietitian = userRepository.findByEmail("dietitian@biocanteens.com")
+                .orElseThrow(() -> new IllegalStateException("Dietitian user not found"));
 
         List<Dish> meatDishes = dishRepository.findAllByType(DishType.MEAT);
         List<Dish> fishDishes = dishRepository.findAllByType(DishType.FISH);

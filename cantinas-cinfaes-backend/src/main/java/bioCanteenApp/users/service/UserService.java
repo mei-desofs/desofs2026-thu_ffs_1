@@ -26,10 +26,9 @@ public class UserService implements IUserService {
     }
 
     public GetUserDTO getUserById(String email) {
-        User user = userRepo.findByEmail(email).iterator().hasNext() ? userRepo.findByEmail(email).iterator().next() : null;
-        if (user == null) {
-            return null;
-        }
+        User user = userRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
         return userMapper.toGetDTO(user);
     }
 
@@ -44,19 +43,19 @@ public class UserService implements IUserService {
 
     @Override
     public GetUserDTO getUserByEmail(String email) {
-        User user = userRepo.findByEmail(email).iterator().hasNext() ? userRepo.findByEmail(email).iterator().next() : null;
-        if (user == null) {
-            return null;
-        }
+        User user = userRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
         return userMapper.toGetDTO(user);
     }
 
     @Override
     public UserDTO createUser(UserDTO dto) {
 
-        if (userRepo.findByEmail(dto.getEmail()).iterator().hasNext()) {
-            throw new IllegalArgumentException("User Already Exists!");
-        }
+        userRepo.findByEmail(dto.getEmail())
+                .ifPresent(u -> {
+                    throw new IllegalArgumentException("User already exists!");
+                });
 
         dto.setPassword(passwordEncoder.encode(dto.getPassword()));
 
@@ -68,10 +67,9 @@ public class UserService implements IUserService {
 
     @Override
     public void deleteUser(String email) {
-        if (!userRepo.findByEmail(email).iterator().hasNext()) {
-            throw new IllegalArgumentException("User Does Not Exist!");
+        if (!userRepo.findByEmail(email).isPresent()) {
+            throw new RuntimeException("User not found");
         }
-
         userRepo.delete(email);
     }
 }

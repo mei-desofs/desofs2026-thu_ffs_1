@@ -19,8 +19,8 @@ public class AuthenticationService implements IAuthenticationService {
 
     @Override
     public LoginResponse login(LoginDTO dto) {
-        User user = userRepo.findByEmail(dto.getEmail()).iterator().hasNext()
-                  ? userRepo.findByEmail(dto.getEmail()).iterator().next() : null;
+        User user = userRepo.findByEmail(dto.getEmail())
+                .orElse(null);
 
         if (user == null) {
             return null;
