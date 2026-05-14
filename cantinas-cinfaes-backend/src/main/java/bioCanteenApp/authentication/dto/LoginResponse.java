@@ -1,6 +1,5 @@
 package bioCanteenApp.authentication.dto;
 
-import bioCanteenApp.users.domain.User;
 import bioCanteenApp.users.dto.UserDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -45,7 +45,7 @@ public class PasswordController {
         return ResponseEntity.ok("Password changed successfully.").getBody();
     }
 
-    @PostMapping("/forgot-password")
+    @PostMapping("/recover-password")
     public ResponseEntity<String> forgotPassword(@RequestBody ForgotPasswordDTO payload) {
 
         String email = payload.getEmail();

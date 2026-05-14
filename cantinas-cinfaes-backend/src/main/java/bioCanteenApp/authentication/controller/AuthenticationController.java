@@ -14,10 +14,10 @@ public class AuthenticationController {
 
     private final IAuthenticationService authenticationService;
 
-    // POST Login
     @PostMapping
     public ResponseEntity<LoginResponse> login(@RequestBody LoginDTO dto) {
         LoginResponse loginResponse = authenticationService.login(dto);
+        if (loginResponse == null) return ResponseEntity.status(401).build();
         return ResponseEntity.ok(loginResponse);
     }
 }

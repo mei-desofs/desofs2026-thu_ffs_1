@@ -22,7 +22,7 @@ public class PasswordExpiryFilter extends OncePerRequestFilter {
     private static final String[] WHITELISTED_PATHS = {
             "/api/passwords/change",
             "/api/passwords/reset-password",
-            "/api/passwords/forgot-password",
+            "/api/passwords/recover-password",
             "/api/auth/logout"
     };
 
