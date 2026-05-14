@@ -31,24 +31,6 @@ public class EmailService implements IEmailService {
     }
 
     @Override
-    public void sendPasswordChangeEmail(String toEmail, String changeLink) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(toEmail);
-        message.setSubject("BioCantinas — Confirm Your Password Change");
-        message.setText(
-                "Hello,\n\n"
-                        + "We received a request to change your BioCantinas password.\n\n"
-                        + "Click the link below to set your new password. "
-                        + "This link is valid for 20 minutes:\n\n"
-                        + changeLink + "\n\n"
-                        + "If you did not request this change, please ignore this email. "
-                        + "Your password will remain unchanged.\n\n"
-                        + "— The BioCantinas Team"
-        );
-        mailSender.send(message);
-    }
-
-    @Override
     public void sendSupplierWelcomeEmail(String toEmail, String temporaryPassword) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(toEmail);
