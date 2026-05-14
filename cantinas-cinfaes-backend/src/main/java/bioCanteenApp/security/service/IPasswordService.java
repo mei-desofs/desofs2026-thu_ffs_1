@@ -12,4 +12,6 @@ public interface IPasswordService {
     void applyNewPassword(User user, String newPassword);
 
     boolean isPasswordExpired(User user);
+
+    void sendPasswordResetEmail(String email);
 }

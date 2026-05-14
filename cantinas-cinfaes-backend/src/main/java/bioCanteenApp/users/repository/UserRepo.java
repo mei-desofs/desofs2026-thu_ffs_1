@@ -8,6 +8,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 @Transactional
@@ -24,11 +25,21 @@ public class UserRepo implements IUserRepo {
     }
 
     @Override
-    public Iterable<User> findByEmail(String email) {
-        TypedQuery<User> query = entityManager.createQuery("SELECT u FROM User u WHERE u.email = :email", User.class);
+    public Optional<User> findByEmail(String email) {
+        TypedQuery<User> query = entityManager.createQuery(
+                "SELECT u FROM User u WHERE u.email = :email",
+                User.class
+        );
+
         query.setParameter("email", email);
 
-        return query.getResultList();
+        List<User> results = query.getResultList();
+
+        if (results.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(results.get(0));
     }
 
     @Override
@@ -44,11 +55,8 @@ public class UserRepo implements IUserRepo {
 
     @Override
     public void delete(String email) {
-        List<User> users = (List<User>) findByEmail(email);
-
-        for (User u : users) {
-            entityManager.remove(entityManager.contains(u) ? u : entityManager.merge(u));
-        }
+        Optional<User> userOpt = findByEmail(email);
+        userOpt.ifPresent(entityManager::remove);
     }
 
     @Override

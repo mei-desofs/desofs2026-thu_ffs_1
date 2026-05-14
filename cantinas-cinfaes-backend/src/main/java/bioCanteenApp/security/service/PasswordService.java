@@ -1,7 +1,10 @@
 package bioCanteenApp.security.service;
 
+import bioCanteenApp.email.service.EmailService;
 import bioCanteenApp.security.domain.PasswordHistory;
+import bioCanteenApp.security.domain.PasswordResetToken;
 import bioCanteenApp.security.repository.PasswordHistoryRepo;
+import bioCanteenApp.security.repository.PasswordResetTokenRepo;
 import bioCanteenApp.users.domain.User;
 import bioCanteenApp.users.repository.UserRepo;
 import lombok.RequiredArgsConstructor;
@@ -11,14 +14,17 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class PasswordService implements IPasswordService {
 
     private final PasswordHistoryRepo passwordHistoryRepo;
+    private final PasswordResetTokenRepo passwordResetTokenRepo;
     private final UserRepo userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     private static final Set<String> COMMON_PASSWORDS = Set.of(
             "password", "password1", "123456", "12345678", "1234567890",
@@ -67,7 +73,7 @@ public class PasswordService implements IPasswordService {
             throw new IllegalArgumentException("User not found.");
         }
 
-        if (!user.getPassword().equals(currentPassword)) {
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
             throw new IllegalArgumentException("Current password is incorrect.");
         }
 
@@ -98,5 +104,21 @@ public class PasswordService implements IPasswordService {
         return lastChanged.isBefore(LocalDateTime.now().minusMonths(6));
     }
 
+    @Override
+    public void sendPasswordResetEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("No account found for that email."));
+
+        // Invalidate any existing tokens for this user
+        passwordResetTokenRepo.deleteAllByUserId(user.getId());
+
+        String rawToken = UUID.randomUUID().toString();
+        PasswordResetToken resetToken = new PasswordResetToken(user, rawToken);
+        passwordResetTokenRepo.save(resetToken);
+
+        // REQ2.3: send email with link (token valid 20 min — set inside constructor)
+        String resetLink = "https://biocanteen.app/reset-password?token=" + rawToken;
+        emailService.sendEmail(user.getEmail(), resetLink);
+    }
 
 }
