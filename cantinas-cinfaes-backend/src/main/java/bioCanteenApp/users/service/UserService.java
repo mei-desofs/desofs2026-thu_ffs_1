@@ -1,5 +1,6 @@
 package bioCanteenApp.users.service;
 
+import bioCanteenApp.email.validator.EmailDomainValidator;
 import bioCanteenApp.users.domain.User;
 import bioCanteenApp.users.dto.GetUserDTO;
 import bioCanteenApp.users.dto.UserDTO;
@@ -18,6 +19,7 @@ public class UserService implements IUserService {
     private final IUserMapper userMapper;
     private final IUserRepo userRepo;
     private final PasswordEncoder passwordEncoder;
+    private final EmailDomainValidator emailDomainValidator;
 
     @Override
     public List<GetUserDTO> getAllUsers() {
@@ -51,6 +53,8 @@ public class UserService implements IUserService {
 
     @Override
     public UserDTO createUser(UserDTO dto) {
+
+        emailDomainValidator.validate(dto.getEmail());
 
         userRepo.findByEmail(dto.getEmail())
                 .ifPresent(u -> {
