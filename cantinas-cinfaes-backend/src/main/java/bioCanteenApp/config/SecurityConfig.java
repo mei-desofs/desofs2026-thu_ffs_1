@@ -21,9 +21,11 @@ public class SecurityConfig {
         return http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/passwords/forgot-password").permitAll()
                         .requestMatchers("/api/passwords/reset-password").permitAll()
                         .requestMatchers("/api/passwords/change").authenticated()
+                        .requestMatchers("/api/users/*").hasRole("admin")
                         .anyRequest().authenticated()
                 )
                 .build();

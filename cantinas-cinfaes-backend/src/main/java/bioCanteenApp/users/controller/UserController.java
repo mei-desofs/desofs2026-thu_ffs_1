@@ -5,6 +5,7 @@ import bioCanteenApp.users.dto.UserDTO;
 import bioCanteenApp.users.service.IUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,6 +25,7 @@ public class UserController {
 
     // POST Create User
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO dto) {
         UserDTO createdUser = userService.createUser(dto);
         return ResponseEntity.ok(createdUser);
