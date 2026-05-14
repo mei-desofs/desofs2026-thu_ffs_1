@@ -12,6 +12,7 @@ public class UserDTO {
     private Long id;
     private String email;
     private String name;
+    private String password;
     private String role;
     private Long canteenId;
     private Long diningHallId;
