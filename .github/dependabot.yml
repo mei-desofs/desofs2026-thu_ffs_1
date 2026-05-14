@@ -1,0 +1,36 @@
+version: 2
+updates:
+
+  - package-ecosystem: "npm"
+    directory: "/"           # Root of your repo; change if package.json is elsewhere
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Europe/Lisbon"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "sca"
+    reviewers:
+      - ""   # Optional: add your GitHub username(s) here
+    commit-message:
+      prefix: "chore(deps)"
+    ignore:
+    # Optional: ignore major version bumps on specific packages to avoid breaking changes
+    # - dependency-name: "some-package"
+    #   update-types: ["version-update:semver-major"]
+
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Europe/Lisbon"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "chore(actions)"

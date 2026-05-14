@@ -1,0 +1,31 @@
+# This is a simple workflow that shows some basic setup 
+# required by the Juice Shop application: node.js and angular cli tools
+name: "Base example workflow"
+
+# run on push to dev or test branches, or manually
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - dev
+      - test
+  
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. get the code from repo
+      - name: "Check out Git repository"
+        uses: actions/checkout@v4.0.0
+      # 2. install node.js
+      - name: "Use Node.js 20"
+        uses: actions/setup-node@v3.8.1
+        with:
+          node-version: 20
+      # 3. install angular cli tools 
+      - name: "Install CLI tools"
+        run: npm install -g @angular/cli@15
+      # 4. run application tests
+      - name: "Run tests"
+        run: npm test
+          
