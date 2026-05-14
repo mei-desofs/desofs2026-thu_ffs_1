@@ -26,14 +26,14 @@ jobs:
           distribution: temurin
 
       - name: "Build with Maven"
+        working-directory: cantinas-cinfaes-backend
         run: mvn clean package -DskipTests
 
       - name: "Start Spring Boot application"
+        working-directory: cantinas-cinfaes-backend
         run: java -jar target/*.jar &
         env:
           SPRING_PROFILES_ACTIVE: test
-          # Add any env vars your app needs, e.g.:
-          # SPRING_DATASOURCE_URL: ${{ secrets.TEST_DATABASE_URL }}
 
       - name: "Wait for application to be ready"
         run: |

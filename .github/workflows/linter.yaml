@@ -26,4 +26,5 @@ jobs:
           distribution: temurin
 
       - name: "Run Checkstyle"
+        working-directory: cantinas-cinfaes-backend
         run: mvn checkstyle:check

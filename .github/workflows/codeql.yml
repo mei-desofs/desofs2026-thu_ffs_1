@@ -38,6 +38,7 @@ jobs:
           languages: java
 
       - name: "Build with Maven"
+        working-directory: cantinas-cinfaes-backend
         run: mvn clean package -DskipTests
 
       - name: "Perform CodeQL Analysis"
