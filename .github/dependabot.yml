@@ -1,8 +1,12 @@
+# Dependabot configuration for Software Composition Analysis (SCA)
+# Place this file at: .github/dependabot.yml (NOT inside workflows/)
+
 version: 2
 updates:
 
-  - package-ecosystem: "npm"
-    directory: "/"           # Root of your repo; change if package.json is elsewhere
+  # --- Maven dependencies ---
+  - package-ecosystem: "maven"
+    directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -12,16 +16,10 @@ updates:
     labels:
       - "dependencies"
       - "sca"
-    reviewers:
-      - ""   # Optional: add your GitHub username(s) here
     commit-message:
       prefix: "chore(deps)"
-    ignore:
-    # Optional: ignore major version bumps on specific packages to avoid breaking changes
-    # - dependency-name: "some-package"
-    #   update-types: ["version-update:semver-major"]
 
-
+  # --- GitHub Actions dependencies ---
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:

@@ -16,30 +16,10 @@ jobs:
     steps:
       - uses: google-github-actions/release-please-action@v4
         with:
-          # You will want to configure a GitHub Actions secret with a
-          # Personal Access Token if you want GitHub Actions CI
-          # checks to run on Release Please PRs.
-          # The folowing assumes that you have created a personal access token
-          # (PAT) and configured it as a GitHub action secret named
-          # `MY_RELEASE_PLEASE_TOKEN` (this secret name is not important).
-          #token: ${{ secrets.MY_RELEASE_PLEASE_TOKEN }}
-
           # if you dont need to trigger new workflow runs on a release please PR
-          # its fine to use GITHUB_TOKEN as folows
+          # its fine to use GITHUB_TOKEN as follows
           token: ${{ secrets.GITHUB_TOKEN }}
 
           # this is a built-in strategy in release-please, see "Action Inputs"
           # for more options
           release-type: simple
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Linter
-        run: npm run lint
