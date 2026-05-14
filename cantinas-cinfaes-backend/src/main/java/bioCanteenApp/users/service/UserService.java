@@ -6,7 +6,7 @@ import bioCanteenApp.users.dto.UserDTO;
 import bioCanteenApp.users.mapper.IUserMapper;
 import bioCanteenApp.users.repository.IUserRepo;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,9 +15,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserService implements IUserService {
 
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private final IUserMapper userMapper;
     private final IUserRepo userRepo;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public List<GetUserDTO> getAllUsers() {
@@ -58,7 +58,7 @@ public class UserService implements IUserService {
             throw new IllegalArgumentException("User Already Exists!");
         }
 
-        dto.setPassword(encodePassword(dto.getPassword()));
+        dto.setPassword(passwordEncoder.encode(dto.getPassword()));
 
         User user = userMapper.toDomain(dto);
         user = userRepo.save(user);
@@ -73,9 +73,5 @@ public class UserService implements IUserService {
         }
 
         userRepo.delete(email);
-    }
-
-    private String encodePassword(String rawPassword) {
-        return passwordEncoder.encode(rawPassword);
     }
 }

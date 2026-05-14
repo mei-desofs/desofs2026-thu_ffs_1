@@ -2,13 +2,11 @@ package bioCanteenApp.users.domain;
 
 import bioCanteenApp.canteens.domain.Canteen;
 import bioCanteenApp.diningHall.domain.DiningHall;
-import bioCanteenApp.waste.domain.Waste;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.net.ssl.SSLSession;
-import java.util.List;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users")
@@ -26,7 +24,7 @@ public class User {
     @Column
     private String name;
 
-    @Column
+    @Column(nullable = false)
     private String password;
 
     @Column
@@ -40,6 +38,10 @@ public class User {
     @ManyToOne
     @JoinColumn(name = "dining_hall_id")
     private DiningHall diningHall;
+
+    // password changed after six months
+    @Column
+    private LocalDateTime passwordChangedAt;
 
     public User(String email, String name, String password) {
         this.email = email;
