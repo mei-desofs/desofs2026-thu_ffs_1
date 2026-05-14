@@ -36,12 +36,12 @@ public class MenuController {
     private final IProvisioningService provisioningService;
     private final IMenuMapper menuMapper;
 
-    @GetMapping("/menus")
+    @GetMapping
     public List<MenuDto> getAllMenus() {
         return menuService.getAllMenus();
     }
 
-    @PostMapping("/menus")
+    @PostMapping
     public MenuDto createMenu(@RequestBody MenuDto dto) {
         return menuService.createMenu(dto);
     }

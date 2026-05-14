@@ -25,7 +25,13 @@ public class SecurityConfig {
                         .requestMatchers("/api/passwords/recover-password").permitAll()
                         .requestMatchers("/api/passwords/reset-password").permitAll()
                         .requestMatchers("/api/passwords/change").authenticated()
-                        .requestMatchers("/api/users/*").hasRole("admin")
+                        .requestMatchers("/api/users/**").hasRole("ADMIN")
+                        .requestMatchers("/api/suppliers/approval").hasRole("ADMIN")
+                        .requestMatchers("/api/suppliers/reject").hasRole("ADMIN")
+                        .requestMatchers("/api/suppliers/edit").hasRole("ADMIN") // no code
+                        .requestMatchers("/api/suppliers/deactivate").hasRole("ADMIN") //no code
+                        .requestMatchers("/api/menus/**").hasRole("DIETITIAN") // no code para o edit menu
+                        .requestMatchers("/api/provisioning/**").hasRole("CANTEEN_MANAGER")
                         .anyRequest().authenticated()
                 )
                 .build();
