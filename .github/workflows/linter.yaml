@@ -27,4 +27,4 @@ jobs:
 
       - name: "Run Checkstyle"
         working-directory: cantinas-cinfaes-backend
-        run: mvn checkstyle:check
+        run: mvn checkstyle:check -Dcheckstyle.config.location=google_checks.xml
