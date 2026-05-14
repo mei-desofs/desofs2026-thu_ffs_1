@@ -7,6 +7,7 @@ import bioCanteenApp.security.repository.PasswordHistoryRepo;
 import bioCanteenApp.security.repository.PasswordResetTokenRepo;
 import bioCanteenApp.users.domain.User;
 import bioCanteenApp.users.repository.UserRepo;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -105,6 +106,7 @@ public class PasswordService implements IPasswordService {
     }
 
     @Override
+    @Transactional
     public void sendPasswordResetEmail(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("No account found for that email."));
@@ -117,8 +119,31 @@ public class PasswordService implements IPasswordService {
         passwordResetTokenRepo.save(resetToken);
 
         // REQ2.3: send email with link (token valid 20 min — set inside constructor)
-        String resetLink = "https://biocanteen.app/reset-password?token=" + rawToken;
+        String resetLink = "https://biocantinas.app/reset-password?token=" + rawToken;
         emailService.sendEmail(user.getEmail(), resetLink);
     }
 
+    public void resetPasswordWithToken(String token, String newPassword) {
+        PasswordResetToken resetToken = passwordResetTokenRepo.findByToken(token)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid or expired reset token."));
+
+        if (resetToken.isUsed()) {
+            throw new IllegalArgumentException("This reset link has already been used.");
+        }
+
+        if (resetToken.isExpired()) {
+            throw new IllegalArgumentException(
+                    "Reset link has expired. Please request a new one (valid for 20 minutes).");
+        }
+
+        User user = resetToken.getUser();
+
+        validatePasswordStrength(newPassword);
+        validateHistoricalPasswords(user, newPassword);
+
+        applyNewPassword(user, newPassword);
+
+        // Mark token as used
+        resetToken.setUsed(true);
+    }
 }

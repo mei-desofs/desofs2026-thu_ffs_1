@@ -1,5 +1,6 @@
 package bioCanteenApp.security.controller;
 
+import bioCanteenApp.security.dto.ForgotPasswordDTO;
 import bioCanteenApp.security.service.PasswordService;
 import bioCanteenApp.users.domain.User;
 import bioCanteenApp.users.repository.UserRepo;
@@ -42,5 +43,40 @@ public class PasswordController {
 
         passwordService.changePassword(user, currentPassword, newPassword);
         return ResponseEntity.ok("Password changed successfully.").getBody();
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotPassword(@RequestBody ForgotPasswordDTO payload) {
+
+        String email = payload.getEmail();
+
+        passwordService.sendPasswordResetEmail(email);
+
+        return ResponseEntity.ok(
+                "If an account with that email exists, a reset link has been sent. It will be valid for 20 minutes.");
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestBody Map<String, String> payload) {
+        String token       = payload.get("token");
+        String newPassword = payload.get("newPassword");
+
+        if (token == null || newPassword == null) {
+            return ResponseEntity.badRequest()
+                    .body("Both 'token' and 'newPassword' are required.");
+        }
+
+        passwordService.resetPasswordWithToken(token, newPassword);
+        return ResponseEntity.ok("Password reset successfully. You can now log in.");
+    }
+
+    @GetMapping("/expired")
+    public ResponseEntity<Boolean> isPasswordExpired(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new IllegalArgumentException("User not found."));
+
+        return ResponseEntity.ok(passwordService.isPasswordExpired(user));
     }
 }
