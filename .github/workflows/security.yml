@@ -175,8 +175,8 @@ jobs:
       - name: Build JAR first
         working-directory: cantinas-cinfaes-backend
         run: mvn clean package -DskipTests
-          - name: Build Docker image
-            run: docker build -t myapp:${{ github.sha }} cantinas-cinfaes-backend/
+      - name: Build Docker image
+        run: docker build -t myapp:${{ github.sha }} cantinas-cinfaes-backend/
       - name: Trivy scan
         uses: aquasecurity/trivy-action@master
         with:
