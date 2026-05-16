@@ -2,11 +2,14 @@
 Thanks for contributing! Please fill in the sections below so reviewers
 have the context they need. Keep it concise — bullet points are fine.
 
-⚠️ Before opening this PR, apply ONE of the required labels:
+⚠️ Before opening this PR, apply the required labels:
    • bug            — fixes incorrect behaviour
-   • feature        — adds new functionality
+   • enhancement        — adds new functionality
    • documentation  — docs / comments only
-The "Require Label" check will fail until exactly one is applied.
+    • minor          — non-breaking change
+    • major          — breaking change
+    • patch          — bug fix or minor enhancement
+The "Require Label" check will fail until the labels are applied.
 -->
 
 ### Description
