@@ -4,10 +4,6 @@ name: "CI"
 
 on:
   push:
-    branches:
-      - main
-      - dev
-      - e2e
   workflow_dispatch:
 
 jobs:
