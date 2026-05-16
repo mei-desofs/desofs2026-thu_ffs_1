@@ -79,11 +79,25 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
+      - name: Cache Dependency-Check NVD database
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository/org/owasp/dependency-check-data
+          key: dependency-check-data-${{ github.run_id }}
+          restore-keys: dependency-check-data-
+
       - name: Run OWASP Dependency Check
         working-directory: cantinas-cinfaes-backend
-        run: mvn org.owasp:dependency-check-maven:check
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: >
+          mvn org.owasp:dependency-check-maven:check
+          -Dnvd.api.key=$NVD_API_KEY
+          -Dnvd.api.delay=2000
+          -Dnvd.api.maxRetryCount=10
 
       - name: Upload Dependency Check Report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: dependency-check-report
