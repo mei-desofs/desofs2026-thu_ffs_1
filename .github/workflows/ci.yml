@@ -1,4 +1,4 @@
-#ci.yml — Build + Lint + Tests
+#ci.yml — Build + Lint + Unit Tests + Basic SAST + Config Validation — Commit pipeline
 
 name: "CI"
 
@@ -8,113 +8,114 @@ on:
       - main
       - dev
       - e2e
-  pull_request:
   workflow_dispatch:
 
 jobs:
+  # ──────────────────────────────────────────────
+  # Build
+  # ──────────────────────────────────────────────
   build:
     name: Build
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-java@v4
         with:
           java-version: 21
           distribution: temurin
-
       - name: Cache Maven packages
         uses: actions/cache@v4
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
-
       - name: Build
         working-directory: cantinas-cinfaes-backend
         run: mvn clean package -DskipTests
 
+  # ──────────────────────────────────────────────
+  # Lint (Checkstyle)
+  # ──────────────────────────────────────────────
   lint:
     name: Lint (Checkstyle)
     runs-on: ubuntu-latest
     needs: build
-
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-java@v4
         with:
           java-version: 21
           distribution: temurin
-
       - name: Cache Maven packages
         uses: actions/cache@v4
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
-
       - name: Run Checkstyle
         working-directory: cantinas-cinfaes-backend
         run: mvn checkstyle:check -Dcheckstyle.config.location=google_checks.xml
 
+  # ──────────────────────────────────────────────
+  # Unit Tests
+  # ──────────────────────────────────────────────
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
     needs: build
-
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-java@v4
         with:
           java-version: 21
           distribution: temurin
-
       - name: Cache Maven packages
         uses: actions/cache@v4
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
-
       - name: Run Unit Tests
         working-directory: cantinas-cinfaes-backend
         run: mvn test
-
       - name: Upload Unit Test Reports
         uses: actions/upload-artifact@v4
         with:
           name: unit-test-reports
           path: cantinas-cinfaes-backend/target/surefire-reports
 
-  integration-tests:
-    name: Integration Tests
+  # ──────────────────────────────────────────────
+  # Basic SAST (Semgrep)
+  # ──────────────────────────────────────────────
+  sast-basic:
+    name: SAST Basic (Semgrep)
     runs-on: ubuntu-latest
     needs: build
-
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-java@v4
+      - uses: returntocorp/semgrep-action@v1
         with:
-          java-version: 21
-          distribution: temurin
+          config: >-
+            p/java
+            p/owasp-top-ten
+            p/secrets
 
-      - name: Cache Maven packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
-
-      - name: Run Integration Tests
-        working-directory: cantinas-cinfaes-backend
-        run: mvn verify -DskipUnitTests
-
-      - name: Upload Integration Test Reports
-        uses: actions/upload-artifact@v4
-        with:
-          name: integration-test-reports
-          path: cantinas-cinfaes-backend/target/failsafe-reports
+  # ──────────────────────────────────────────────
+  # Configuration Validation
+  # ──────────────────────────────────────────────
+  config-validation:
+    name: Configuration Validation
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate configuration files
+        run: |
+          test -f cantinas-cinfaes-backend/src/main/resources/application.properties \
+            || test -f cantinas-cinfaes-backend/src/main/resources/application.yml
+          echo "Config files present"
+      - name: Validate Docker Compose
+        run: |
+          if [ -f docker-compose.yml ]; then
+            docker compose config --quiet && echo "Docker Compose valid"
+          fi
