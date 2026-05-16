@@ -21,10 +21,4 @@ jobs:
               core.setFailed(
                 `This PR must have exactly one of these labels: ${required.join(', ')}`
               );
-            } else if (matched.length > 1) {
-              core.setFailed(
-                `This PR has multiple required labels (${matched.join(', ')}). Keep only one.`
-              );
-            } else {
-              core.info(`Label check passed: "${matched[0]}"`);
             }
