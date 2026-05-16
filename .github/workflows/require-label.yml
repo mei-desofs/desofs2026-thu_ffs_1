@@ -1,0 +1,30 @@
+name: "Require Label"
+
+on:
+  pull_request:
+    types: [opened, labeled, unlabeled, synchronize]
+
+jobs:
+  require-label:
+    name: Check for required label
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify one of the required labels is present
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const required = ['bug', 'enhancement', 'documentation', 'minor', 'major', 'patch']; //
+            const labels = context.payload.pull_request.labels.map(l => l.name);
+            const matched = labels.filter(l => required.includes(l));
+
+            if (matched.length === 0) {
+              core.setFailed(
+                `This PR must have exactly one of these labels: ${required.join(', ')}`
+              );
+            } else if (matched.length > 1) {
+              core.setFailed(
+                `This PR has multiple required labels (${matched.join(', ')}). Keep only one.`
+              );
+            } else {
+              core.info(`Label check passed: "${matched[0]}"`);
+            }

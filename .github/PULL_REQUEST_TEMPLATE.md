@@ -1,25 +1,43 @@
-<!--🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅
+<!--
+Thanks for contributing! Please fill in the sections below so reviewers
+have the context they need. Keep it concise — bullet points are fine.
 
-You can expedite processing of your PR by using this template to provide context
-and additional information. Before actually opening a PR please make sure that it
-does NOT fall into any of the following categories
-
-🚫 Spam PRs (accidental or intentional) - these will result in a 7 / 30 / ∞ days ban from
-interacting with the project depending on reoccurrence and severity. You can find more
-information [here](https://pwning.owasp-juice.shop/companion-guide/latest/part3/contribution.html#_handling_of_spam_prs). 
-
-🚫 Lazy typo fixing PRs - if you fix a typo in a file, your PR will only be merged
-if all other typos in the same file are also fixed with the same PR
-
-🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅-->
+⚠️ Before opening this PR, apply ONE of the required labels:
+   • bug            — fixes incorrect behaviour
+   • feature        — adds new functionality
+   • documentation  — docs / comments only
+The "Require Label" check will fail until exactly one is applied.
+-->
 
 ### Description
 
-<!-- ✍️-->
-A clear and concise summary of the change and which issue (if any) it fixes. Should also include relevant motivation and context.
+<!-- A clear, concise summary of what this change does and why. -->
 
-Resolved or fixed issue: <!-- ✍️ Add GitHub issue number in format `#0000` or `none` -->
 
-### Affirmation
+### Type of change
 
-- [ ] My code follows the [CONTRIBUTING.md](https://github.com/juice-shop/juice-shop/blob/master/CONTRIBUTING.md) guidelines
+<!-- Tick the one that matches the label you applied. -->
+- [ ] Bug fix (non-breaking change that fixes an issue)
+- [ ] New feature (non-breaking change that adds functionality)
+- [ ] Breaking change (fix or feature that changes existing behaviour)
+- [ ] Documentation only
+
+### How has this been tested?
+
+<!-- Describe how you verified the change: unit tests, manual steps,
+     environment, etc. Reviewers should be able to reproduce it. -->
+
+
+### Checklist
+
+- [ ] I applied the required label(s) (`bug`, `enhancement`, or `documentation`/ `minor`, `major`, or `patch`)
+- [ ] My code builds locally (`mvn clean package`)
+- [ ] Unit and integration tests pass
+- [ ] I added or updated tests for my change where relevant
+- [ ] I updated documentation where relevant
+- [ ] No secrets, credentials, or sensitive data are included in this PR
+
+### Screenshots / notes (optional)
+
+<!-- Anything else reviewers should know: UI screenshots, trade-offs,
+     follow-up work, etc. -->
