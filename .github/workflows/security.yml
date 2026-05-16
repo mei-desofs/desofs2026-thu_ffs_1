@@ -170,8 +170,6 @@ jobs:
       security-events: write
     steps:
       - uses: actions/checkout@v4
-      - name: Build Docker image
-        run: docker build -t myapp:${{ github.sha }} cantinas-cinfaes-backend/
       - name: Build JAR first
         working-directory: cantinas-cinfaes-backend
         run: mvn clean package -DskipTests
