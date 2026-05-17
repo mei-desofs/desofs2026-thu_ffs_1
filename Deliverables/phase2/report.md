@@ -1,22 +1,29 @@
 # Phase 2: Sprint 1
 
-------
+---
 
 ### Table of Contents
 
+- [Introduction](#introduction)
+- [Development](#development)
+- [Build and Test](#build-and-test)
+- [Pipeline Automation](#pipeline-automation)
+- [Test Planning](#test-planning)
+- [Conclusion](#conclusion)
+
+---
+
 ## Introduction
 
-This document covers the security engineering practices adopted during the development of the Cantinas de Cinfães backend 
-— a Spring Boot REST API for managing canteen operations, including user authentication, meal scheduling, and email notifications.
-The project follows a shift-left security approach, integrating security checks throughout the development 
-lifecycle via three automated GitHub Actions pipelines: one for commits, one for Pull Requests, and one for 
-Releases. Practices include SAST, SCA, DAST, secret scanning, artifact scanning, SBOM generation, and automated testing, 
-all traceable to security requirements defined using the OWASP ASVS.
+This document covers the security engineering practices adopted during the development of the **Cantinas de Cinfães** backend — a Spring Boot REST API for managing canteen operations, including user authentication, meal scheduling, and email notifications.
+
+The project follows a **shift-left security** approach, integrating security checks throughout the development lifecycle via three automated GitHub Actions pipelines: one for commits, one for Pull Requests, and one for Releases. Practices include SAST, SCA, DAST, secret scanning, artifact scanning, SBOM generation, and automated testing, all traceable to security requirements defined using the OWASP ASVS.
+
+---
 
 ## Development
 
-All the functionalities mentioned in Phase 1 are implemented (some with not all the requirements), constituting the basic operations
-of create, read, update and delete. 
+All the functionalities mentioned in Phase 1 are implemented (some with not all the requirements), constituting the basic operations of create, read, update and delete.
 
 For this project, the following set of development good practices were adopted.
 
@@ -26,205 +33,82 @@ In every controller of the BioCantinas App, there are various and relevant audit
 
 ### Code Reviews
 
-In the repository, it is mandatory that every Pull Request has at least two approvals to be merged, at least a label 
-associated and that all the checks are successful. When the PR is merged, it happens by squash and merge, meaning
-all the commits in the PR are merged to the other branch as one single commit.
+In the repository, it is mandatory that every Pull Request has at least two approvals to be merged, at least a label associated and that all the checks are successful. When the PR is merged, it happens by squash and merge, meaning all the commits in the PR are merged to the other branch as one single commit.
 
 ![img.png](pr.png)
 ![img_1.png](pr1.png)
 
 ### Repository and Team Rules
 
-- There are 3 branches, dev, e2e and main:
-  - dev is used for active development where the new functionalities are merged to.
-  - e2e receives the code from dev and is ready to be tested in a more completed way
-  - main represents the code that is actually fully validated and ready for production
-- It is not possible to do a direct commit to branches dev, e2e and main. It can only be done through PRs.
-- The code needs to be implemented in a branch with the naming /feature for new features or /bugfix to correct bugs and needs
-to mention the issue. Example: feature/10-implement-release-workflows
-- Every commit has to have an issue associated, otherwise the push won't be successful
+- There are 3 branches, `dev`, `e2e` and `main`:
+    - `dev` is used for active development where new functionalities are merged.
+    - `e2e` receives code from `dev` and is used for end-to-end validation in a more complete environment.
+    - `main` represents the code that is fully validated and ready for production.
+- Direct commits to `dev`, `e2e` and `main` are not allowed — all changes go through Pull Requests.
+- Branches must follow the naming convention `/feature` for new features or `/bugfix` for bug corrections, and must reference the associated issue. Example: `feature/10-implement-release-workflows`.
+- Every commit must have an associated issue, otherwise the push will be rejected.
+
+---
 
 ## Build and Test
 
-This section documents the quality and security practices adopted throughout the development lifecycle, providing evidence of their execution across the defined pipelines.
+This section summarises the quality and security practices adopted throughout the development lifecycle, organised by type of practice and indicating when each one runs. Implementation details and pipeline configuration are covered in the [Pipeline Automation](#pipeline-automation) section.
 
-### Inventory of Components 
+### Inventory of Components
 
-A Software Bill of Materials (SBOM) is generated automatically using the **CycloneDX Maven Plugin** to produce a complete and auditable inventory of all project dependencies and their versions.
-
-The SBOM is generated in two moments:
-
-- During every **Pull Request** (Security pipeline), producing `bom.json` uploaded as the `sbom` artifact.
-- During every **Release** (DAST pipeline), producing a version-tagged `bom.json` uploaded as `final-sbom-<version>`.
-```yaml
-- name: Generate SBOM
-  working-directory: cantinas-cinfaes-backend
-  run: mvn org.cyclonedx:cyclonedx-maven-plugin:makeAggregateBom
-- name: Upload SBOM
-  uses: actions/upload-artifact@v4
-  with:
-    name: sbom
-    path: cantinas-cinfaes-backend/target/bom.json
-```
-
-The output follows the CycloneDX standard (`bom.json`), listing every Maven dependency with its group ID, artifact ID, version, and known licenses. This inventory is used as input for Software Composition Analysis and serves as a compliance artifact for each release.
+A **Software Bill of Materials (SBOM)** is generated automatically using the CycloneDX Maven Plugin, producing a complete inventory of all Maven dependencies with their versions and licenses. It is generated on every Pull Request and on every Release, and uploaded as an artifact (`sbom` and `final-sbom-<version>` respectively).
 
 ### Execution of Test Plans
 
-#### Unit Tests
-
-Unit tests are executed on every commit using the **Maven Surefire Plugin**. The `test` Spring profile is activated to replace the production MySQL database with an in-memory H2 instance, so no real infrastructure is required.
-
-```yaml
-- name: Run Unit Tests
-  working-directory: cantinas-cinfaes-backend
-  run: mvn test 
-  env:
-    JWT_TOKEN: ${{ secrets.JWT_TOKEN }}
-- name: Upload Unit Test Reports
-  uses: actions/upload-artifact@v4
-  with:
-    name: unit-test-reports
-    path: cantinas-cinfaes-backend/target/surefire-reports
-```
-
-Test reports are uploaded as artifacts (`unit-test-reports`) in every CI run, providing a full record of test results including pass/fail counts and execution times.
-
-#### Integration Tests
-
-Integration tests are executed on every Pull Request using the **Maven Failsafe Plugin**, after the SAST scan completes. They also use the `test` Spring profile with H2 to avoid requiring the real database.
-
-```yaml
-- name: Run Integration Tests
-  working-directory: cantinas-cinfaes-backend
-  run: mvn verify -DskipUnitTests -Dspring.profiles.active=test
-  env:
-    JWT_TOKEN: ${{ secrets.JWT_TOKEN }}
-- name: Upload Integration Test Reports
-  uses: actions/upload-artifact@v4
-  with:
-    name: integration-test-reports
-    path: cantinas-cinfaes-backend/target/failsafe-reports
-```
-
-Reports are uploaded as artifacts (`integration-test-reports`) and are available for review after each Pull Request pipeline execution.
+| Test Type | Plugin | Trigger | Report Artifact |
+|---|---|---|---|
+| Unit Tests | Maven Surefire | Every commit | `unit-test-reports` |
+| Integration Tests | Maven Failsafe | Every Pull Request | `integration-test-reports` |
 
 ### Dynamic Analysis
 
-Dynamic Application Security Testing (DAST) is performed on every release using **OWASP ZAP** (Zed Attack Proxy). Unlike static analysis, DAST tests the application while it is running, simulating real attacks against the live endpoints.
-
-A MySQL 8 database is spun up as a service container, and the Spring Boot application is started and verified to be healthy before ZAP begins scanning.
-
-```yaml
-services:
-  mysql:
-    image: mysql:8
-    env:
-      MYSQL_ROOT_PASSWORD: testpassword
-      MYSQL_DATABASE: cantinasDB
-    ports:
-      - 3306:3306
-    options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=5
- 
-- name: Start Spring Boot application
-  working-directory: cantinas-cinfaes-backend
-  run: java -jar target/*.jar &
-  env:
-    SPRING_PROFILES_ACTIVE: test
-    SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/cantinasDB
-    SPRING_DATASOURCE_USERNAME: root
-    SPRING_DATASOURCE_PASSWORD: testpassword
- 
-- name: OWASP ZAP Baseline Scan
-  uses: zaproxy/action-baseline@v0.14.0
-  with:
-    target: 'http://localhost:8080'
-    fail_action: false
-    issue_title: 'ZAP Baseline Scan Report'
-```
-
-The ZAP Baseline Scan tests the application for common web vulnerabilities such as those listed in the OWASP Top 10, including XSS, SQL Injection, insecure headers, and misconfigured CORS policies. Results are uploaded as artifacts in HTML, Markdown, and JSON formats (`zap-report`) and are also automatically created as a GitHub Issue for visibility.
+Dynamic Application Security Testing (DAST) is performed on every Release using **OWASP ZAP**. The application is started against a real MySQL 8 database spun up as a service container, and ZAP runs a baseline scan against the live endpoints, testing for OWASP Top 10 vulnerabilities such as XSS, SQL Injection, and insecure headers. Results are uploaded as artifacts and automatically created as a GitHub Issue.
 
 ### Configuration Validation
 
-Configuration validation runs on every commit as part of the CI pipeline, ensuring that required configuration files are present and syntactically correct before any further checks run.
+On every commit, the CI pipeline verifies that the required `application.properties` (or `application.yml`) is present, and validates the Docker Compose file syntax using `docker compose config`, catching misconfigurations before they reach further stages.
 
-```yaml
-- name: Validate configuration files
-  run: |
-    test -f cantinas-cinfaes-backend/src/main/resources/application.properties \
-      || test -f cantinas-cinfaes-backend/src/main/resources/application.yml
-    echo "Config files present"
-- name: Validate Docker Compose
-  run: |
-    if [ -f docker-compose.yml ]; then
-      docker compose config --quiet && echo "Docker Compose valid"
-    fi
-```
+### Artifact Scanning
 
-- The first step verifies that at least one application configuration file (`application.properties` or `application.yml`) exists, preventing deployments with missing configuration.
-- The second step runs `docker compose config` to validate the Docker Compose file syntax without starting any services, catching misconfigurations early.
-
-### Artifact Scanning 
-
-Artifact scanning analyses the final Docker image — the exact artifact that would be deployed to production — for known vulnerabilities in both the application dependencies and the underlying OS base image.
-
-It is performed using **Trivy** in two pipelines:
-
-- On every **Pull Request** (Security pipeline), as part of the `container-scanning` job.
-- On every **Release** (DAST pipeline), as part of the `artifact-scanning` job.
-```yaml
-- name: Build Docker image
-  run: docker build -t myapp:${{ github.sha }} cantinas-cinfaes-backend/
- 
-- name: Trivy image scan
-  uses: aquasecurity/trivy-action@master
-  with:
-    image-ref: myapp:${{ github.sha }}
-    format: sarif
-    output: trivy-results.sarif
-    severity: HIGH,CRITICAL
- 
-- uses: github/codeql-action/upload-sarif@v3
-  with:
-    sarif_file: trivy-results.sarif
-```
-
-The image is built from the actual JAR artifact to replicate the production environment as closely as possible. Trivy scans for HIGH and CRITICAL CVEs across the application layer and the base image (e.g. `eclipse-temurin:21`). Results are reported in SARIF format and uploaded directly to the GitHub Security tab, where they are visible as code scanning alerts.
+The final Docker image is scanned for HIGH and CRITICAL CVEs using **Trivy**, covering both the application layer and the OS base image. This runs on every Pull Request and every Release, with results uploaded to the GitHub Security tab in SARIF format.
 
 ### Other Relevant Practices
 
-**Static Application Security Testing (SAST)**
+| Practice | Tool | Trigger |
+|---|---|---|
+| SAST (lightweight) | Semgrep (`p/java`, `p/owasp-top-ten`, `p/secrets`) | Every commit |
+| SAST (deep) | GitHub CodeQL | Every PR and Release |
+| SCA | OWASP Dependency Check | Every PR and Release |
+| Secret Scanning | Dedicated workflow (`secretDetector.yml`) | Every commit |
+| Lint | Checkstyle (Google Java Style Guide) | Every commit |
 
-SAST is performed at two levels:
+**Note on IAST**
 
-- **Semgrep** runs on every commit (CI pipeline) as a lightweight scan covering `p/java`, `p/owasp-top-ten`, and `p/secrets` rulesets.
-- **CodeQL** runs on every Pull Request and Release, performing a deeper bytecode-level analysis of the compiled Java application. Results are uploaded to the GitHub Security tab.
+IAST (Interactive Application Security Testing) combines elements of SAST and DAST by instrumenting the application at runtime during test execution, detecting vulnerabilities with greater precision and fewer false positives than either approach alone. The three most common tools are:
 
-**Software Composition Analysis (SCA)**
+| Tool | Vendor | Notes |
+|---|---|---|
+| **Contrast Security** | Contrast Security | Agent-based, deep runtime analysis, integrates with CI/CD |
+| **Seeker** | Synopsys | Strong compliance reporting, integrates with existing test suites |
+| **Hdiv Detection** | Hdiv Security | Lightweight agent, focused on OWASP Top 10 |
 
-SCA is performed using the **OWASP Dependency Check Maven Plugin**, scanning all declared Maven dependencies against the NVD (National Vulnerability Database) for known CVEs.
+All three are commercial products with no free tier suitable for open-source or academic projects. For this reason, IAST was not implemented in this project. SAST (CodeQL + Semgrep) and DAST (OWASP ZAP) were adopted as open-source alternatives that together cover a similar range of vulnerability detection.
 
-It runs on every **Pull Request** and every **Release**, producing an HTML report uploaded as an artifact (`dependency-check-report` / `full-cve-report`).
 
-**Secret Scanning**
+---
 
-Secret scanning is performed using a dedicated workflow (`secretDetector.yml`) to detect hardcoded credentials, API keys, tokens, and other sensitive values accidentally committed to the repository. This prevents secrets from reaching the codebase and is a complement to the `p/secrets` Semgrep ruleset used in the CI pipeline.
+## Pipeline Automation
 
-**Lint**
-
-Code style is enforced on every commit using **Checkstyle** with the Google Java Style Guide (`google_checks.xml`). This catches formatting inconsistencies, naming violations, and other style issues early, before they reach a Pull Request.
-
-## Pipeline
-
-To ensure safety during the development of software, different pipelines were created, applying the concept of shift-left security with the 
-purpose of detecting issues as soon as possible in the development cycle. This also saves GitHub Action resources and does not delay the development.
-
-Therefore, 3 distinct pipelines were defined. One for commits, one for Pull Requests and other for Releases, each one with the checks appropriate for that specific context.
+Three distinct pipelines were defined applying the concept of shift-left security, with checks appropriate for each stage of the development lifecycle.
 
 ### CI Pipeline (commit)
 
-The CI pipeline runs on every push to any branch. It is designed to be fast and provide immediate feedback, covering only the essential checks: build, lint, unit tests, basic SAST and configuration validation.
+Runs on every push. Designed to be fast and provide immediate feedback.
 
 ```yaml
 on:
@@ -232,9 +116,9 @@ on:
   workflow_dispatch:
 ```
 
-#### Job 1: Build 
+#### Job 1: Build
 
-This job compiles the project and packages it, skipping tests to keep it fast. It is the foundation for all other jobs in the pipeline.
+Compiles the project and packages it, skipping tests to keep the pipeline fast. All subsequent jobs depend on this one.
 
 ```yaml
 build:
@@ -257,12 +141,12 @@ build:
       run: mvn clean package -DskipTests
 ```
 
-- `actions/cache@v4`: Caches the Maven local repository (`.m2`) to speed up subsequent runs by avoiding re-downloading dependencies.
-- `-DskipTests`: Skips test execution at this stage since tests are handled in a dedicated job.
+- `actions/cache@v4`: Caches the Maven local repository to avoid re-downloading dependencies on every run.
+- `-DskipTests`: Tests are handled in a dedicated job.
 
-#### Job 2: Lint 
+#### Job 2: Lint (Checkstyle)
 
-This job enforces code style rules using Checkstyle with the Google Java style guide, ensuring consistent code quality across the team.
+Enforces the Google Java Style Guide using Checkstyle.
 
 ```yaml
 lint:
@@ -275,12 +159,9 @@ lint:
       run: mvn checkstyle:check -Dcheckstyle.config.location=google_checks.xml
 ```
 
-- `needs: build`: Only runs after a successful build.
-- `google_checks.xml`: Enforces the Google Java Style Guide, catching formatting inconsistencies, naming violations, and other style issues early.
-
 #### Job 3: Unit Tests
 
-Runs the project's unit tests using Maven Surefire
+Runs unit tests using Maven Surefire and uploads the results as an artifact.
 
 ```yaml
 unit-tests:
@@ -300,13 +181,9 @@ unit-tests:
         path: cantinas-cinfaes-backend/target/surefire-reports
 ```
 
-- `-Dspring.profiles.active=test`: Activates the `test` Spring profile, which uses an in-memory H2 database instead of the real MySQL instance, so no database secrets are required.
-- `JWT_TOKEN`: The only secret needed, to allow JWT-related tests to run correctly.
-- Test reports are uploaded as artifacts for later inspection.
-
 #### Job 4: Basic SAST (Semgrep)
 
-Performs a lightweight Static Application Security Testing scan using Semgrep, covering Java-specific rules, OWASP Top 10, and secret detection.
+Lightweight static analysis covering Java vulnerabilities, OWASP Top 10, and secret detection.
 
 ```yaml
 sast-basic:
@@ -323,13 +200,9 @@ sast-basic:
           p/secrets
 ```
 
-- `p/java`: Rules targeting common Java vulnerabilities.
-- `p/owasp-top-ten`: Rules mapped to the OWASP Top 10 security risks.
-- `p/secrets`: Detects hardcoded secrets and credentials in the codebase.
+#### Job 5: Configuration Validation
 
-#### Configuration Validation
-
-Validates that required configuration files exist and that the Docker Compose file is syntactically correct.
+Verifies that required configuration files exist and that Docker Compose is syntactically valid.
 
 ```yaml
 config-validation:
@@ -349,16 +222,21 @@ config-validation:
         fi
 ```
 
-- Ensures the application configuration file is present before any deployment attempt.
-- `docker compose config --quiet`: Validates the Docker Compose syntax without starting any services.
+---
 
 ### Security Pipeline (pull request)
 
-The Security pipeline runs on every Pull Request. It acts as a security gate before code is merged, running deeper and more time-consuming checks that would be too slow for every commit.
+Acts as a security gate before code is merged, running deeper checks that would be too slow for every commit.
+
+```yaml
+on:
+  pull_request:
+  workflow_dispatch:
+```
 
 #### Job 1: SAST (CodeQL)
 
-Performs deep Static Application Security Testing using GitHub CodeQL, which builds and analyses the compiled bytecode for security vulnerabilities.
+Deep bytecode-level static analysis. Results are uploaded to the GitHub Security tab.
 
 ```yaml
 sast:
@@ -382,13 +260,11 @@ sast:
         category: "/language:java"
 ```
 
-- `permissions: security-events: write`: Required for CodeQL to upload findings to the GitHub Security tab.
-- CodeQL requires a full build to analyse the compiled output, unlike Semgrep which analyses source code directly.
-- Results are visible in the repository's Security tab as code scanning alerts.
+- CodeQL requires a full build to analyse the compiled bytecode, unlike Semgrep which analyses source code directly.
 
-#### SCA (OWASP Dependency Check)
+#### Job 2: SCA (OWASP Dependency Check)
 
-Performs Software Composition Analysis by scanning all Maven dependencies against the NVD (National Vulnerability Database) for known CVEs.
+Scans all Maven dependencies against the NVD for known CVEs.
 
 ```yaml
 sca:
@@ -414,15 +290,12 @@ sca:
         path: cantinas-cinfaes-backend/target/dependency-check-report.html
 ```
 
-- `NVD_API_KEY`: Used to authenticate against the NVD API for faster and more reliable CVE data retrieval.
-- `continue-on-error: true`: Allows the pipeline to continue even if vulnerabilities are found, so the full report is generated and other jobs still run.
-- `-DfailBuildOnCVSS=11`: Set above the maximum CVSS score of 10 so the build never hard-fails — the report is used for manual review instead.
-- The HTML report is always uploaded as an artifact for inspection.
-
+- `continue-on-error: true`: The pipeline continues even if vulnerabilities are found, ensuring the full report is always generated.
+- `-DfailBuildOnCVSS=11`: Set above the maximum CVSS score so the build never hard-fails — findings are reviewed manually from the uploaded report.
 
 #### Job 3: SBOM (CycloneDX)
 
-Generates a Software Bill of Materials listing all project dependencies and their versions, providing a full inventory of components.
+Generates a Software Bill of Materials for the PR, providing a component inventory.
 
 ```yaml
 sbom:
@@ -440,12 +313,9 @@ sbom:
         path: cantinas-cinfaes-backend/target/bom.json
 ```
 
-- `makeAggregateBom`: Generates a single aggregated BOM covering all Maven modules.
-- The output `bom.json` follows the CycloneDX standard, compatible with most security tools and auditing platforms.
-
 #### Job 4: Integration Tests
 
-Runs the integration test suite using Maven Failsafe.
+Runs integration tests using Maven Failsafe after SAST completes.
 
 ```yaml
 integration-tests:
@@ -465,13 +335,9 @@ integration-tests:
         path: cantinas-cinfaes-backend/target/failsafe-reports
 ```
 
-- `needs: sast`: Integration tests only run after the SAST scan succeeds.
-- `-DskipUnitTests`: Runs only integration tests (Failsafe), since unit tests (Surefire) are already covered in the CI pipeline.
-- `-Dspring.profiles.active=test`: Uses the test profile with H2 in-memory database, avoiding the need for real database secrets.
-
 #### Job 5: Container Scanning (Trivy)
 
-Builds the Docker image and scans it for HIGH and CRITICAL vulnerabilities using Trivy, uploading results to the GitHub Security tab.
+Builds the Docker image and scans it for HIGH and CRITICAL vulnerabilities.
 
 ```yaml
 container-scanning:
@@ -497,24 +363,23 @@ container-scanning:
         sarif_file: trivy-results.sarif
 ```
 
-- The Docker image is built from the actual JAR to replicate the production artifact.
-- `format: sarif`: Outputs results in SARIF format so they integrate natively with the GitHub Security tab.
-- `severity: HIGH,CRITICAL`: Filters to only report the most impactful vulnerabilities.
+- Results are uploaded in SARIF format, integrating natively with the GitHub Security tab as code scanning alerts.
+
+---
 
 ### DAST Pipeline (release)
 
-The Release pipeline runs when a new tag matching `v*` is pushed. It is the most comprehensive pipeline, covering publication of the release artifact followed by a full suite of security scans before the release is considered complete.
+The most comprehensive pipeline, triggered when a GitHub Release is published. Runs a full suite of security scans against the released code and artifact.
 
 ```yaml
 on:
-  push:
-    tags:
-      - "v*"
+  release:
+    types: [published]
 ```
 
 #### Job 1: Full Security Scan (CodeQL + Semgrep)
 
-Runs a full SAST scan combining CodeQL and Semgrep, more thorough than the PR pipeline as it runs on every release.
+Combines CodeQL and Semgrep for maximum SAST coverage at release time.
 
 ```yaml
 full-security-scan:
@@ -529,7 +394,7 @@ full-security-scan:
       uses: github/codeql-action/init@v3
       with:
         languages: java
-    - name: Build for CodeQL
+    - name: Build with Maven
       working-directory: cantinas-cinfaes-backend
       run: mvn clean package -DskipTests
     - name: Perform CodeQL Analysis
@@ -543,13 +408,9 @@ full-security-scan:
           p/secrets
 ```
 
-- `permissions: security-events: write`: Required for CodeQL to upload findings to the GitHub Security tab.
-- Combines both CodeQL (bytecode analysis) and Semgrep (source code analysis) for maximum coverage.
-- Triggered automatically when a GitHub Release is published.
-
 #### Job 2: Full CVE Scan (OWASP DC + Trivy FS)
 
-Runs a full Software Composition Analysis with OWASP Dependency Check and also scans the filesystem with Trivy to catch vulnerabilities in the OS layer and other files.
+Full SCA with OWASP Dependency Check plus a Trivy filesystem scan covering the OS layer and configuration files.
 
 ```yaml
 full-cve-scan:
@@ -580,12 +441,11 @@ full-cve-scan:
         path: cantinas-cinfaes-backend/target/dependency-check-report.html
 ```
 
-- Unlike the PR pipeline, this uses a lower `delay` and higher `maxRetryCount` for a more thorough NVD query.
-- `scan-type: fs`: Trivy scans the entire filesystem, not just the Docker image, catching vulnerabilities in configuration files and scripts as well.
+- `scan-type: fs`: Scans the entire filesystem, going beyond declared dependencies to catch vulnerabilities in the OS layer and scripts.
 
 #### Job 3: Artifact Scanning (Trivy)
 
-Builds the final Docker image and scans it for vulnerabilities, representing the exact artifact that would be deployed to production.
+Scans the final Docker image — the exact artifact deployed to production — for HIGH and CRITICAL CVEs.
 
 ```yaml
 artifact-scanning:
@@ -612,12 +472,9 @@ artifact-scanning:
         sarif_file: trivy-results.sarif
 ```
 
-- Scans the final Docker image — the actual artifact that will be deployed — for HIGH and CRITICAL CVEs.
-- Results are uploaded to the GitHub Security tab in SARIF format.
-
 #### Job 4: Dynamic Analysis (OWASP ZAP)
 
-Starts the full application with a real MySQL database and runs an OWASP ZAP baseline scan against it, testing the running application for common web vulnerabilities.
+Starts the application against a real MySQL database and runs a ZAP baseline scan against the live endpoints.
 
 ```yaml
 dast:
@@ -660,14 +517,12 @@ dast:
         issue_title: 'ZAP Baseline Scan Report'
 ```
 
-- A real MySQL 8 service is spun up as a sidecar container, with health checks to ensure it is ready before the application starts.
-- The Spring Boot application is started in the background and the pipeline waits up to 120 seconds for it to become healthy via the `/actuator/health` endpoint.
-- `fail_action: false`: ZAP findings are reported but do not fail the pipeline, allowing the release to proceed while flagging issues for review.
-- ZAP reports are uploaded in HTML, Markdown, and JSON formats as artifacts.
+- The pipeline waits up to 120 seconds for the application to become healthy via `/actuator/health` before ZAP begins.
+- `fail_action: false`: Findings are reported without failing the pipeline, and are automatically created as a GitHub Issue.
 
 #### Job 5: Final SBOM (CycloneDX)
 
-Generates the final Software Bill of Materials for the release, providing a complete and auditable inventory of all components included in the published artifact.
+Generates the official component inventory for the release, tagged with the version number.
 
 ```yaml
 final-sbom:
@@ -685,8 +540,9 @@ final-sbom:
         path: cantinas-cinfaes-backend/target/bom.json
 ```
 
-- The SBOM is tagged with the release version via `github.ref_name` (e.g. `final-sbom-v1.0.0`), making it easy to correlate with a specific release.
-- The `bom.json` in CycloneDX format serves as the official component inventory for the release, useful for compliance and security audits.
+- Tagged with `github.ref_name` (e.g. `final-sbom-v1.0.0`), making it easy to correlate with a specific release.
+
+---
 
 ## Test Planning
 
