@@ -38,8 +38,8 @@ public class UserController {
     }
 
     // DELETE User by Email
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable String email) {
+    @DeleteMapping("/{email}")
+    public ResponseEntity<Void> deleteUser(@PathVariable("email") String email) {
         userService.deleteUser(email);
         return ResponseEntity.noContent().build();
     }

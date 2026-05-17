@@ -12,6 +12,8 @@ import bioCanteenApp.waste.dto.WasteDTO;
 import bioCanteenApp.waste.service.IWasteService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 
@@ -218,8 +220,8 @@ class WasteControllerTest {
     void shouldThrowWhenUserNotFoundOnKPIs() {
         when(userRepository.findById(1L)).thenReturn(null);
 
-        assertThrows(
-                IllegalArgumentException.class,
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
                 () -> controller.getKPIs(
                         "monthly",
                         1L,
@@ -228,6 +230,9 @@ class WasteControllerTest {
                         null
                 )
         );
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+        assertTrue(exception.getReason().contains("Utilizador não encontrado"));
     }
 
     @Test
@@ -246,8 +251,8 @@ class WasteControllerTest {
                         LocalDate.of(2026, 5, 31)
                 });
 
-        assertThrows(
-                IllegalArgumentException.class,
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
                 () -> controller.getKPIs(
                         "monthly",
                         1L,
@@ -256,6 +261,9 @@ class WasteControllerTest {
                         null
                 )
         );
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+        assertTrue(exception.getReason().contains("Role não suportada"));
     }
 
     private Canteen createCanteen() {
