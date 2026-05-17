@@ -8,7 +8,7 @@ import bioCanteenApp.users.repository.UserRepo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.Authentication;
 
 import java.util.Map;
 import java.util.Optional;
@@ -39,7 +39,8 @@ class PasswordControllerTest {
 
     @Test
     void shouldChangePassword() {
-        UserDetails userDetails = mock(UserDetails.class);
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.isAuthenticated()).thenReturn(true);
 
         User user = new User(
                 "user@email.com",
@@ -48,7 +49,7 @@ class PasswordControllerTest {
                 Role.USER
         );
 
-        when(userDetails.getUsername())
+        when(authentication.getName())
                 .thenReturn("user@email.com");
 
         when(userRepository.findByEmail("user@email.com"))
@@ -57,15 +58,16 @@ class PasswordControllerTest {
         when(passwordService.isPasswordExpired(user))
                 .thenReturn(false);
 
-        String result = controller.changePassword(
-                userDetails,
+        ResponseEntity<String> response = controller.changePassword(
+                authentication,
                 Map.of(
                         "currentPassword", "oldPassword",
                         "newPassword", "newPassword"
                 )
         );
 
-        assertEquals("Password changed successfully.", result);
+        assertEquals(200, response.getStatusCode().value());
+        assertEquals("Password changed successfully.", response.getBody());
 
         verify(passwordService).changePassword(
                 user,
@@ -76,16 +78,18 @@ class PasswordControllerTest {
 
     @Test
     void shouldReturnBadRequestWhenCurrentPasswordIsMissing() {
-        UserDetails userDetails = mock(UserDetails.class);
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.isAuthenticated()).thenReturn(true);
 
-        String result = controller.changePassword(
-                userDetails,
+        ResponseEntity<String> response = controller.changePassword(
+                authentication,
                 Map.of("newPassword", "newPassword")
         );
 
+        assertEquals(400, response.getStatusCode().value());
         assertEquals(
                 "Both 'currentPassword' and 'newPassword' are required.",
-                result
+                response.getBody()
         );
 
         verify(passwordService, never())
@@ -94,16 +98,18 @@ class PasswordControllerTest {
 
     @Test
     void shouldReturnBadRequestWhenNewPasswordIsMissing() {
-        UserDetails userDetails = mock(UserDetails.class);
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.isAuthenticated()).thenReturn(true);
 
-        String result = controller.changePassword(
-                userDetails,
+        ResponseEntity<String> response = controller.changePassword(
+                authentication,
                 Map.of("currentPassword", "oldPassword")
         );
 
+        assertEquals(400, response.getStatusCode().value());
         assertEquals(
                 "Both 'currentPassword' and 'newPassword' are required.",
-                result
+                response.getBody()
         );
 
         verify(passwordService, never())
@@ -112,9 +118,10 @@ class PasswordControllerTest {
 
     @Test
     void shouldThrowWhenUserNotFoundOnChangePassword() {
-        UserDetails userDetails = mock(UserDetails.class);
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.isAuthenticated()).thenReturn(true);
 
-        when(userDetails.getUsername())
+        when(authentication.getName())
                 .thenReturn("missing@email.com");
 
         when(userRepository.findByEmail("missing@email.com"))
@@ -123,7 +130,7 @@ class PasswordControllerTest {
         assertThrows(
                 RuntimeException.class,
                 () -> controller.changePassword(
-                        userDetails,
+                        authentication,
                         Map.of(
                                 "currentPassword", "oldPassword",
                                 "newPassword", "newPassword"
@@ -212,7 +219,8 @@ class PasswordControllerTest {
 
     @Test
     void shouldCheckIfPasswordIsExpired() {
-        UserDetails userDetails = mock(UserDetails.class);
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.isAuthenticated()).thenReturn(true);
 
         User user = new User(
                 "user@email.com",
@@ -221,7 +229,7 @@ class PasswordControllerTest {
                 Role.USER
         );
 
-        when(userDetails.getUsername())
+        when(authentication.getName())
                 .thenReturn("user@email.com");
 
         when(userRepository.findByEmail("user@email.com"))
@@ -231,19 +239,20 @@ class PasswordControllerTest {
                 .thenReturn(true);
 
         ResponseEntity<Boolean> response =
-                controller.isPasswordExpired(userDetails);
+                controller.isPasswordExpired(authentication);
 
         assertEquals(200, response.getStatusCode().value());
-        assertTrue(response.getBody());
+        assertEquals(Boolean.TRUE, response.getBody());
 
         verify(passwordService).isPasswordExpired(user);
     }
 
     @Test
     void shouldThrowWhenUserNotFoundOnPasswordExpired() {
-        UserDetails userDetails = mock(UserDetails.class);
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.isAuthenticated()).thenReturn(true);
 
-        when(userDetails.getUsername())
+        when(authentication.getName())
                 .thenReturn("missing@email.com");
 
         when(userRepository.findByEmail("missing@email.com"))
@@ -251,7 +260,7 @@ class PasswordControllerTest {
 
         assertThrows(
                 IllegalArgumentException.class,
-                () -> controller.isPasswordExpired(userDetails)
+                () -> controller.isPasswordExpired(authentication)
         );
 
         verify(passwordService, never())
