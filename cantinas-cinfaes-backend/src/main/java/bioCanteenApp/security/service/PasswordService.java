@@ -7,7 +7,7 @@ import bioCanteenApp.security.repository.PasswordHistoryRepo;
 import bioCanteenApp.security.repository.PasswordResetTokenRepo;
 import bioCanteenApp.users.domain.User;
 import bioCanteenApp.users.repository.UserRepo;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -58,7 +58,7 @@ public class PasswordService implements IPasswordService {
         List<PasswordHistory> passwordHistories = passwordHistoryRepo.findTop5ByUserOrderByCreatedAtDesc(userId);
 
         boolean isReused = passwordHistories.stream()
-                .anyMatch(ph -> ph.getPassword().equals(newPassword));
+                .anyMatch(ph -> passwordEncoder.matches(newPassword, ph.getPassword()));
 
         if (isReused) {
             throw new IllegalArgumentException("New password cannot be the same as any of the last 5 passwords.");
@@ -66,6 +66,7 @@ public class PasswordService implements IPasswordService {
     }
 
     @Override
+    @Transactional
     public void changePassword(User userId, String currentPassword, String newPassword) {
 
         User user = userRepository.findById(userId.getId());
@@ -85,13 +86,15 @@ public class PasswordService implements IPasswordService {
     }
 
     @Override
+    @Transactional
     public void applyNewPassword(User user, String newPassword) {
         String encodedPassword = passwordEncoder.encode(newPassword);
 
         PasswordHistory passwordHistory = new PasswordHistory(user, encodedPassword);
         passwordHistoryRepo.save(passwordHistory);
 
-        user.setPassword(newPassword);
+        // store encoded password on the user
+        user.setPassword(encodedPassword);
         user.setPasswordChangedAt(LocalDateTime.now());
         userRepository.save(user);
     }
@@ -123,6 +126,7 @@ public class PasswordService implements IPasswordService {
         emailService.sendEmail(user.getEmail(), resetLink);
     }
 
+    @Transactional
     public void resetPasswordWithToken(String token, String newPassword) {
         PasswordResetToken resetToken = passwordResetTokenRepo.findByToken(token)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid or expired reset token."));
