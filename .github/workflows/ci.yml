@@ -74,6 +74,8 @@ jobs:
       - name: Run Unit Tests
         working-directory: cantinas-cinfaes-backend
         env:
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
           JWT_TOKEN: ${{ secrets.JWT_TOKEN }}
         run: mvn test
       - name: Upload Unit Test Reports
