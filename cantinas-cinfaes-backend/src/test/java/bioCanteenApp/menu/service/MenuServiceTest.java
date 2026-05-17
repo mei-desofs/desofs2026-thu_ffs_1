@@ -20,7 +20,7 @@ import bioCanteenApp.users.domain.User;
 import bioCanteenApp.users.dto.GetUserDTO;
 import bioCanteenApp.users.mapper.UserMapper;
 import bioCanteenApp.users.repository.UserRepo;
-import bioCanteenApp.users.service.UserService;
+import bioCanteenApp.users.service.IUserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -40,7 +40,7 @@ class MenuServiceTest {
 
     private MenuRepo menuRepo;
     private MenuMapper menuMapper;
-    private UserService userService;
+    private IUserService userService;
     private ProductService productService;
     private DishService dishService;
     private DishRepo dishRepo;
@@ -55,7 +55,7 @@ class MenuServiceTest {
     void setUp() {
         menuRepo = mock(MenuRepo.class);
         menuMapper = mock(MenuMapper.class);
-        userService = mock(UserService.class);
+        userService = mock(IUserService.class);
         productService = mock(ProductService.class);
         dishService = mock(DishService.class);
         dishRepo = mock(DishRepo.class);
@@ -128,8 +128,10 @@ class MenuServiceTest {
     @Test
     void shouldThrowWhenDieticianDoesNotExistOnCreateMenu() {
         MenuDto dto = mock(MenuDto.class);
+        User mockDietician = mock(User.class);
 
-        when(userService.getUserById("1")).thenReturn(null);
+        when(dto.getDieticianId()).thenReturn(mockDietician);
+        when(mockDietician.getId()).thenReturn(1L);
 
         assertThrows(
                 IllegalArgumentException.class,
@@ -143,8 +145,9 @@ class MenuServiceTest {
     void shouldThrowWhenUserIsNotDieticianOnCreateMenu() {
         MenuDto dto = mock(MenuDto.class);
         GetUserDTO userDto = mock(GetUserDTO.class);
+        User mockDietician = mock(User.class);
 
-        when(userService.getUserById("1")).thenReturn(userDto);
+        when(dto.getDieticianId()).thenReturn(mockDietician);
         when(userDto.getRole()).thenReturn(Role.USER.name());
 
         assertThrows(
