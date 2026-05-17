@@ -22,6 +22,7 @@ import bioCanteenApp.users.dto.GetUserDTO;
 import bioCanteenApp.users.dto.UserDTO;
 import bioCanteenApp.users.mapper.UserMapper;
 import bioCanteenApp.users.repository.UserRepo;
+import bioCanteenApp.users.service.IUserService;
 import bioCanteenApp.users.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -35,7 +36,7 @@ import java.util.stream.Collectors;
 public class MenuService implements IMenuService {
     private final MenuRepo menuRepo;
     private final MenuMapper menuMapper;
-    private final UserService userService;
+    private final IUserService userService;
     private final ProductService productService;
     private final DishService dishService;
     private final DishRepo dishRepo;
@@ -63,7 +64,7 @@ public class MenuService implements IMenuService {
 
     @Override
     public MenuDto createMenu(MenuDto dto) {
-        GetUserDTO dietician = userService.getUserById(String.valueOf(dto.getDieticianId()));
+        GetUserDTO dietician = userService.findUserById(dto.getDieticianId().getId());
 
         if (dietician == null || !dietician.getRole().contains(Role.DIETITIAN.name())) {
             throw new IllegalArgumentException("Dietician not found");

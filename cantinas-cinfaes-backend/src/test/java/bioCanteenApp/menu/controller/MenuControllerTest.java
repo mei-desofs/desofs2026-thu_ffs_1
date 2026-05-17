@@ -26,7 +26,6 @@ class MenuControllerTest {
     }
 
     private IMenuService menuService;
-    private DishService dishService;
     private IProvisioningService provisioningService;
     private IMenuMapper menuMapper;
 
@@ -35,7 +34,7 @@ class MenuControllerTest {
     @BeforeEach
     void setUp() {
         menuService = mock(IMenuService.class);
-        dishService = mock(DishService.class);
+        DishService dishService = mock(DishService.class);
         provisioningService = mock(IProvisioningService.class);
         menuMapper = mock(IMenuMapper.class);
 

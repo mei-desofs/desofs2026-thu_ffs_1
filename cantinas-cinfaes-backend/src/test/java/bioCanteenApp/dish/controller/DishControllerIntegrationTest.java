@@ -1,10 +1,10 @@
 package bioCanteenApp.dish.controller;
 
-import bioCanteenApp.dish.dto.DishDto;
 import bioCanteenApp.dish.dto.GetDishDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
@@ -15,10 +15,12 @@ import java.util.ArrayList;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@WithMockUser
+@AutoConfigureTestDatabase
+@WithMockUser(roles = {"ADMIN", "USER", "STAFF"})
 class DishControllerIntegrationTest {
 
     @Autowired
@@ -29,16 +31,14 @@ class DishControllerIntegrationTest {
 
     @Test
     void shouldGetDishTypes() throws Exception {
-
         mockMvc.perform(get("/api/dishes/dish-types"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
     }
 
     @Test
     void shouldGenerateDishInformation() throws Exception {
-
         GetDishDTO dto = new GetDishDTO();
-
         dto.setIngredients(new ArrayList<>());
 
         mockMvc.perform(
@@ -51,14 +51,12 @@ class DishControllerIntegrationTest {
 
     @Test
     void shouldGetAlternatives() throws Exception {
-
         mockMvc.perform(get("/api/dishes/alternatives/1"))
                 .andExpect(status().isOk());
     }
 
     @Test
     void shouldReplaceDish() throws Exception {
-
         mockMvc.perform(
                         put("/api/dishes/1/replace")
                                 .param("newDishId", "2")
@@ -68,8 +66,8 @@ class DishControllerIntegrationTest {
 
     @Test
     void shouldGetOrganicProducts() throws Exception {
-
         mockMvc.perform(get("/api/dishes/organic"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
     }
 }

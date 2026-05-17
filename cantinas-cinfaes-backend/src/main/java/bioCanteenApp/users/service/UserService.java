@@ -27,20 +27,13 @@ public class UserService implements IUserService {
         return users.stream().map(userMapper::toGetDTO).toList();
     }
 
-    public GetUserDTO getUserById(String email) {
-        User user = userRepo.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        return userMapper.toGetDTO(user);
-    }
-
     @Override
-    public UserDTO findUserById(Long id) {
+    public GetUserDTO findUserById(Long id) {
         User dietician = userRepo.findById(id);
         if (dietician == null) {
             throw new RuntimeException("User not found");
         }
-        return userMapper.toDTO(dietician);
+        return userMapper.toGetDTO(dietician);
     }
 
     @Override
