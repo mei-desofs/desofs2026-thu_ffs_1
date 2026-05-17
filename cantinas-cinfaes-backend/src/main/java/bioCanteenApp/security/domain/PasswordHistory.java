@@ -30,6 +30,7 @@ public class PasswordHistory {
     public PasswordHistory(User user, String password) {
         this.user = user;
         this.password = password;
+        this.createdAt = LocalDateTime.now();
     }
 
     protected PasswordHistory() {}
