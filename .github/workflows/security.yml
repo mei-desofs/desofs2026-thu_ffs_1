@@ -1,0 +1,197 @@
+#security.yml — SAST + SCA + SBOM + Integration Tests + Secret Scanning + Container Scanning — PR pipeline
+
+name: "Security"
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  # ──────────────────────────────────────────────
+  # SAST — CodeQL
+  # ──────────────────────────────────────────────
+  sast:
+    name: SAST (CodeQL)
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: temurin
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: java
+
+      - name: Build with Maven (for CodeQL)
+        working-directory: cantinas-cinfaes-backend
+        run: mvn clean package -DskipTests
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:java"
+
+  # ──────────────────────────────────────────────
+  # SCA — OWASP Dependency Check
+  # ──────────────────────────────────────────────
+  sca:
+    name: SCA (OWASP Dependency Check)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: temurin
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      - name: Cache Dependency-Check NVD database
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository/org/owasp/dependency-check-data
+          key: dependency-check-data-${{ github.run_id }}
+          restore-keys: dependency-check-data-
+
+      - name: Run OWASP Dependency Check
+        working-directory: cantinas-cinfaes-backend
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: >
+          mvn org.owasp:dependency-check-maven:check
+          -Dnvd.api.key=$NVD_API_KEY
+          -Dnvd.api.delay=6000
+          -Dnvd.api.maxRetryCount=5
+          -DfailBuildOnCVSS=11
+
+      - name: Upload Dependency Check Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: cantinas-cinfaes-backend/target/dependency-check-report.html
+
+  # ──────────────────────────────────────────────
+  # SBOM Generation — CycloneDX Maven Plugin
+  # ──────────────────────────────────────────────
+  sbom:
+    name: SBOM (CycloneDX)
+    runs-on: ubuntu-latest
+    needs: sca
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: temurin
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      - name: Generate SBOM
+        working-directory: cantinas-cinfaes-backend
+        run: mvn org.cyclonedx:cyclonedx-maven-plugin:makeAggregateBom
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: cantinas-cinfaes-backend/target/bom.json
+
+  # ──────────────────────────────────────────────
+  # Integration Tests
+  # ──────────────────────────────────────────────
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: sast
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: temurin
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      - name: Run Integration Tests
+        working-directory: cantinas-cinfaes-backend
+        run: mvn verify -DskipUnitTests
+      - name: Upload Integration Test Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-reports
+          path: cantinas-cinfaes-backend/target/failsafe-reports
+
+  # ──────────────────────────────────────────────
+  # Secret Scanning
+  # ──────────────────────────────────────────────
+  # secretDetector.yml
+
+  # ──────────────────────────────────────────────
+  # Container/Artifact Scanning
+  # ──────────────────────────────────────────────
+  container-scanning:
+    name: Container Scanning (Trivy)
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: temurin
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      - name: Build JAR first
+        working-directory: cantinas-cinfaes-backend
+        run: mvn clean package -DskipTests
+      - name: Build Docker image
+        run: docker build -t myapp:${{ github.sha }} cantinas-cinfaes-backend/
+      - name: Trivy scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: myapp:${{ github.sha }}
+          format: sarif
+          output: trivy-results.sarif
+          severity: HIGH,CRITICAL
+      - uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
