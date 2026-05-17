@@ -24,6 +24,11 @@ public class AuthenticationController {
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.AUTHORIZATION, loginResponse.getTokenType() + " " + loginResponse.getToken());
 
-        return ResponseEntity.ok().headers(headers).body(loginResponse.getUser());
+        UserDTO user = loginResponse.getUser();
+        if (user != null) {
+            user.setPassword(null);
+        }
+
+        return ResponseEntity.ok().headers(headers).body(user);
     }
 }

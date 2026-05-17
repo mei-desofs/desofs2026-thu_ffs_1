@@ -3,9 +3,14 @@ package bioCanteenApp.security;
 import bioCanteenApp.users.domain.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import jakarta.annotation.PostConstruct;
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
@@ -14,11 +19,32 @@ import java.util.Map;
 @Service
 public class JwtService {
 
-    // Generate a secure key for HS256
-    private static final Key SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    private static final Logger log = LoggerFactory.getLogger(JwtService.class);
+
+    // Secret key is loaded at startup either from configuration (recommended) or generated as a fallback
+    private Key secretKey;
+
+    // Base64-encoded secret supplied via configuration. Example: jwt.secret=BASE64_KEY
+    @Value("${jwt.secret:}")
+    private String jwtSecret;
 
     // Default expiration is 24 hours
     private static final long EXPIRATION_TIME = 1000 * 60 * 60 * 24;
+
+    @PostConstruct
+    public void init() {
+        if (jwtSecret == null || jwtSecret.isBlank()) {
+            throw new IllegalStateException("JWT secret is not configured. Set 'jwt.secret' (base64-encoded 256-bit key) in application.properties or environment variables to enable JWT generation.");
+        }
+
+        try {
+            byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
+            this.secretKey = Keys.hmacShaKeyFor(keyBytes);
+            log.info("JWT secret loaded from configuration (base64). Using configured signing key.");
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to decode configured jwt.secret. Provide a valid base64-encoded 256-bit key.", e);
+        }
+    }
 
     public String generateToken(User user) {
         Map<String, Object> claims = new HashMap<>();
@@ -31,7 +57,11 @@ public class JwtService {
                 .setSubject(user.getEmail())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                .signWith(SECRET_KEY)
+                .signWith(secretKey)
                 .compact();
     }
+
+    // Note: token validation and parsing are handled by the OAuth2 Resource Server configuration (JwtDecoder).
+    // Keep this service focused on token generation. If you need parsing utilities for tests or admin endpoints,
+    // add them in a separate Test util or reintroduce minimal parsing helpers when necessary.
 }

@@ -5,15 +5,19 @@ import bioCanteenApp.security.service.PasswordService;
 import bioCanteenApp.users.domain.User;
 import bioCanteenApp.users.repository.UserRepo;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/passwords")
 public class PasswordController {
+
+    private static final Logger log = LoggerFactory.getLogger(PasswordController.class);
 
     private final PasswordService passwordService;
     private final UserRepo userRepository;
@@ -24,25 +28,32 @@ public class PasswordController {
     }
 
     @PostMapping("/change")
-    public String changePassword(@AuthenticationPrincipal UserDetails userDetails,
-                                 @RequestBody Map<String, String> payload) {
+    public ResponseEntity<String> changePassword(Authentication authentication,
+                                                 @RequestBody Map<String, String> payload) {
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(401).build();
+        }
+
+        String username = authentication.getName();
 
         String currentPassword = payload.get("currentPassword");
         String newPassword     = payload.get("newPassword");
 
         if (currentPassword == null || newPassword == null) {
-            return ResponseEntity.badRequest().body("Both 'currentPassword' and 'newPassword' are required.").getBody();}
+            return ResponseEntity.badRequest().body("Both 'currentPassword' and 'newPassword' are required.");
+        }
 
-        var user = userRepository.findByEmail(userDetails.getUsername())
+        var user = userRepository.findByEmail(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         // REQ2.5: inform user if password is already expired (handled by filter too)
         if (passwordService.isPasswordExpired(user)) {
-            // We still allow the change — this endpoint IS the solution
+            log.warn("Password for user {} is expired; allowing change via API endpoint.", user.getEmail());
         }
 
         passwordService.changePassword(user, currentPassword, newPassword);
-        return ResponseEntity.ok("Password changed successfully.").getBody();
+        return ResponseEntity.ok("Password changed successfully.");
     }
 
     @PostMapping("/recover-password")
@@ -71,10 +82,12 @@ public class PasswordController {
     }
 
     @GetMapping("/expired")
-    public ResponseEntity<Boolean> isPasswordExpired(
-            @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<Boolean> isPasswordExpired(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(401).build();
+        }
 
-        User user = userRepository.findByEmail(userDetails.getUsername())
+        User user = userRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> new IllegalArgumentException("User not found."));
 
         return ResponseEntity.ok(passwordService.isPasswordExpired(user));
