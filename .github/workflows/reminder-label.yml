@@ -1,0 +1,80 @@
+name: "Label Reminder"
+
+on:
+  pull_request:
+    types: [opened, labeled, unlabeled, synchronize]
+
+jobs:
+  label-reminder:
+    name: Remind about labels
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Comment if a required label group is missing
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const groups = {
+              'Type':   ['bug', 'enhancement', 'documentation'],
+              'Semver': ['minor', 'major', 'patch'],
+            };
+            const marker = '<!-- label-reminder-bot -->';
+
+            const labels = context.payload.pull_request.labels.map(l => l.name);
+
+            // figure out which groups have no label applied
+            const missing = Object.entries(groups)
+              .filter(([_, opts]) => !opts.some(o => labels.includes(o)))
+              .map(([name, opts]) => ({ name, opts }));
+
+            // find a previous comment from this bot, if any
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c => c.body.includes(marker));
+
+            if (missing.length === 0) {
+              // all groups covered — clean up the reminder if it exists
+              if (existing) {
+                await github.rest.issues.deleteComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existing.id,
+                });
+              }
+              return;
+            }
+
+            const sections = missing.map(g =>
+              [`**${g.name}** — add one of:`, ...g.opts.map(o => `- \`${o}\``)].join('\n')
+            );
+
+            const body = [
+              marker,
+              '### 🏷️ This PR is missing a label',
+              '',
+              'Please make sure the PR has a label from **each** group below:',
+              '',
+              ...sections,
+              '',
+              '_This is a friendly reminder — it won\'t block your PR._',
+            ].join('\n\n');
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
