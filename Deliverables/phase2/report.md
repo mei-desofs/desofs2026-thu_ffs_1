@@ -45,7 +45,7 @@ In the repository, it is mandatory that every Pull Request has at least two appr
     - `e2e` receives code from `dev` and is used for end-to-end validation in a more complete environment.
     - `main` represents the code that is fully validated and ready for production.
 - Direct commits to `dev`, `e2e` and `main` are not allowed — all changes go through Pull Requests.
-- Branches must follow the naming convention `/feature` for new features or `/bugfix` for bug corrections, and must reference the associated issue. Example: `feature/10-implement-release-workflows`.
+- Before merge to dev, branches must follow the naming convention `/feature` for new features or `/bugfix` for bug corrections, and must reference the associated issue. Example: `feature/10-implement-release-workflows`.
 - Every commit must have an associated issue, otherwise the push will be rejected.
 
 ---
