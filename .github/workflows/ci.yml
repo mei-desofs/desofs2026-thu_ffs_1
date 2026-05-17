@@ -73,7 +73,7 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run Unit Tests
         working-directory: cantinas-cinfaes-backend
-        run: mvn test
+        run: mvn test -Dspring.profiles.active=test
       - name: Upload Unit Test Reports
         uses: actions/upload-artifact@v4
         with:

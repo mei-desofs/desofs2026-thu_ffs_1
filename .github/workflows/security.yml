@@ -148,7 +148,7 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run Integration Tests
         working-directory: cantinas-cinfaes-backend
-        run: mvn verify -DskipUnitTests
+        run: mvn verify -DskipUnitTests -Dspring.profiles.active=test
       - name: Upload Integration Test Reports
         uses: actions/upload-artifact@v4
         with:
