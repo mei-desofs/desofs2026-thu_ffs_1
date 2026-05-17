@@ -28,7 +28,7 @@ public class AuthenticationService implements IAuthenticationService {
             return null;
         }
 
-        if (!passwordEncoder.matches(dto.getPassword(), decodePassword(user.getPassword()))) {
+        if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
             return null;
         }
 
@@ -39,9 +39,5 @@ public class AuthenticationService implements IAuthenticationService {
                 .tokenType("Bearer")
                 .user(userMapper.toDTO(user))
                 .build();
-    }
-
-    private String decodePassword(String encodedPassword) {
-        return passwordEncoder.encode(encodedPassword);
     }
 }
