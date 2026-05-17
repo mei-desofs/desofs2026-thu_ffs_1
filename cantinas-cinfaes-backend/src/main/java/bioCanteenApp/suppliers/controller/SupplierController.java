@@ -71,19 +71,19 @@ public class SupplierController {
         return ResponseEntity.ok(dto);
     }
 
-    @GetMapping("/filter/{name}")
+    @GetMapping("/filter/name/{name}")
     ResponseEntity<List<SupplierDTO>> getSuppliersByName(@PathVariable("name") String name) {
         List<SupplierDTO> dto = supplierService.getSuppliersByName(name);
         return ResponseEntity.ok(dto);
     }
 
-    @GetMapping("/filter/{village}")
+    @GetMapping("/filter/village/{village}")
     ResponseEntity<List<SupplierDTO>> getSuppliersByVillage(@PathVariable("village") String village) {
         List<SupplierDTO> dto = supplierService.getSuppliersByVillage(village);
         return ResponseEntity.ok(dto);
     }
 
-    @GetMapping("/filter/{municipality}")
+    @GetMapping("/filter/municipality/{municipality}")
     ResponseEntity<List<SupplierDTO>> getSuppliersByMunicipality(@PathVariable("municipality") String village) {
         List<SupplierDTO> dto = supplierService.getSuppliersByMunicipality(village);
         return ResponseEntity.ok(dto);
