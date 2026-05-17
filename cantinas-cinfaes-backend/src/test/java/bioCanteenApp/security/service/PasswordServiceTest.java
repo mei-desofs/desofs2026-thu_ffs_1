@@ -98,8 +98,11 @@ class PasswordServiceTest {
 
         PasswordHistory history = new PasswordHistory(user, "StrongPass1!");
 
-        when(passwordHistoryRepo.findTop5ByUserOrderByCreatedAtDesc(user))
+        when(passwordHistoryRepo.findTop5ByUserOrderByCreatedAtDesc(any(User.class)))
                 .thenReturn(List.of(history));
+
+        when(passwordEncoder.matches(any(CharSequence.class), anyString()))
+                .thenReturn(true);
 
         assertThrows(
                 IllegalArgumentException.class,
@@ -122,7 +125,7 @@ class PasswordServiceTest {
 
         service.changePassword(user, "oldPassword", "StrongPass1!");
 
-        assertEquals("StrongPass1!", user.getPassword());
+        assertEquals("encodedPassword", user.getPassword());
         assertNotNull(user.getPasswordChangedAt());
 
         verify(passwordHistoryRepo).save(any(PasswordHistory.class));
@@ -170,7 +173,7 @@ class PasswordServiceTest {
 
         service.applyNewPassword(user, "StrongPass1!");
 
-        assertEquals("StrongPass1!", user.getPassword());
+        assertEquals("encodedPassword", user.getPassword());
         assertNotNull(user.getPasswordChangedAt());
 
         verify(passwordHistoryRepo).save(any(PasswordHistory.class));

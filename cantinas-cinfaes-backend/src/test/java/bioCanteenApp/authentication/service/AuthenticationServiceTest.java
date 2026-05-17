@@ -6,6 +6,7 @@ import bioCanteenApp.users.domain.User;
 import bioCanteenApp.users.dto.UserDTO;
 import bioCanteenApp.users.mapper.UserMapper;
 import bioCanteenApp.users.repository.IUserRepo;
+import bioCanteenApp.security.JwtService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -25,6 +26,9 @@ class AuthenticationServiceTest {
 
     @Mock
     private UserMapper userMapper;
+
+    @Mock
+    private JwtService jwtService;
 
     @InjectMocks
     private AuthenticationService authenticationService;
@@ -88,6 +92,9 @@ class AuthenticationServiceTest {
 
         when(userMapper.toDTO(user))
                 .thenReturn(userDTO);
+
+        when(jwtService.generateToken(user))
+                .thenReturn("JWT Token");
 
         LoginResponse response = authenticationService.login(dto);
 
