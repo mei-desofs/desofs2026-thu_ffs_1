@@ -28,68 +28,131 @@ public class PasswordController {
     }
 
     @PostMapping("/change")
-    public ResponseEntity<String> changePassword(Authentication authentication,
-                                                 @RequestBody Map<String, String> payload) {
+    public ResponseEntity<String> changePassword(
+            Authentication authentication,
+            @RequestBody Map<String, String> payload
+    ) {
 
         if (authentication == null || !authentication.isAuthenticated()) {
+
+            log.warn("Unauthorized password change attempt");
+
             return ResponseEntity.status(401).build();
         }
 
         String username = authentication.getName();
 
+        log.info("Password change requested for user: {}", username);
+
         String currentPassword = payload.get("currentPassword");
         String newPassword     = payload.get("newPassword");
 
         if (currentPassword == null || newPassword == null) {
-            return ResponseEntity.badRequest().body("Both 'currentPassword' and 'newPassword' are required.");
+
+            log.warn(
+                    "Password change failed for user {} due to missing fields",
+                    username
+            );
+
+            return ResponseEntity.badRequest()
+                    .body("Both 'currentPassword' and 'newPassword' are required.");
         }
 
         var user = userRepository.findByEmail(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // REQ2.5: inform user if password is already expired (handled by filter too)
         if (passwordService.isPasswordExpired(user)) {
-            log.warn("Password for user {} is expired; allowing change via API endpoint.", user.getEmail());
+
+            log.warn(
+                    "Password for user {} is expired; allowing change via API endpoint.",
+                    user.getEmail()
+            );
         }
 
         passwordService.changePassword(user, currentPassword, newPassword);
+
+        log.info("Password changed successfully for user: {}", username);
+
         return ResponseEntity.ok("Password changed successfully.");
     }
 
     @PostMapping("/recover-password")
-    public ResponseEntity<String> forgotPassword(@RequestBody ForgotPasswordDTO payload) {
+    public ResponseEntity<String> forgotPassword(
+            @RequestBody ForgotPasswordDTO payload
+    ) {
 
         String email = payload.getEmail();
 
+        log.info("Password recovery requested for email: {}", email);
+
         passwordService.sendPasswordResetEmail(email);
+
+        log.info(
+                "Password recovery email processed for email: {}",
+                email
+        );
 
         return ResponseEntity.ok(
                 "If an account with that email exists, a reset link has been sent. It will be valid for 20 minutes.");
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<String> resetPassword(@RequestBody Map<String, String> payload) {
+    public ResponseEntity<String> resetPassword(
+            @RequestBody Map<String, String> payload
+    ) {
+
         String token       = payload.get("token");
         String newPassword = payload.get("newPassword");
 
+        log.info("Password reset attempt using reset token");
+
         if (token == null || newPassword == null) {
+
+            log.warn(
+                    "Password reset failed due to missing token or password"
+            );
+
             return ResponseEntity.badRequest()
                     .body("Both 'token' and 'newPassword' are required.");
         }
 
         passwordService.resetPasswordWithToken(token, newPassword);
+
+        log.info("Password reset completed successfully");
+
         return ResponseEntity.ok("Password reset successfully. You can now log in.");
     }
 
     @GetMapping("/expired")
-    public ResponseEntity<Boolean> isPasswordExpired(Authentication authentication) {
+    public ResponseEntity<Boolean> isPasswordExpired(
+            Authentication authentication
+    ) {
+
         if (authentication == null || !authentication.isAuthenticated()) {
+
+            log.warn("Unauthorized password expiration check attempt");
+
             return ResponseEntity.status(401).build();
         }
 
-        User user = userRepository.findByEmail(authentication.getName())
+        String username = authentication.getName();
+
+        log.info(
+                "Checking password expiration status for user: {}",
+                username
+        );
+
+        User user = userRepository.findByEmail(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found."));
 
-        return ResponseEntity.ok(passwordService.isPasswordExpired(user));
+        Boolean expired = passwordService.isPasswordExpired(user);
+
+        log.info(
+                "Password expiration status for user {}: {}",
+                username,
+                expired
+        );
+
+        return ResponseEntity.ok(expired);
     }
 }

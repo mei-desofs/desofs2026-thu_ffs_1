@@ -4,6 +4,7 @@ import bioCanteenApp.users.dto.GetUserDTO;
 import bioCanteenApp.users.dto.UserDTO;
 import bioCanteenApp.users.service.IUserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -13,34 +14,71 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/users")
+@Slf4j
 public class UserController {
+
     private final IUserService userService;
 
-    // GET All Users
     @GetMapping
     public ResponseEntity<List<GetUserDTO>> getAllUsers() {
-        List<GetUserDTO> users = userService.getAllUsers();
+
+        log.info("Fetching all users");
+
+        List<GetUserDTO> users =
+                userService.getAllUsers();
+
+        log.info("Found {} users", users.size());
+
         return ResponseEntity.ok(users);
     }
 
-    // POST Create User
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO dto) {
-        UserDTO createdUser = userService.createUser(dto);
+    public ResponseEntity<UserDTO> createUser(
+            @RequestBody UserDTO dto
+    ) {
+
+        log.info(
+                "Creating user with email: {} and role: {}",
+                dto.getEmail(),
+                dto.getRole()
+        );
+
+        UserDTO createdUser =
+                userService.createUser(dto);
+
+        log.info(
+                "User created successfully with id: {}",
+                createdUser.getId()
+        );
+
         return ResponseEntity.ok(createdUser);
     }
 
     @GetMapping("/email/{email}")
-    public ResponseEntity<GetUserDTO> getUserByEmail(@PathVariable("email") String email){
-        GetUserDTO userDTO = userService.getUserByEmail(email);
+    public ResponseEntity<GetUserDTO> getUserByEmail(
+            @PathVariable("email") String email
+    ) {
+
+        log.info("Fetching user with email: {}", email);
+
+        GetUserDTO userDTO =
+                userService.getUserByEmail(email);
+
         return ResponseEntity.ok(userDTO);
     }
 
-    // DELETE User by Email
     @DeleteMapping("/{email}")
-    public ResponseEntity<Void> deleteUser(@PathVariable("email") String email) {
+    public ResponseEntity<Void> deleteUser(
+            @PathVariable("email") String email
+    ) {
+
+        log.warn("Deleting user with email: {}", email);
+
         userService.deleteUser(email);
+
+        log.info("User deleted successfully with email: {}", email);
+
         return ResponseEntity.noContent().build();
     }
 }
