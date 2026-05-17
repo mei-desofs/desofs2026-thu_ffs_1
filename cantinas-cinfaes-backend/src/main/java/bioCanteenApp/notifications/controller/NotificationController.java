@@ -24,7 +24,7 @@ public class NotificationController {
 
     // GET notification by ID
     @GetMapping("/{id}")
-    public ResponseEntity<NotificationDTO> getNotificationById(@PathVariable Long id) {
+    public ResponseEntity<NotificationDTO> getNotificationById(@PathVariable("id") Long id) {
         NotificationDTO notification = notificationService.getById(id);
         return ResponseEntity.ok(notification);
     }
@@ -45,14 +45,14 @@ public class NotificationController {
 
     // PUT mark notification as read
     @PutMapping("/{id}/read")
-    public ResponseEntity<Void> markAsRead(@PathVariable Long id) {
+    public ResponseEntity<Void> markAsRead(@PathVariable("id") Long id) {
         notificationService.markAsRead(id);
         return ResponseEntity.noContent().build();
     }
 
     // PUT mark all notifications as read for a user
     @PutMapping("/user/{userId}/read")
-    public ResponseEntity<Void> markAllAsReadForUser(@PathVariable Long userId) {
+    public ResponseEntity<Void> markAllAsReadForUser(@PathVariable("userId") Long userId) {
         notificationService.markAllAsReadForUser(userId);
         return ResponseEntity.noContent().build();
     }
@@ -66,7 +66,7 @@ public class NotificationController {
 
     // DELETE all notifications for a user
     @DeleteMapping("/user/{userId}")
-    public ResponseEntity<Void> deleteAllNotificationsForUser(@PathVariable Long userId) {
+    public ResponseEntity<Void> deleteAllNotificationsForUser(@PathVariable("userId") Long userId) {
         notificationService.deleteAllForUser(userId);
         return ResponseEntity.noContent().build();
     }
