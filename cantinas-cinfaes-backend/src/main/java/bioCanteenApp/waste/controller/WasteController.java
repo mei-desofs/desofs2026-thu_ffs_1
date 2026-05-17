@@ -5,7 +5,9 @@ import bioCanteenApp.users.repository.UserRepo;
 import bioCanteenApp.waste.dto.WasteDTO;
 import bioCanteenApp.waste.service.IWasteService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 
@@ -48,7 +50,7 @@ public class WasteController {
 
         User user = userRepository.findById(userId);
         if (user == null) {
-            throw new IllegalArgumentException("Utilizador não encontrado");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Utilizador não encontrado");
         }
 
         LocalDate[] range = wasteService.getDateRange(period);
@@ -61,7 +63,7 @@ public class WasteController {
             case NETWORK_MANAGER:
                 return wasteService.aggregateWaste(canteenId, diningHallId, supplierId, range[0], range[1]);
             default:
-                throw new IllegalArgumentException("Role não suportada");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Role não suportada");
         }
     }
 }

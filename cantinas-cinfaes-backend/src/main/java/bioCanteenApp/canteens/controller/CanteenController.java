@@ -46,13 +46,13 @@ public class CanteenController {
         return ResponseEntity.ok(unquarantined);
     }
 
-    @GetMapping("/filter/{municipality}")
+    @GetMapping("/filter/municipality/{municipality}")
     public ResponseEntity<List<CanteenDTO>> getCanteensByMunicipality(@PathVariable("municipality") String municipality) {
         List<CanteenDTO> dto=service.getByMunicipality(municipality);
         return ResponseEntity.ok(dto);
     }
 
-    @GetMapping("/filter/{village}")
+    @GetMapping("/filter/village/{village}")
     public ResponseEntity<List<CanteenDTO>> getCanteensByVillage(@PathVariable("village") String village) {
         List<CanteenDTO> dto=service.getByVillage(village);
         return ResponseEntity.ok(dto);
