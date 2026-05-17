@@ -34,6 +34,12 @@ jobs:
         run: java -jar target/*.jar &
         env:
           SPRING_PROFILES_ACTIVE: test
+          DB_URL: ${{ secrets.DB_URL }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          JWT_TOKEN: ${{ secrets.JWT_TOKEN }}
 
       - name: "Wait for application to be ready"
         run: |
