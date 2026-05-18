@@ -75,6 +75,9 @@ public class UserController {
 
         log.warn("Deleting user with email: {}", email);
 
+    // DELETE User by Email
+    @DeleteMapping("/{email}")
+    public ResponseEntity<Void> deleteUser(@PathVariable("email") String email) {
         userService.deleteUser(email);
 
         log.info("User deleted successfully with email: {}", email);

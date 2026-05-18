@@ -110,7 +110,21 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Build JAR
         working-directory: cantinas-cinfaes-backend
+        env:
+          DB_URL: ${{ secrets.DB_URL }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          JWT_TOKEN: ${{ secrets.JWT_TOKEN }}
         run: mvn clean package -DskipTests
+        env:
+          DB_URL: ${{ secrets.DB_URL }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          JWT_TOKEN: ${{ secrets.JWT_TOKEN }}
       - name: Build Docker image
         run: docker build -t myapp:${{ github.sha }} cantinas-cinfaes-backend/
       - name: Trivy image scan
@@ -165,9 +179,9 @@ jobs:
         run: java -jar target/*.jar &
         env:
           SPRING_PROFILES_ACTIVE: test
-          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/cantinasDB
-          SPRING_DATASOURCE_USERNAME: root
-          SPRING_DATASOURCE_PASSWORD: testpassword
+          DB_URL: ${{ secrets.DB_URL }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       - name: Wait for application to be ready
         run: |
           echo "Waiting for Spring Boot to start..."
