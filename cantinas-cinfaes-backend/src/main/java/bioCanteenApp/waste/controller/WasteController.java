@@ -5,6 +5,7 @@ import bioCanteenApp.users.repository.UserRepo;
 import bioCanteenApp.waste.dto.WasteDTO;
 import bioCanteenApp.waste.service.IWasteService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -14,6 +15,7 @@ import java.time.LocalDate;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/waste")
+@Slf4j
 public class WasteController {
 
     private final IWasteService wasteService;
@@ -21,22 +23,54 @@ public class WasteController {
 
     @GetMapping("/daily")
     public WasteDTO getDailyWaste() {
-        return wasteService.getDailyWaste();
+
+        log.info("Fetching daily waste statistics");
+
+        WasteDTO waste =
+                wasteService.getDailyWaste();
+
+        log.info("Daily waste statistics fetched successfully");
+
+        return waste;
     }
 
     @GetMapping("/weekly")
     public WasteDTO getWeeklyWaste() {
-        return wasteService.getWeeklyWaste();
+
+        log.info("Fetching weekly waste statistics");
+
+        WasteDTO waste =
+                wasteService.getWeeklyWaste();
+
+        log.info("Weekly waste statistics fetched successfully");
+
+        return waste;
     }
 
     @GetMapping("/monthly")
     public WasteDTO getMonthlyWaste() {
-        return wasteService.getMonthlyWaste();
+
+        log.info("Fetching monthly waste statistics");
+
+        WasteDTO waste =
+                wasteService.getMonthlyWaste();
+
+        log.info("Monthly waste statistics fetched successfully");
+
+        return waste;
     }
 
     @GetMapping("/all")
     public WasteDTO getAllWaste() {
-        return wasteService.getAllWaste();
+
+        log.info("Fetching overall waste statistics");
+
+        WasteDTO waste =
+                wasteService.getAllWaste();
+
+        log.info("Overall waste statistics fetched successfully");
+
+        return waste;
     }
 
     @GetMapping("/kpis/{period}")
@@ -48,22 +82,98 @@ public class WasteController {
             @RequestParam(value = "supplierId", required = false) Long supplierId
     ) {
 
+        log.info(
+                "Fetching waste KPIs for user id: {} and period: {}",
+                userId,
+                period
+        );
+
         User user = userRepository.findById(userId);
+
         if (user == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Utilizador não encontrado");
+
+            log.warn(
+                    "Waste KPI request failed. User not found with id: {}",
+                    userId
+            );
+
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Utilizador não encontrado"
+            );
         }
 
-        LocalDate[] range = wasteService.getDateRange(period);
+        LocalDate[] range =
+                wasteService.getDateRange(period);
+
+        log.info(
+                "Calculating waste KPIs for role: {} between {} and {}",
+                user.getRole(),
+                range[0],
+                range[1]
+        );
 
         switch (user.getRole()) {
+
             case CANTEEN_MANAGER:
-                return wasteService.aggregateWaste(user.getCanteen().getId(), null, null, range[0], range[1]);
+
+                log.info(
+                        "Generating waste KPIs for canteen id: {}",
+                        user.getCanteen().getId()
+                );
+
+                return wasteService.aggregateWaste(
+                        user.getCanteen().getId(),
+                        null,
+                        null,
+                        range[0],
+                        range[1]
+                );
+
             case DINING_HALL_MANAGER:
-                return wasteService.aggregateWaste(null, user.getDiningHall().getId(), null, range[0], range[1]);
+
+                log.info(
+                        "Generating waste KPIs for dining hall id: {}",
+                        user.getDiningHall().getId()
+                );
+
+                return wasteService.aggregateWaste(
+                        null,
+                        user.getDiningHall().getId(),
+                        null,
+                        range[0],
+                        range[1]
+                );
+
             case NETWORK_MANAGER:
-                return wasteService.aggregateWaste(canteenId, diningHallId, supplierId, range[0], range[1]);
+
+                log.info(
+                        "Generating network waste KPIs with filters - canteenId: {}, diningHallId: {}, supplierId: {}",
+                        canteenId,
+                        diningHallId,
+                        supplierId
+                );
+
+                return wasteService.aggregateWaste(
+                        canteenId,
+                        diningHallId,
+                        supplierId,
+                        range[0],
+                        range[1]
+                );
+
             default:
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Role não suportada");
+
+                log.warn(
+                        "Unsupported role {} for user id: {}",
+                        user.getRole(),
+                        userId
+                );
+
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Role não suportada"
+                );
         }
     }
 }
