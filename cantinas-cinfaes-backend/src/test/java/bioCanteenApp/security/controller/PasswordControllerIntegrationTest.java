@@ -9,7 +9,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -28,7 +27,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
-@AutoConfigureTestDatabase
 @AutoConfigureMockMvc
 class PasswordControllerIntegrationTest {
 
@@ -42,7 +40,6 @@ class PasswordControllerIntegrationTest {
     private PasswordService passwordService;
 
     @MockBean
-    @Autowired
     private UserRepo userRepository;
 
     private User mockUser;
@@ -52,12 +49,6 @@ class PasswordControllerIntegrationTest {
         mockUser = new User("user@email.com", "User Test", "password", Role.USER);
 
         when(userRepository.findByEmail("user@email.com")).thenReturn(Optional.of(mockUser));
-        if (userRepository.findByEmail("user@email.com").isEmpty()) {
-            mockUser = new User("user@email.com", "User Test", "password", Role.USER);
-            userRepository.save(mockUser);
-        } else {
-            mockUser = userRepository.findByEmail("user@email.com").get();
-        }
     }
 
     @Test

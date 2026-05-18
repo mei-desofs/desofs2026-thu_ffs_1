@@ -40,8 +40,6 @@ public class NotificationController {
         NotificationDTO notification =
                 notificationService.getById(id);
 
-    public ResponseEntity<NotificationDTO> getNotificationById(@PathVariable("id") Long id) {
-        NotificationDTO notification = notificationService.getById(id);
         return ResponseEntity.ok(notification);
     }
 
@@ -92,7 +90,6 @@ public class NotificationController {
 
         log.info("Marking notification as read with id: {}", id);
 
-    public ResponseEntity<Void> markAsRead(@PathVariable("id") Long id) {
         notificationService.markAsRead(id);
 
         log.info("Notification marked as read successfully with id: {}", id);
@@ -110,7 +107,6 @@ public class NotificationController {
                 userId
         );
 
-    public ResponseEntity<Void> markAllAsReadForUser(@PathVariable("userId") Long userId) {
         notificationService.markAllAsReadForUser(userId);
 
         log.info(
@@ -145,7 +141,6 @@ public class NotificationController {
                 userId
         );
 
-    public ResponseEntity<Void> deleteAllNotificationsForUser(@PathVariable("userId") Long userId) {
         notificationService.deleteAllForUser(userId);
 
         log.info(

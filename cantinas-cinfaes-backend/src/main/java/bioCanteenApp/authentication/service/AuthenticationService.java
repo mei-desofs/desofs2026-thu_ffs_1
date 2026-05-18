@@ -7,14 +7,14 @@ import bioCanteenApp.users.mapper.UserMapper;
 import bioCanteenApp.users.repository.IUserRepo;
 import bioCanteenApp.security.JwtService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService implements IAuthenticationService {
 
-    private final PasswordEncoder passwordEncoder;
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private final IUserRepo userRepo;
     private final UserMapper userMapper;
     private final JwtService jwtService;
@@ -40,5 +40,4 @@ public class AuthenticationService implements IAuthenticationService {
                 .user(userMapper.toDTO(user))
                 .build();
     }
-}
 }
