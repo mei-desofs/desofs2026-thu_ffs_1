@@ -11,7 +11,8 @@ public interface IUserService {
     UserDTO createUser(UserDTO dto);
     void deleteUser(String id);
 
-    UserDTO findUserById(Long id);
+    GetUserDTO findUserById(Long id);
 
     GetUserDTO getUserByEmail(String email);
+
 }

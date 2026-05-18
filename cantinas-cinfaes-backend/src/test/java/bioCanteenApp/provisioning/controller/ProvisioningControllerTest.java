@@ -47,8 +47,7 @@ class ProvisioningControllerTest {
                 provisioningService,
                 productMapper,
                 menuService,
-                menuMapper,
-                menuRepository
+                menuMapper
         );
     }
 

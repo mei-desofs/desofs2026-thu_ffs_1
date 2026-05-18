@@ -97,7 +97,7 @@ class UserServiceTest {
                 .thenReturn(dto);
 
         GetUserDTO result =
-                service.getUserById("user@email.com");
+                service.getUserByEmail("user@email.com");
 
         assertEquals(dto, result);
     }
@@ -109,7 +109,7 @@ class UserServiceTest {
 
         assertThrows(
                 RuntimeException.class,
-                () -> service.getUserById("missing@email.com")
+                () -> service.getUserByEmail("missing@email.com")
         );
     }
 
@@ -122,17 +122,18 @@ class UserServiceTest {
                 Role.USER
         );
 
-        UserDTO dto = mock(UserDTO.class);
+        GetUserDTO dto = mock(GetUserDTO.class);
 
         when(userRepo.findById(1L))
                 .thenReturn(user);
 
-        when(userMapper.toDTO(user))
+        when(userMapper.toGetDTO(user))
                 .thenReturn(dto);
 
-        UserDTO result = service.findUserById(1L);
+        GetUserDTO result = service.findUserById(1L);
 
         assertEquals(dto, result);
+
     }
 
     @Test

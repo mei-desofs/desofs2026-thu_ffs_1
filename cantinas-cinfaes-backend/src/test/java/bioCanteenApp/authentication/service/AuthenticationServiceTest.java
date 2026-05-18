@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
@@ -30,6 +31,9 @@ class AuthenticationServiceTest {
     @Mock
     private JwtService jwtService;
 
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
     @InjectMocks
     private AuthenticationService authenticationService;
 
@@ -45,8 +49,11 @@ class AuthenticationServiceTest {
         LoginResponse response = authenticationService.login(dto);
 
         assertNull(response);
+
         verify(userRepo).findByEmail("user@email.com");
         verifyNoInteractions(userMapper);
+        verifyNoInteractions(jwtService);
+        verifyNoInteractions(passwordEncoder);
     }
 
     @Test
@@ -58,17 +65,23 @@ class AuthenticationServiceTest {
         User user = new User(
                 "user@email.com",
                 "User",
-                "correctPassword"
+                "encoded-password"
         );
 
         when(userRepo.findByEmail("user@email.com"))
                 .thenReturn(Optional.of(user));
 
+        when(passwordEncoder.matches("wrongPassword", "encoded-password"))
+                .thenReturn(false);
+
         LoginResponse response = authenticationService.login(dto);
 
         assertNull(response);
+
         verify(userRepo).findByEmail("user@email.com");
+        verify(passwordEncoder).matches("wrongPassword", "encoded-password");
         verifyNoInteractions(userMapper);
+        verifyNoInteractions(jwtService);
     }
 
     @Test
@@ -80,7 +93,7 @@ class AuthenticationServiceTest {
         User user = new User(
                 "user@email.com",
                 "User",
-                "password"
+                "encoded-password"
         );
 
         UserDTO userDTO = new UserDTO();
@@ -89,6 +102,9 @@ class AuthenticationServiceTest {
 
         when(userRepo.findByEmail("user@email.com"))
                 .thenReturn(Optional.of(user));
+
+        when(passwordEncoder.matches("password", "encoded-password"))
+                .thenReturn(true);
 
         when(userMapper.toDTO(user))
                 .thenReturn(userDTO);
@@ -104,6 +120,8 @@ class AuthenticationServiceTest {
         assertEquals(userDTO, response.getUser());
 
         verify(userRepo).findByEmail("user@email.com");
+        verify(passwordEncoder).matches("password", "encoded-password");
         verify(userMapper).toDTO(user);
+        verify(jwtService).generateToken(user);
     }
 }
