@@ -25,8 +25,7 @@ class ProductBatchControllerTest {
         productService = mock(IProductService.class);
 
         controller = new ProductBatchController(
-                productBatchService,
-                productService
+                productBatchService
         );
     }
 
