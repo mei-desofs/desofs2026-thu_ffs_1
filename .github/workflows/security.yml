@@ -55,7 +55,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
         run: |
-          response=$(gh api "/repos/${REPO}/code-scanning/alerts" -f state=open --jq '[.[] | select(.rule.severity == "high" or .rule.severity == "critical" or .rule.security_severity_level == "high" or .rule.security_severity_level == "critical")]' 2>&1)
+          response=$(gh api "/repos/${REPO}/code-scanning/alerts" -f state=open --jq '[.[] | select(.rule.severity == "high" or .rule.severity == "critical" or .rule.security_severity_level == "high" or .rule.security_severity_level == "critical")]' 2>&1) || true
           if echo "$response" | grep -q "Not Found\|HTTP 404"; then
             echo "Warning: code scanning API returned 404 — no results indexed yet or insufficient permissions."
             exit 0
