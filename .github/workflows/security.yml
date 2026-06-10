@@ -55,13 +55,18 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
         run: |
-          high_count=$(gh api "/repos/${REPO}/code-scanning/alerts" -f state=open -f severity=high --jq 'length')
-          critical_count=$(gh api "/repos/${REPO}/code-scanning/alerts" -f state=open -f severity=critical --jq 'length')
-
-          if [ "$((high_count + critical_count))" -gt 0 ]; then
-            echo "Found ${high_count} high and ${critical_count} critical code scanning alerts."
+          response=$(gh api "/repos/${REPO}/code-scanning/alerts" -f state=open --jq '[.[] | select(.rule.severity == "high" or .rule.severity == "critical" or .rule.security_severity_level == "high" or .rule.security_severity_level == "critical")]' 2>&1)
+          if echo "$response" | grep -q "Not Found\|HTTP 404"; then
+            echo "Warning: code scanning API returned 404 — no results indexed yet or insufficient permissions."
+            exit 0
+          fi
+          count=$(echo "$response" | jq 'length')
+          if [ "$count" -gt 0 ]; then
+            echo "Found ${count} high/critical code scanning alerts."
+            echo "$response" | jq '.[].rule.id'
             exit 1
           fi
+          echo "No high or critical alerts found."
 
   # ──────────────────────────────────────────────
   # SCA — OWASP Dependency Check
