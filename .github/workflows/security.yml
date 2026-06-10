@@ -61,8 +61,6 @@ jobs:
 
           # Rules are in tool.extensions[].rules in CodeQL SARIF (not tool.driver.rules).
           # Build a ruleId->security-severity map then filter results.
-          # Findings with "suppressions" (from // lgtm[rule-id] comments in source) are excluded —
-          # this suppresses only the specific occurrence, not the rule globally.
           findings=$(jq -r '
             .runs[] |
             (
@@ -74,7 +72,6 @@ jobs:
               | add // {}
             ) as $m |
             .results[] |
-            select((.suppressions // []) | length == 0) |
             . as $r |
             (($m[$r.ruleId] // "0") | tonumber) as $sev |
             select($sev >= 7.0) |
