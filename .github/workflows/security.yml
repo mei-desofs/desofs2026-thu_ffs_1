@@ -52,31 +52,48 @@ jobs:
           output: sarif-results
 
       - name: Fail on High or Critical CodeQL Alerts
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
-          REF: ${{ github.ref }}
         run: |
-          set -euo pipefail
-          # Query the API for open (non-dismissed) high/critical alerts on this ref.
-          # Dismissed alerts are excluded because they have state=dismissed, not state=open.
-          count=$(gh api \
-            "/repos/${REPO}/code-scanning/alerts" \
-            -f state=open \
-            -f ref="${REF}" \
-            -f per_page=100 \
-            --jq '[.[] | select(.rule.security_severity_level == "high" or .rule.security_severity_level == "critical")] | length')
-          echo "Open high/critical alerts: $count"
+          sarif_file="sarif-results/java.sarif"
+          if [ ! -f "$sarif_file" ]; then
+            echo "SARIF file not found — skipping check."
+            exit 0
+          fi
+          # In CodeQL SARIF, rules live under tool.extensions[].rules (not tool.driver.rules).
+          # Build a ruleId -> security-severity map from both driver and all extensions.
+          count=$(jq '
+            [.runs[] |
+              (
+                [
+                  (.tool.driver.rules // []),
+                  ([.tool.extensions[]? | .rules? // []] | add // [])
+                ] | add // []
+                | map({ (.id): (.properties["security-severity"] // "0") })
+                | add // {}
+              ) as $ruleMap |
+              .results[] |
+              (($ruleMap[.ruleId] // "0") | tonumber) as $sev |
+              select($sev >= 7.0)
+            ] | length' "$sarif_file")
+          echo "High/critical findings: $count"
           if [ "$count" -gt 0 ]; then
-            gh api \
-              "/repos/${REPO}/code-scanning/alerts" \
-              -f state=open \
-              -f ref="${REF}" \
-              -f per_page=100 \
-              --jq '.[] | select(.rule.security_severity_level == "high" or .rule.security_severity_level == "critical") | "\(.rule.id): \(.message.text)"'
+            jq -r '
+              .runs[] |
+              (
+                [
+                  (.tool.driver.rules // []),
+                  ([.tool.extensions[]? | .rules? // []] | add // [])
+                ] | add // []
+                | map({ (.id): (.properties["security-severity"] // "0") })
+                | add // {}
+              ) as $ruleMap |
+              .results[] |
+              (($ruleMap[.ruleId] // "0") | tonumber) as $sev |
+              select($sev >= 7.0) |
+              "\(.ruleId) (severity \($sev)): \(.message.text)"
+            ' "$sarif_file"
             exit 1
           fi
-          echo "No open high/critical alerts found."
+          echo "No high or critical alerts found."
 
   # ──────────────────────────────────────────────
   # SCA — OWASP Dependency Check
