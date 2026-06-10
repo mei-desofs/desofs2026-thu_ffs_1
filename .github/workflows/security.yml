@@ -58,24 +58,36 @@ jobs:
             echo "SARIF file not found — skipping check."
             exit 0
           fi
-          # In CodeQL SARIF, security-severity lives on the rule definition,
-          # not on the result. We join results with their rule to get the severity.
+          # In CodeQL SARIF, rules live under tool.extensions[].rules (not tool.driver.rules).
+          # Build a ruleId -> security-severity map from both driver and all extensions.
           count=$(jq '
             [.runs[] |
-              (.tool.driver.rules // []) as $rules |
+              (
+                [
+                  (.tool.driver.rules // []),
+                  ([.tool.extensions[]? | .rules? // []] | add // [])
+                ] | add // []
+                | map({ (.id): (.properties["security-severity"] // "0") })
+                | add // {}
+              ) as $ruleMap |
               .results[] |
-              . as $result |
-              ($rules[] | select(.id == $result.ruleId) | .properties["security-severity"] // "0" | tonumber) as $sev |
+              (($ruleMap[.ruleId] // "0") | tonumber) as $sev |
               select($sev >= 7.0)
             ] | length' "$sarif_file")
           echo "High/critical findings: $count"
           if [ "$count" -gt 0 ]; then
             jq -r '
               .runs[] |
-              (.tool.driver.rules // []) as $rules |
+              (
+                [
+                  (.tool.driver.rules // []),
+                  ([.tool.extensions[]? | .rules? // []] | add // [])
+                ] | add // []
+                | map({ (.id): (.properties["security-severity"] // "0") })
+                | add // {}
+              ) as $ruleMap |
               .results[] |
-              . as $result |
-              ($rules[] | select(.id == $result.ruleId) | .properties["security-severity"] // "0" | tonumber) as $sev |
+              (($ruleMap[.ruleId] // "0") | tonumber) as $sev |
               select($sev >= 7.0) |
               "\(.ruleId) (severity \($sev)): \(.message.text)"
             ' "$sarif_file"
