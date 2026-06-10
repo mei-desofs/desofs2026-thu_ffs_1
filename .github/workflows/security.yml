@@ -54,10 +54,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          REF: ${{ github.ref }}
         run: |
-          high_count=$(gh api "/repos/${REPO}/code-scanning/alerts" -f state=open -f severity=high -f ref="${REF}" --jq 'length')
-          critical_count=$(gh api "/repos/${REPO}/code-scanning/alerts" -f state=open -f severity=critical -f ref="${REF}" --jq 'length')
+          high_count=$(gh api "/repos/${REPO}/code-scanning/alerts" -f state=open -f severity=high --jq 'length')
+          critical_count=$(gh api "/repos/${REPO}/code-scanning/alerts" -f state=open -f severity=critical --jq 'length')
 
           if [ "$((high_count + critical_count))" -gt 0 ]; then
             echo "Found ${high_count} high and ${critical_count} critical code scanning alerts."
@@ -221,6 +220,7 @@ jobs:
     name: Container Scanning (Trivy)
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       security-events: write
     steps:
       - uses: actions/checkout@v4
