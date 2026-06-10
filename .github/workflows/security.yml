@@ -58,16 +58,27 @@ jobs:
             echo "SARIF file not found — skipping check."
             exit 0
           fi
+          # In CodeQL SARIF, security-severity lives on the rule definition,
+          # not on the result. We join results with their rule to get the severity.
           count=$(jq '
-            [.runs[].results[] |
-              select(
-                (.rule.properties["problem.severity"] == "error") or
-                (.properties["security-severity"] != null and (.properties["security-severity"] | tonumber) >= 7.0)
-              )
+            [.runs[] |
+              (.tool.driver.rules // []) as $rules |
+              .results[] |
+              . as $result |
+              ($rules[] | select(.id == $result.ruleId) | .properties["security-severity"] // "0" | tonumber) as $sev |
+              select($sev >= 7.0)
             ] | length' "$sarif_file")
           echo "High/critical findings: $count"
           if [ "$count" -gt 0 ]; then
-            jq -r '.runs[].results[] | select((.rule.properties["problem.severity"] == "error") or (.properties["security-severity"] != null and (.properties["security-severity"] | tonumber) >= 7.0)) | "\(.ruleId): \(.message.text)"' "$sarif_file"
+            jq -r '
+              .runs[] |
+              (.tool.driver.rules // []) as $rules |
+              .results[] |
+              . as $result |
+              ($rules[] | select(.id == $result.ruleId) | .properties["security-severity"] // "0" | tonumber) as $sev |
+              select($sev >= 7.0) |
+              "\(.ruleId) (severity \($sev)): \(.message.text)"
+            ' "$sarif_file"
             exit 1
           fi
           echo "No high or critical alerts found."
