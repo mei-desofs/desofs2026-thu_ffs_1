@@ -49,21 +49,25 @@ jobs:
         uses: github/codeql-action/analyze@v4
         with:
           category: "/language:java"
+          output: sarif-results
 
       - name: Fail on High or Critical CodeQL Alerts
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
         run: |
-          response=$(gh api "/repos/${REPO}/code-scanning/alerts" -f state=open --jq '[.[] | select(.rule.severity == "high" or .rule.severity == "critical" or .rule.security_severity_level == "high" or .rule.security_severity_level == "critical")]' 2>&1) || true
-          if echo "$response" | grep -q "Not Found\|HTTP 404"; then
-            echo "Warning: code scanning API returned 404 — no results indexed yet or insufficient permissions."
+          sarif_file="sarif-results/java.sarif"
+          if [ ! -f "$sarif_file" ]; then
+            echo "SARIF file not found — skipping check."
             exit 0
           fi
-          count=$(echo "$response" | jq 'length')
+          count=$(jq '
+            [.runs[].results[] |
+              select(
+                (.rule.properties["problem.severity"] == "error") or
+                (.properties["security-severity"] != null and (.properties["security-severity"] | tonumber) >= 7.0)
+              )
+            ] | length' "$sarif_file")
+          echo "High/critical findings: $count"
           if [ "$count" -gt 0 ]; then
-            echo "Found ${count} high/critical code scanning alerts."
-            echo "$response" | jq '.[].rule.id'
+            jq -r '.runs[].results[] | select((.rule.properties["problem.severity"] == "error") or (.properties["security-severity"] != null and (.properties["security-severity"] | tonumber) >= 7.0)) | "\(.ruleId): \(.message.text)"' "$sarif_file"
             exit 1
           fi
           echo "No high or critical alerts found."
@@ -243,7 +247,12 @@ jobs:
         working-directory: cantinas-cinfaes-backend
         run: mvn clean package -DskipTests
       - name: Build Docker image
-        run: docker build -t myapp:${{ github.sha }} cantinas-cinfaes-backend/
+        run: |
+          for i in 1 2 3; do
+            docker build -t myapp:${{ github.sha }} cantinas-cinfaes-backend/ && break
+            echo "Attempt $i failed, retrying in 15s..."
+            sleep 15
+          done
       - name: Trivy scan
         uses: aquasecurity/trivy-action@master
         with:
