@@ -2,6 +2,8 @@ package bioCanteenApp.authentication.service;
 
 import bioCanteenApp.authentication.dto.LoginDTO;
 import bioCanteenApp.authentication.dto.LoginResponse;
+import bioCanteenApp.authentication.exception.InvalidCredentialsException;
+import bioCanteenApp.email.service.EmailService;
 import bioCanteenApp.users.domain.User;
 import bioCanteenApp.users.mapper.UserMapper;
 import bioCanteenApp.users.repository.IUserRepo;
@@ -18,9 +20,14 @@ public class AuthenticationService implements IAuthenticationService {
     private final IUserRepo userRepo;
     private final UserMapper userMapper;
     private final JwtService jwtService;
+    private final LoginAttemptService loginAttemptService;
+    private final EmailService emailService;
 
     @Override
     public LoginResponse login(LoginDTO dto) {
+
+        loginAttemptService.checkNotLocked(dto.getEmail());
+
         User user = userRepo.findByEmail(dto.getEmail())
                 .orElse(null);
 
@@ -29,8 +36,13 @@ public class AuthenticationService implements IAuthenticationService {
         }
 
         if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
-            return null;
+            loginAttemptService.registerFailure(dto.getEmail());
+            throw new InvalidCredentialsException("Invalid email or password.");
         }
+
+        loginAttemptService.resetAttempts(dto.getEmail());
+
+        // emailService.alertIfNewDevice(user, dto.getDeviceId());
 
         String jwtToken = jwtService.generateToken(user);
 
