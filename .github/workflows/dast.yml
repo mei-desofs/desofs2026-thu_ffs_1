@@ -310,13 +310,13 @@ jobs:
         id: find_release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
         run: |
-          TAG="${{ github.ref_name }}"
           echo "Looking for draft release with tag $TAG..."
-          # List releases (including drafts) and find the one matching this tag
           RELEASE_ID=$(gh api \
             -H "Accept: application/vnd.github+json" \
-            "/repos/${{ github.repository }}/releases" \
+            "/repos/$REPO/releases" \
             --jq ".[] | select(.tag_name == \"$TAG\") | .id")
 
           if [ -z "$RELEASE_ID" ]; then
@@ -330,8 +330,8 @@ jobs:
       - name: Upload JAR and SBOM to draft release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
         run: |
-          TAG="${{ github.ref_name }}"
           echo "Uploading assets to draft release $TAG..."
           gh release upload "$TAG" \
             cantinas-cinfaes-backend/target/*.jar \
