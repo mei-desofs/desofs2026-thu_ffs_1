@@ -46,4 +46,21 @@ public class EmailService implements IEmailService {
         );
         mailSender.send(message);
     }
+
+    @Override
+    public void sendRejectionEmail(String toEmail, String reason) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(toEmail);
+        message.setSubject("BioCantinas — Supplier Application Status");
+        message.setText(
+                "Hello,\n\n"
+                        + "Thank you for applying to be a supplier for BioCantinas.\n\n"
+                        + "After careful consideration, we regret to inform you that your application has not been approved at this time.\n\n"
+                        + "Reason for rejection:\n"
+                        + reason + "\n\n"
+                        + "If you have any questions or believe this was a mistake, please reach out to our support team.\n\n"
+                        + "— The BioCantinas Team"
+        );
+        mailSender.send(message);
+    }
 }

@@ -10,6 +10,8 @@ import java.util.Optional;
 
 public interface ISupplierRepo {
 
+    Optional<SupplierApplication> findApplicationById(Long id);
+
     Supplier save(Supplier supplier);
 
     SupplierApplication save(SupplierApplication supplierApplication);
