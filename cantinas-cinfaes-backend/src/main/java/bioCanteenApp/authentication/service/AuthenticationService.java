@@ -5,17 +5,19 @@ import bioCanteenApp.authentication.dto.LoginResponse;
 import bioCanteenApp.users.domain.User;
 import bioCanteenApp.users.mapper.UserMapper;
 import bioCanteenApp.users.repository.IUserRepo;
+import bioCanteenApp.security.JwtService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService implements IAuthenticationService {
 
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final PasswordEncoder passwordEncoder;
     private final IUserRepo userRepo;
     private final UserMapper userMapper;
+    private final JwtService jwtService;
 
     @Override
     public LoginResponse login(LoginDTO dto) {
@@ -26,18 +28,16 @@ public class AuthenticationService implements IAuthenticationService {
             return null;
         }
 
-        if (!passwordEncoder.matches(dto.getPassword(), decodePassword(user.getPassword()))) {
+        if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
             return null;
         }
 
+        String jwtToken = jwtService.generateToken(user);
+
         return LoginResponse.builder()
-                .token("JWT Token")
+                .token(jwtToken)
                 .tokenType("Bearer")
                 .user(userMapper.toDTO(user))
                 .build();
-    }
-
-    private String decodePassword(String encodedPassword) {
-        return passwordEncoder.encode(encodedPassword);
     }
 }

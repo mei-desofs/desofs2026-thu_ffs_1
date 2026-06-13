@@ -20,6 +20,7 @@ import bioCanteenApp.users.dto.UserDTO;
 import bioCanteenApp.users.mapper.UserMapper;
 import bioCanteenApp.users.repository.UserRepo;
 import bioCanteenApp.users.service.IUserService;
+import bioCanteenApp.users.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -60,7 +61,7 @@ public class MenuService implements IMenuService {
 
     @Override
     public MenuDto createMenu(MenuDto dto) {
-        UserDTO dietician = userService.findUserById(dto.getDieticianId().getId());
+        GetUserDTO dietician = userService.findUserById(dto.getDieticianId().getId());
 
         if (dietician == null || !dietician.getRole().contains(Role.DIETITIAN.name())) {
             throw new IllegalArgumentException("Dietician not found");

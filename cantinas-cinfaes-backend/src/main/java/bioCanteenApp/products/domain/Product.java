@@ -28,7 +28,7 @@
         @ElementCollection(targetClass = Season.class)
         @CollectionTable(name = "product_seasonal_year", joinColumns = @JoinColumn(name = "product_id"))
         @Enumerated(EnumType.STRING)
-        @Column(name = "month")
+        @Column(name = "\"month\"")
         private List<Season> seasons;
 
         @ElementCollection(targetClass = Allergen.class)
@@ -51,3 +51,4 @@
 
         protected Product() { }
     }
+
