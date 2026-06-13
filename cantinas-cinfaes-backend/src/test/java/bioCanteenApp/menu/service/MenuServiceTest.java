@@ -166,24 +166,19 @@ class MenuServiceTest {
         ProductDTO productDTO = mock(ProductDTO.class);
         when(productDTO.getName()).thenReturn("Rice");
 
-        DishIngredientDto ingredientDto = new DishIngredientDto(
-                1L,
-                1L,
-                "Rice",
-                1.0,
-                "kg"
-        );
+        DishIngredientDto ingredientDto = new DishIngredientDto(1L, 1L, "Rice", 1.0, "kg");
 
-        DishDto dishDto = new DishDto(
-                1L,
-                "Rice Dish",
-                "Info",
-                DishType.VEGETARIAN.name(),
-                null,
-                List.of(ingredientDto)
-        );
+        DishDto meatDish       = new DishDto(1L, "Meat Dish",       "Info", DishType.MEAT.name(),       null, List.of(ingredientDto));
+        DishDto fishDish       = new DishDto(2L, "Fish Dish",       "Info", DishType.FISH.name(),       null, List.of(ingredientDto));
+        DishDto vegetarianDish = new DishDto(3L, "Vegetarian Dish", "Info", DishType.VEGETARIAN.name(), null, List.of(ingredientDto));
+        DishDto dietDish       = new DishDto(4L, "Diet Dish",       "Info", DishType.DIET.name(),       null, List.of(ingredientDto));
+        DishDto kosherDish     = new DishDto(5L, "Kosher Dish",     "Info", DishType.KOSHER.name(),     null, List.of(ingredientDto));
 
-        Dish dish = new Dish("Rice Dish", DishType.VEGETARIAN);
+        Dish meatEntity       = new Dish("Meat Dish",       DishType.MEAT);
+        Dish fishEntity       = new Dish("Fish Dish",       DishType.FISH);
+        Dish vegetarianEntity = new Dish("Vegetarian Dish", DishType.VEGETARIAN);
+        Dish dietEntity       = new Dish("Diet Dish",       DishType.DIET);
+        Dish kosherEntity     = new Dish("Kosher Dish",     DishType.KOSHER);
 
         MenuDto menuDto = mock(MenuDto.class);
 
@@ -191,13 +186,16 @@ class MenuServiceTest {
                 .thenReturn(List.of(productDTO));
 
         when(dishService.getDishesWithSeasonalIngredients(List.of("Rice")))
-                .thenReturn(List.of(dishDto));
+                .thenReturn(List.of(meatDish, fishDish, vegetarianDish, dietDish, kosherDish));
 
         when(productBatchRepo.sumValidStockByProduct(1L))
                 .thenReturn(10.0);
 
-        when(dishRepo.findById(1L))
-                .thenReturn(Optional.of(dish));
+        when(dishRepo.findById(1L)).thenReturn(Optional.of(meatEntity));
+        when(dishRepo.findById(2L)).thenReturn(Optional.of(fishEntity));
+        when(dishRepo.findById(3L)).thenReturn(Optional.of(vegetarianEntity));
+        when(dishRepo.findById(4L)).thenReturn(Optional.of(dietEntity));
+        when(dishRepo.findById(5L)).thenReturn(Optional.of(kosherEntity));
 
         when(menuRepo.save(any(Menu.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
@@ -256,8 +254,8 @@ class MenuServiceTest {
 
     @Test
     void shouldPublishMenu() {
-        LocalDate start = LocalDate.of(2026, 5, 11);
-        LocalDate end = LocalDate.of(2026, 5, 17);
+        LocalDate start = LocalDate.now().plusWeeks(2);
+        LocalDate end = start.plusDays(6);
 
         User dietician = new User(
                 "dietitian@email.com",
