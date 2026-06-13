@@ -50,6 +50,9 @@ public class User {
     @Column
     private LocalDateTime lockedUntil;
 
+    @Column
+    private String lastDeviceId;
+
     public User(String email, String name, String password) {
         this.email = email;
         this.name = name;

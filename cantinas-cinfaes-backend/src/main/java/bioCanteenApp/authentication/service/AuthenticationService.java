@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService implements IAuthenticationService {
@@ -42,7 +44,12 @@ public class AuthenticationService implements IAuthenticationService {
 
         loginAttemptService.resetAttempts(dto.getEmail());
 
+        checkAndAlertNewDevice(user, dto.getDeviceId());
+        user.setLastDeviceId(dto.getDeviceId());
+        userRepo.save(user);
+
         // emailService.alertIfNewDevice(user, dto.getDeviceId());
+
 
         String jwtToken = jwtService.generateToken(user);
 
@@ -51,5 +58,20 @@ public class AuthenticationService implements IAuthenticationService {
                 .tokenType("Bearer")
                 .user(userMapper.toDTO(user))
                 .build();
+    }
+
+    private void checkAndAlertNewDevice(User user, String incomingDeviceId) {
+
+        if (incomingDeviceId == null) return;
+
+        String lastDevice = user.getLastDeviceId();
+
+        if (lastDevice != null && !lastDevice.equals(incomingDeviceId)) {
+            emailService.sendNewDeviceAlert(
+                    user.getEmail(),
+                    incomingDeviceId,
+                    LocalDateTime.now()
+            );
+        }
     }
 }
