@@ -17,6 +17,7 @@ jobs:
       actions: read
       contents: read
       security-events: write
+      pull-requests: read
 
     steps:
       - name: Checkout
@@ -36,7 +37,7 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: java
 
@@ -45,9 +46,44 @@ jobs:
         run: mvn clean package -DskipTests
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
         with:
           category: "/language:java"
+          output: sarif-results
+
+      - name: Fail on High or Critical CodeQL Alerts
+        run: |
+          sarif_file="sarif-results/java.sarif"
+          if [ ! -f "$sarif_file" ]; then
+            echo "SARIF file not found — skipping check."
+            exit 0
+          fi
+
+          # Rules are in tool.extensions[].rules in CodeQL SARIF (not tool.driver.rules).
+          # Build a ruleId->security-severity map then filter results.
+          findings=$(jq -r '
+            .runs[] |
+            (
+              [
+                (.tool.driver.rules // []),
+                ([.tool.extensions[]? | .rules? // []] | add // [])
+              ] | add // []
+              | map({(.id): (.properties["security-severity"] // "0")})
+              | add // {}
+            ) as $m |
+            .results[] |
+            . as $r |
+            (($m[$r.ruleId] // "0") | tonumber) as $sev |
+            select($sev >= 7.0) |
+            "\(.ruleId) (severity \($sev)): \(.message.text)"
+          ' "$sarif_file")
+
+          if [ -n "$findings" ]; then
+            echo "High/critical findings:"
+            echo "$findings"
+            exit 1
+          fi
+          echo "No high or critical alerts found."
 
   # ──────────────────────────────────────────────
   # SCA — OWASP Dependency Check
@@ -55,7 +91,6 @@ jobs:
   sca:
     name: SCA (OWASP Dependency Check)
     runs-on: ubuntu-latest
-    continue-on-error: true
 
     steps:
       - name: Checkout
@@ -146,13 +181,49 @@ jobs:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
-      - name: Run Integration Tests
+      - name: Run Integration Tests (with JaCoCo)
         working-directory: cantinas-cinfaes-backend
         env:
           MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
           MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
           JWT_TOKEN: ${{ secrets.JWT_TOKEN }}
-        run: mvn verify -DskipUnitTests -Dspring.profiles.active=test
+        run: mvn org.jacoco:jacoco-maven-plugin:prepare-agent verify org.jacoco:jacoco-maven-plugin:report -DskipUnitTests -Dspring.profiles.active=test
+
+      - name: Check integration coverage threshold
+        working-directory: cantinas-cinfaes-backend
+        run: |
+          python3 - <<'PY'
+          import sys
+          try:
+              import xml.etree.ElementTree as ET
+              tree = ET.parse('target/site/jacoco/jacoco.xml')
+              root = tree.getroot()
+          except Exception as e:
+              print('Failed to read jacoco.xml:', e)
+              sys.exit(1)
+          pct = None
+          for c in root.findall('counter'):
+              if c.get('type') == 'LINE':
+                  covered = int(c.get('covered'))
+                  missed = int(c.get('missed'))
+                  total = covered + missed
+                  pct = (covered * 100.0 / total) if total > 0 else 0.0
+                  print(f'Line coverage: {pct:.2f}% ({covered}/{total})')
+                  break
+          if pct is None:
+              print('No LINE counter found in jacoco report')
+              sys.exit(1)
+          if pct < 80.0:
+              print('Coverage below 80% — failing the step')
+              sys.exit(1)
+          print('Coverage threshold met')
+
+      - name: Upload JaCoCo report
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-jacoco-report
+          path: cantinas-cinfaes-backend/target/site/jacoco
+
       - name: Upload Integration Test Reports
         uses: actions/upload-artifact@v4
         with:
@@ -171,6 +242,7 @@ jobs:
     name: Container Scanning (Trivy)
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       security-events: write
     steps:
       - uses: actions/checkout@v4
@@ -188,7 +260,12 @@ jobs:
         working-directory: cantinas-cinfaes-backend
         run: mvn clean package -DskipTests
       - name: Build Docker image
-        run: docker build -t myapp:${{ github.sha }} cantinas-cinfaes-backend/
+        run: |
+          for i in 1 2 3; do
+            docker build -t myapp:${{ github.sha }} cantinas-cinfaes-backend/ && break
+            echo "Attempt $i failed, retrying in 15s..."
+            sleep 15
+          done
       - name: Trivy scan
         uses: aquasecurity/trivy-action@master
         with:
@@ -196,6 +273,6 @@ jobs:
           format: sarif
           output: trivy-results.sarif
           severity: HIGH,CRITICAL
-      - uses: github/codeql-action/upload-sarif@v3
+      - uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-results.sarif
