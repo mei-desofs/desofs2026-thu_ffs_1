@@ -4,6 +4,7 @@ import bioCanteenApp.authentication.dto.LoginDTO;
 import bioCanteenApp.authentication.dto.LoginResponse;
 import bioCanteenApp.authentication.service.IAuthenticationService;
 import bioCanteenApp.users.dto.UserDTO;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -19,9 +20,15 @@ public class AuthenticationController {
     private final IAuthenticationService authenticationService;
 
     @PostMapping
-    public ResponseEntity<UserDTO> login(@RequestBody LoginDTO dto) {
+    public ResponseEntity<UserDTO> login(@RequestBody LoginDTO dto,
+                                         HttpServletRequest request) {
 
         log.info("Authentication attempt for email: {}", dto.getEmail());
+
+        // REQ1.4 — usa User-Agent se deviceId não vier no body
+        if (dto.getDeviceId() == null || dto.getDeviceId().isBlank()) {
+            dto.setDeviceId(request.getHeader("User-Agent"));
+        }
 
         LoginResponse loginResponse =
                 authenticationService.login(dto);
@@ -60,5 +67,17 @@ public class AuthenticationController {
         return ResponseEntity.ok()
                 .headers(headers)
                 .body(user);
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<UserDTO> refresh(@RequestHeader("X-Refresh-Token") String refreshToken) {
+        LoginResponse response = authenticationService.refreshToken(refreshToken);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.AUTHORIZATION, response.getTokenType() + " " + response.getToken());
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(response.getUser());
     }
 }

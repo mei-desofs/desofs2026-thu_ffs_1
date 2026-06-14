@@ -96,6 +96,7 @@ public class PasswordService implements IPasswordService {
         // store encoded password on the user
         user.setPassword(encodedPassword);
         user.setPasswordChangedAt(LocalDateTime.now());
+        user.setTokenVersion(user.getTokenVersion() + 1);
         userRepository.save(user);
     }
 
