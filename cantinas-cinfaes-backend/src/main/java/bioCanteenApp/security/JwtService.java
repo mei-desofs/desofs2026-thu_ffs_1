@@ -1,10 +1,15 @@
 package bioCanteenApp.security;
 
+import bioCanteenApp.authentication.dto.LoginResponse;
+import bioCanteenApp.authentication.exception.InvalidCredentialsException;
 import bioCanteenApp.users.domain.User;
+import bioCanteenApp.users.mapper.UserMapper;
+import bioCanteenApp.users.repository.IUserRepo;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,12 +17,17 @@ import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
 import java.security.Key;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class JwtService {
+
+    private final IUserRepo userRepo;
+    private final UserMapper userMapper;
 
     private static final Logger log = LoggerFactory.getLogger(JwtService.class);
 
@@ -28,8 +38,8 @@ public class JwtService {
     @Value("${jwt.secret:}")
     private String jwtSecret;
 
-    // Default expiration is 24 hours
-    private static final long EXPIRATION_TIME = 1000 * 60 * 60 * 24;
+    // Default expiration is 20 minutos
+    private static final long EXPIRATION_TIME = 1000 * 60 * 20;
 
     @PostConstruct
     public void init() {
@@ -52,6 +62,8 @@ public class JwtService {
             claims.put("role", user.getRole().name());
         }
 
+        claims.put("tokenVersion", user.getTokenVersion());
+
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(user.getEmail())
@@ -59,6 +71,29 @@ public class JwtService {
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(secretKey)
                 .compact();
+    }
+
+    public LoginResponse refreshToken(String refreshToken) {
+
+        User user = userRepo.findByRefreshToken(refreshToken)
+                .orElseThrow(() -> new InvalidCredentialsException("Invalid refresh token."));
+
+        if (user.getRefreshTokenExpiry().isBefore(LocalDateTime.now())) {
+            throw new InvalidCredentialsException("Refresh token expired. Please log in again.");
+        }
+
+        String newJwtToken = generateToken(user);
+
+        return LoginResponse.builder()
+                .token(newJwtToken)
+                .refreshToken(refreshToken) // mantém o mesmo refresh token
+                .tokenType("Bearer")
+                .user(userMapper.toDTO(user))
+                .build();
+    }
+
+    public String generateRefreshToken() {
+        return java.util.UUID.randomUUID().toString();
     }
 
     // Note: token validation and parsing are handled by the OAuth2 Resource Server configuration (JwtDecoder).
