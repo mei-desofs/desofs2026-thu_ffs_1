@@ -47,7 +47,7 @@ jobs:
           SHA: ${{ github.sha }}
         run: |
           if gh release view "$TAG" &>/dev/null; then
-            echo "Release $TAG já existe, a saltar"
+            echo "Release $TAG already exists, skipping"
           else
             PRERELEASE_FLAG=""
             if [ "$PRERELEASE" = "true" ]; then
