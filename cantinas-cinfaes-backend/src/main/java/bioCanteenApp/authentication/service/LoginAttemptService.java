@@ -44,7 +44,7 @@ public class LoginAttemptService {
                 user.setLockedUntil(lockUntil);
 
                 log.warn("Conta bloqueada por {} minutos: {}", LOCK_MINUTES, email);
-                emailService.sendLockNotification(email, LOCK_MINUTES); // REQ1.3
+                emailService.sendLockNotification(email, LOCK_MINUTES, MAX_ATTEMPTS); // REQ1.3
             }
 
             userRepository.save(user);

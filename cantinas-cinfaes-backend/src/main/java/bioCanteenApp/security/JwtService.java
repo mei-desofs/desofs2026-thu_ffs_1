@@ -38,8 +38,8 @@ public class JwtService {
     @Value("${jwt.secret:}")
     private String jwtSecret;
 
-    // Default expiration is 24 hours
-    private static final long EXPIRATION_TIME = 1000 * 60 * 60 * 24;
+    // Default expiration is 20 minutos
+    private static final long EXPIRATION_TIME = 1000 * 60 * 20;
 
     @PostConstruct
     public void init() {
@@ -61,6 +61,8 @@ public class JwtService {
         if (user.getRole() != null) {
             claims.put("role", user.getRole().name());
         }
+
+        claims.put("tokenVersion", user.getTokenVersion());
 
         return Jwts.builder()
                 .setClaims(claims)

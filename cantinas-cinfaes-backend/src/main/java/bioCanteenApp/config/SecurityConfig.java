@@ -37,10 +37,10 @@ public class SecurityConfig {
             var jwt = delegate.decode(token);
 
             String email = jwt.getSubject();
-            Integer tokenVersion = jwt.getClaim("tokenVersion");
+            long tokenVersion = ((Number) jwt.getClaim("tokenVersion")).longValue();
 
             userRepo.findByEmail(email).ifPresent(user -> {
-                if (tokenVersion == null || tokenVersion != user.getTokenVersion()) {
+                if (tokenVersion != user.getTokenVersion()) {
                     throw new org.springframework.security.oauth2.jwt.BadJwtException(
                             "Session invalidated. Please log in again.");
                 }

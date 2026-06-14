@@ -51,19 +51,23 @@ public class EmailService implements IEmailService {
     }
 
     @Override
-    public void sendLockNotification(String toEmail, int lockMinutes) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(toEmail);
-        message.setSubject("BioCantinas — Account Temporarily Locked");
-        message.setText(
-                "Hello,\n\n"
-                        + "We detected " + lockMinutes + " consecutive failed login attempts on your account.\n\n"
-                        + "For your security, your account has been temporarily locked.\n"
-                        + "You may try again in " + lockMinutes + " minutes.\n\n"
-                        + "If this was not you, we recommend changing your password after regaining access.\n\n"
-                        + "— The BioCantinas Team"
-        );
-        mailSender.send(message);
+    public void sendLockNotification(String toEmail, int lockMinutes, int failedAttempts) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(toEmail);
+            message.setSubject("BioCantinas — Account Temporarily Locked");
+            message.setText(
+                    "Hello,\n\n"
+                            + "We detected " + failedAttempts + " consecutive failed login attempts on your account.\n\n"
+                            + "For your security, your account has been temporarily locked.\n"
+                            + "You may try again in " + lockMinutes + " minutes.\n\n"
+                            + "If this was not you, we recommend changing your password after regaining access.\n\n"
+                            + "— The BioCantinas Team"
+            );
+            mailSender.send(message);
+        } catch (Exception e){
+            System.out.println("Failed to send lock notification email: " + e.getMessage());
+        }
     }
 
     @Override
