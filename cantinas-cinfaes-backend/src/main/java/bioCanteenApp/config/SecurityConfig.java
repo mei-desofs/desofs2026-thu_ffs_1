@@ -1,5 +1,6 @@
 package bioCanteenApp.config;
 
+import bioCanteenApp.users.repository.IUserRepo;
 import io.jsonwebtoken.io.Decoders;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -26,17 +27,31 @@ public class SecurityConfig {
     }
 
     @Bean
-    public JwtDecoder jwtDecoder() {
-        if (jwtSecret == null || jwtSecret.isBlank()) {
-            throw new IllegalStateException("JWT secret is not configured. Set 'jwt.secret' (base64-encoded 256-bit key) in application.properties or environment variables to enable JWT decoding for the resource server.");
-        }
+    public JwtDecoder tokenVersionValidatingDecoder(IUserRepo userRepo) {
+        NimbusJwtDecoder delegate = NimbusJwtDecoder
+                .withSecretKey(new javax.crypto.spec.SecretKeySpec(
+                        Decoders.BASE64.decode(jwtSecret), "HmacSHA256"))
+                .build();
 
-        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
-        return NimbusJwtDecoder.withSecretKey(new javax.crypto.spec.SecretKeySpec(keyBytes, "HmacSHA256")).build();
+        return token -> {
+            var jwt = delegate.decode(token);
+
+            String email = jwt.getSubject();
+            Integer tokenVersion = jwt.getClaim("tokenVersion");
+
+            userRepo.findByEmail(email).ifPresent(user -> {
+                if (tokenVersion == null || tokenVersion != user.getTokenVersion()) {
+                    throw new org.springframework.security.oauth2.jwt.BadJwtException(
+                            "Session invalidated. Please log in again.");
+                }
+            });
+
+            return jwt;
+        };
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, IUserRepo userRepo) throws Exception {
 
         JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
         grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
@@ -64,7 +79,9 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> jwt.jwtAuthenticationConverter(authenticationConverter))
+                        .jwt(jwt -> jwt
+                                .jwtAuthenticationConverter(authenticationConverter)
+                                .decoder(tokenVersionValidatingDecoder(userRepo)))
                 )
                 .build();
     }

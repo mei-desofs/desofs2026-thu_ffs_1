@@ -48,13 +48,34 @@ public class AuthenticationService implements IAuthenticationService {
         user.setLastDeviceId(dto.getDeviceId());
         userRepo.save(user);
 
-        // emailService.alertIfNewDevice(user, dto.getDeviceId());
-
-
         String jwtToken = jwtService.generateToken(user);
+        String refreshToken = jwtService.generateRefreshToken();
+
+        user.setRefreshToken(refreshToken);
+        user.setRefreshTokenExpiry(LocalDateTime.now().plusDays(7));
+        userRepo.save(user);
 
         return LoginResponse.builder()
                 .token(jwtToken)
+                .tokenType("Bearer")
+                .user(userMapper.toDTO(user))
+                .build();
+    }
+
+    @Override
+    public LoginResponse refreshToken(String refreshToken) {
+        User user = userRepo.findByRefreshToken(refreshToken)
+                .orElseThrow(() -> new InvalidCredentialsException("Invalid refresh token."));
+
+        if (user.getRefreshTokenExpiry().isBefore(LocalDateTime.now())) {
+            throw new InvalidCredentialsException("Refresh token expired. Please log in again.");
+        }
+
+        String newJwtToken = jwtService.generateToken(user);
+
+        return LoginResponse.builder()
+                .token(newJwtToken)
+                .refreshToken(refreshToken)
                 .tokenType("Bearer")
                 .user(userMapper.toDTO(user))
                 .build();

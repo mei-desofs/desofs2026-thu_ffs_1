@@ -53,6 +53,15 @@ public class User {
     @Column
     private String lastDeviceId;
 
+    @Column(nullable = false)
+    private int tokenVersion = 0;
+
+    @Column
+    private String refreshToken;
+
+    @Column
+    private LocalDateTime refreshTokenExpiry;
+
     public User(String email, String name, String password) {
         this.email = email;
         this.name = name;

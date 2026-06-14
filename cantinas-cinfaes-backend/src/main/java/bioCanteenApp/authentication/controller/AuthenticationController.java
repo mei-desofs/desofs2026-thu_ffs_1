@@ -61,4 +61,16 @@ public class AuthenticationController {
                 .headers(headers)
                 .body(user);
     }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<UserDTO> refresh(@RequestHeader("X-Refresh-Token") String refreshToken) {
+        LoginResponse response = authenticationService.refreshToken(refreshToken);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.AUTHORIZATION, response.getTokenType() + " " + response.getToken());
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(response.getUser());
+    }
 }
