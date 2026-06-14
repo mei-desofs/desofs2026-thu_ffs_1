@@ -3,5 +3,9 @@
   "draft": true,
   "packages": {
     ".": {}
-  }
+  },
+  "branches": [
+    { "branch": "main" },
+    { "branch": "dev", "prerelease": true, "prerelease-type": "beta" }
+  ]
 }
