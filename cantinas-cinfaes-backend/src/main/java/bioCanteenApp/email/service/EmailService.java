@@ -16,33 +16,18 @@ public class EmailService implements IEmailService {
         this.mailSender = mailSender;
     }
 
-    public void sendEmail(String toEmail, String resetLink) {
+    @Override
+    public void sendSupplierWelcomeEmail(String toEmail, String token) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(toEmail);
-        message.setSubject("BioCantinas — Password Reset Request");
+        message.setSubject("BioCantinas — Supplier Approved");
         message.setText(
                 "Hello,\n\n"
-                        + "We received a request to reset your BioCantinas password.\n\n"
-                        + "Click the link below to set a new password. "
+                        + "Congratulations! Your supplier application has been approved.\n\n"
+                        + "To activate your account, please set your password using the link below. "
                         + "This link is valid for 20 minutes:\n\n"
-                        + resetLink + "\n\n"
-                        + "If you did not request a password reset, please ignore this email. "
-                        + "Your password will remain unchanged.\n\n"
-                        + "— The BioCantinas Team"
-        );
-        mailSender.send(message);
-    }
-
-    @Override
-    public void sendSupplierWelcomeEmail(String toEmail, String name) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(toEmail);
-        message.setSubject("BioCantinas — Supplier Application Update");
-        message.setText(
-                "Hello " + name + ",\n\n"
-                        + "Thank you for your interest in becoming a BioCantinas supplier.\n\n"
-                        + "After careful review, we regret to inform you that your application "
-                        + "has not been approved at this time.\n\n"
+                        + "http://localhost:8080/api/passwords/activate-account?token=" + token + "\n"
+                        + "If you have any questions, please contact us.\n\n"
                         + "— The BioCantinas Team"
         );
         mailSender.send(message);

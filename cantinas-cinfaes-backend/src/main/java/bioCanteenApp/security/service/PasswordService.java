@@ -118,13 +118,7 @@ public class PasswordService implements IPasswordService {
         // Invalidate any existing tokens for this user
         passwordResetTokenRepo.deleteAllByUserId(user.getId());
 
-        String rawToken = UUID.randomUUID().toString();
-        PasswordResetToken resetToken = new PasswordResetToken(user, rawToken);
-        passwordResetTokenRepo.save(resetToken);
-
-        // REQ2.3: send email with link (token valid 20 min — set inside constructor)
-        String resetLink = "https://biocantinas.app/reset-password?token=" + rawToken;
-        emailService.sendEmail(user.getEmail(), resetLink);
+        sendSupplierActivationEmail(user.getEmail());
     }
 
     @Transactional
@@ -150,5 +144,20 @@ public class PasswordService implements IPasswordService {
 
         // Mark token as used
         resetToken.setUsed(true);
+    }
+
+    @Transactional
+    public void sendSupplierActivationEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("No account found for that email."));
+
+        passwordResetTokenRepo.deleteAllByUserId(user.getId());
+
+        String rawToken = UUID.randomUUID().toString();
+        PasswordResetToken resetToken = new PasswordResetToken(user, rawToken);
+        passwordResetTokenRepo.save(resetToken);
+
+        // Manda o token em plain text para usar no Postman
+        emailService.sendSupplierWelcomeEmail(user.getEmail(), rawToken);
     }
 }
