@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 @Entity
 @Table(name = "users")
@@ -42,6 +43,24 @@ public class User {
     // password changed after six months
     @Column
     private LocalDateTime passwordChangedAt;
+
+    @Column(nullable = false)
+    private int failedAttempts = 0;
+
+    @Column
+    private LocalDateTime lockedUntil;
+
+    @Column
+    private String lastDeviceId;
+
+    @Column(nullable = false)
+    private int tokenVersion = 0;
+
+    @Column
+    private String refreshToken;
+
+    @Column
+    private LocalDateTime refreshTokenExpiry;
 
     public User(String email, String name, String password) {
         this.email = email;
@@ -86,4 +105,13 @@ public class User {
     }
 
     protected User() { }
+
+    public boolean isLocked() {
+        return lockedUntil != null && lockedUntil.isAfter(LocalDateTime.now());
+    }
+
+    public long secondsUntilUnlock() {
+        if (!isLocked()) return 0;
+        return ChronoUnit.SECONDS.between(LocalDateTime.now(), lockedUntil);
+    }
 }

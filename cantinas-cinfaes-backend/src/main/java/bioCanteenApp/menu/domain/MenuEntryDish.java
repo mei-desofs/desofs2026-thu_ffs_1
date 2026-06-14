@@ -23,7 +23,7 @@ public class MenuEntryDish {
     @JoinColumn(name = "dish_id", nullable = false)
     private Dish dish;
 
-    protected MenuEntryDish() {}
+    public MenuEntryDish() {}
 
     public MenuEntryDish(MenuEntry entry, Dish dish) {
         this.menuEntry = entry;

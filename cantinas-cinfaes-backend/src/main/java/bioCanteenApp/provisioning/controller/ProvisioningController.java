@@ -15,6 +15,7 @@ import bioCanteenApp.provisioning.dto.ProvisioningItemDTO;
 import bioCanteenApp.provisioning.service.IProvisioningService;
 import bioCanteenApp.provisioning.service.ProvisioningService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,26 +27,31 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/provisioning")
 @RequiredArgsConstructor
+@Slf4j
 public class ProvisioningController {
 
     private final IProvisioningService provisioningService;
     private final IProductMapper productMapper;
     private final IMenuService menuService;
     private final IMenuMapper menuMapper;
-    private final IMenuRepo menuRepository;
 
-    /**
-     * Calcula as quantidades planejadas para um menu
-     */
     @GetMapping("/planned/{id}")
-    public ResponseEntity<List<ProductQuantityDTO>> getPlannedQuantities(@PathVariable("id") Long id) {
+    public ResponseEntity<List<ProductQuantityDTO>> getPlannedQuantities(
+            @PathVariable("id") Long id
+    ) {
+
+        log.info("Fetching planned quantities for menu id: {}", id);
+
         MenuDto menu = menuService.getAllMenus().stream()
                 .filter(m -> m.getId().equals(id))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Menu not found with id: " + id));
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Menu not found with id: " + id));
 
         Map<Product, Double> planned =
-                provisioningService.getPlannedQuantities(menuMapper.toDomain(menu));
+                provisioningService.getPlannedQuantities(
+                        menuMapper.toDomain(menu)
+                );
 
         List<ProductQuantityDTO> dtoList = planned.entrySet().stream()
                 .map(e -> ProductQuantityDTO.builder()
@@ -54,25 +60,33 @@ public class ProvisioningController {
                         .build())
                 .collect(Collectors.toList());
 
+        log.info(
+                "Calculated planned quantities for {} products in menu id: {}",
+                dtoList.size(),
+                id
+        );
+
         return ResponseEntity.ok(dtoList);
     }
 
-    /**
-     * Ajusta quantidades com base em reservas reais e gera alertas se houver desvio > 10%
-     */
     @PostMapping("/adjusted/{menuId}")
     public ResponseEntity<List<ProductQuantityDTO>> getAdjustedQuantities(
             @PathVariable("menuId") Long menuId,
             @RequestBody List<ProductQuantityDTO> plannedDtos
     ) {
 
+        log.info("Fetching adjusted quantities for menu id: {}", menuId);
+
         MenuDto menu = menuService.getAllMenus().stream()
                 .filter(m -> m.getId().equals(menuId))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Menu not found with id: " + menuId));
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Menu not found with id: " + menuId));
 
         Map<Product, Double> adjusted =
-                provisioningService.getAdjustedQuantities(menuMapper.toDomain(menu));
+                provisioningService.getAdjustedQuantities(
+                        menuMapper.toDomain(menu)
+                );
 
         List<ProductQuantityDTO> dtoList = adjusted.entrySet().stream()
                 .map(e -> ProductQuantityDTO.builder()
@@ -81,6 +95,12 @@ public class ProvisioningController {
                         .build())
                 .collect(Collectors.toList());
 
+        log.info(
+                "Calculated adjusted quantities for {} products in menu id: {}",
+                dtoList.size(),
+                menuId
+        );
+
         return ResponseEntity.ok(dtoList);
     }
 
@@ -88,10 +108,14 @@ public class ProvisioningController {
     public ResponseEntity<List<ProductQuantityDTO>> findPlanned(
             @PathVariable("menuId") Long menuId
     ) {
+
+        log.info("Finding stored planned quantities for menu id: {}", menuId);
+
         MenuDto menu = menuService.getAllMenus().stream()
                 .filter(m -> m.getId().equals(menuId))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Menu not found with id: " + menuId));
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Menu not found with id: " + menuId));
 
         return provisioningService.findPlanned(menuMapper.toDomain(menu))
                 .map(map ->
@@ -111,11 +135,14 @@ public class ProvisioningController {
     public ResponseEntity<List<ProductQuantityDTO>> findAdjusted(
             @PathVariable("menuId") Long menuId
     ) {
+
+        log.info("Finding stored adjusted quantities for menu id: {}", menuId);
+
         MenuDto menu = menuService.getAllMenus().stream()
                 .filter(m -> m.getId().equals(menuId))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Menu not found with id: " + menuId));
-
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Menu not found with id: " + menuId));
 
         return provisioningService.findAdjusted(menuMapper.toDomain(menu))
                 .map(map ->
@@ -131,56 +158,114 @@ public class ProvisioningController {
                 .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
-    /**
-     * Gera o plano de produção PREVISTO (distribuído por fornecedores)
-     */
     @GetMapping("/production-plan/planned/{menuId}")
-    public ResponseEntity<List<ProductionOrderDTO>> getPlannedProductionPlan(@PathVariable("menuId") Long menuId) {
+    public ResponseEntity<List<ProductionOrderDTO>> getPlannedProductionPlan(
+            @PathVariable("menuId") Long menuId
+    ) {
+
+        log.info(
+                "Generating planned production plan for menu id: {}",
+                menuId
+        );
+
         MenuDto menuDto = menuService.getAllMenus().stream()
                 .filter(m -> m.getId().equals(menuId))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Menu not found"));
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Menu not found"));
 
         Menu menu = menuMapper.toDomain(menuDto);
-        Map<Product, Double> plannedNeeds = provisioningService.getPlannedQuantities(menu);
 
-        List<ProductionOrderDTO> plan = provisioningService.generateProductionPlan(menu, plannedNeeds);
+        Map<Product, Double> plannedNeeds =
+                provisioningService.getPlannedQuantities(menu);
+
+        List<ProductionOrderDTO> plan =
+                provisioningService.generateProductionPlan(
+                        menu,
+                        plannedNeeds
+                );
+
+        log.info(
+                "Generated planned production plan with {} orders for menu id: {}",
+                plan.size(),
+                menuId
+        );
 
         return ResponseEntity.ok(plan);
     }
 
-    /**
-     * Gera o plano de produção AJUSTADO (após reservas, distribuído por fornecedores)
-     */
     @GetMapping("/production-plan/adjusted/{menuId}")
-    public ResponseEntity<List<ProductionOrderDTO>> getAdjustedProductionPlan(@PathVariable("menuId") Long menuId) {
+    public ResponseEntity<List<ProductionOrderDTO>> getAdjustedProductionPlan(
+            @PathVariable("menuId") Long menuId
+    ) {
+
+        log.info(
+                "Generating adjusted production plan for menu id: {}",
+                menuId
+        );
+
         MenuDto menuDto = menuService.getAllMenus().stream()
                 .filter(m -> m.getId().equals(menuId))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Menu not found"));
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Menu not found"));
 
         Menu menu = menuMapper.toDomain(menuDto);
-        Map<Product, Double> adjustedNeeds = provisioningService.getAdjustedQuantities(menu);
 
-        List<ProductionOrderDTO> plan = provisioningService.generateProductionPlan(menu, adjustedNeeds);
+        Map<Product, Double> adjustedNeeds =
+                provisioningService.getAdjustedQuantities(menu);
+
+        List<ProductionOrderDTO> plan =
+                provisioningService.generateProductionPlan(
+                        menu,
+                        adjustedNeeds
+                );
+
+        log.info(
+                "Generated adjusted production plan with {} orders for menu id: {}",
+                plan.size(),
+                menuId
+        );
 
         return ResponseEntity.ok(plan);
     }
 
     @GetMapping("/planned/update/{menuId}")
-    public ResponseEntity<List<ProductQuantityDTO>> getUpdatedPlanned(@PathVariable("menuId") Long menuId) {
+    public ResponseEntity<List<ProductQuantityDTO>> getUpdatedPlanned(
+            @PathVariable("menuId") Long menuId
+    ) {
+
+        log.info(
+                "Updating planned quantities for menu id: {}",
+                menuId
+        );
 
         MenuDto menuDto = menuService.getAllMenus().stream()
                 .filter(m -> m.getId().equals(menuId))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Menu not found with id: " + menuId));
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Menu not found with id: " + menuId));
 
         Menu menu = menuMapper.toDomain(menuDto);
+
         Map<Product, Double> result;
 
         if (menu.getStatus() != MenuStatus.CLOSED) {
+
+            log.info(
+                    "Recalculating planned quantities for open menu id: {}",
+                    menuId
+            );
+
             result = provisioningService.recalculatePlanned(menu);
+
         } else {
+
+            log.info(
+                    "Fetching stored planned quantities for closed menu id: {}",
+                    menuId
+            );
+
             result = provisioningService.getPlannedQuantities(menu);
         }
 
@@ -191,7 +276,12 @@ public class ProvisioningController {
                         .build())
                 .collect(Collectors.toList());
 
+        log.info(
+                "Updated planned quantities generated for {} products in menu id: {}",
+                dtoList.size(),
+                menuId
+        );
+
         return ResponseEntity.ok(dtoList);
     }
-
 }

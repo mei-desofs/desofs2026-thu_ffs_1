@@ -1,48 +1,352 @@
-name: "DAST - OWASP ZAP"
+#dast.yml — Full Security Scan + CVE Scan + Artifact Scanning + DAST + Final SBOM — Release pipeline
+
+name: "Release"
 
 on:
   push:
-    branches:
-      - main
-      - dev
-  workflow_dispatch:
+    tags:
+      - "v*"
 
 jobs:
+  # ──────────────────────────────────────────────
+  # Full Security Scan — CodeQL + Semgrep
+  # ─────────────────────────────────────────────
+  full-security-scan:
+    name: Full Security Scan (CodeQL + Semgrep)
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: temurin
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: java
+      - name: Build with Maven
+        working-directory: cantinas-cinfaes-backend
+        run: mvn clean package -DskipTests
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+      - name: Semgrep Full Scan
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/java
+            p/owasp-top-ten
+            p/secrets
+      - name: Fail on High or Critical Code Scanning Alerts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+
+          high_count=$(gh api \
+            "/repos/${REPO}/code-scanning/alerts" \
+            -f state=open \
+            -f severity=high \
+            -f ref="${REF}" \
+            -f per_page=100 \
+            --jq 'length')
+
+          critical_count=$(gh api \
+            "/repos/${REPO}/code-scanning/alerts" \
+            -f state=open \
+            -f severity=critical \
+            -f ref="${REF}" \
+            -f per_page=100 \
+            --jq 'length')
+
+          total_count=$((high_count + critical_count))
+
+          if [ "$total_count" -gt 0 ]; then
+            echo "Found ${total_count} open high/critical code scanning alert(s)."
+            exit 1
+          fi
+
+  # ──────────────────────────────────────────────
+  # Full CVE Scan — OWASP Dependency Check + Trivy Filesystem
+  # ─────────────────────────────────────────────
+  full-cve-scan:
+    name: Full CVE Scan (OWASP DC + Trivy FS)
+    runs-on: ubuntu-latest
+    needs: full-security-scan
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: temurin
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      - name: OWASP Dependency Check
+        working-directory: cantinas-cinfaes-backend
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: >
+          mvn org.owasp:dependency-check-maven:check
+          -Dnvd.api.key=$NVD_API_KEY
+          -Dnvd.api.delay=2000
+          -Dnvd.api.maxRetryCount=10
+          -DfailBuildOnCVSS=0
+      - name: Trivy Filesystem Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          exit-code: '1'
+          severity: HIGH,CRITICAL
+      - name: Upload CVE Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-cve-report
+          path: cantinas-cinfaes-backend/target/dependency-check-report.html
+
+  # ──────────────────────────────────────────────
+  # Artifact Scanning
+  # ──────────────────────────────────────────────
+  artifact-scanning:
+    name: Artifact Scanning (Trivy)
+    runs-on: ubuntu-latest
+    needs: full-cve-scan
+    permissions:
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: temurin
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      - name: Build JAR
+        working-directory: cantinas-cinfaes-backend
+        env:
+          DB_URL: ${{ secrets.DB_URL }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          JWT_TOKEN: ${{ secrets.JWT_TOKEN }}
+        run: mvn clean package -DskipTests
+      - name: Build Docker image
+        run: docker build -t myapp:${{ github.sha }} cantinas-cinfaes-backend/
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: myapp:${{ github.sha }}
+          format: sarif
+          output: trivy-results.sarif
+          severity: HIGH,CRITICAL
+      - uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
+
+  # ──────────────────────────────────────────────
+  # Dynamic Analysis — OWASP ZAP
+  # ──────────────────────────────────────────────
   dast:
-    name: OWASP ZAP Scan
+    name: Dynamic Analysis (OWASP ZAP)
     runs-on: ubuntu-latest
     permissions:
       contents: read
       issues: write
-
+      security-events: write
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: testpassword
+          MYSQL_DATABASE: cantinasDB
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=5
     steps:
-      - name: "Check out Git repository"
-        uses: actions/checkout@v4.0.0
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: temurin
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      - name: Build with Maven
+        working-directory: cantinas-cinfaes-backend
+        run: mvn clean package -DskipTests
+      - name: Start Spring Boot application
+        working-directory: cantinas-cinfaes-backend
+        run: java -jar target/*.jar &
+        env:
+          DB_URL: ${{ secrets.DB_URL }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          JWT_TOKEN: ${{ secrets.JWT_TOKEN }}
+      - name: Wait for application to be ready
+        run: |
+          echo "Waiting for Spring Boot to start..."
+          for i in {1..24}; do
+            if curl -sf http://localhost:8080/actuator/health; then
+              echo "Application is up!"
+              exit 0
+            fi
+            echo "Attempt $i/24 — retrying in 5s..."
+            sleep 5
+          done
+          echo "Application never became healthy after 120s"
+          exit 1
+      - name: OWASP ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          target: 'http://localhost:8080'
+          fail_action: true
+          issue_title: 'ZAP Baseline Scan Report'
+      - name: Upload ZAP Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-report
+          path: |
+            report_html.html
+            report_md.md
+            report_json.json
 
-      - name: "Set up Java 21"
+  # ──────────────────────────────────────────────
+  # Final SBOM Generation — CycloneDX Maven Plugin
+  # ──────────────────────────────────────────────
+  final-sbom:
+    name: Final SBOM (CycloneDX)
+    runs-on: ubuntu-latest
+    needs: full-cve-scan
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: temurin
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      - name: Generate Final SBOM
+        working-directory: cantinas-cinfaes-backend
+        run: mvn org.cyclonedx:cyclonedx-maven-plugin:makeAggregateBom
+      - name: Upload Final SBOM as Release Asset
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-sbom-${{ github.ref_name }}
+          path: cantinas-cinfaes-backend/target/bom.json
+
+  # ──────────────────────────────────────────────
+  # Release Publication — Promote draft release to published
+  # ──────────────────────────────────────────────
+  # This job only runs if all security/scan jobs above have passed.
+  # It assumes release-please has already created a DRAFT release for this tag.
+  # We attach the JAR to that draft and then promote it from draft -> published.
+  # If any upstream job fails, the release remains as a draft (invisible to consumers).
+  release:
+    name: Release Publication
+    runs-on: ubuntu-latest
+    needs: [artifact-scanning, dast, final-sbom]
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
         uses: actions/setup-java@v4
         with:
           java-version: 21
           distribution: temurin
 
-      - name: "Build with Maven"
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      - name: Build project
         working-directory: cantinas-cinfaes-backend
         run: mvn clean package -DskipTests
 
-      - name: "Start Spring Boot application"
-        working-directory: cantinas-cinfaes-backend
-        run: java -jar target/*.jar &
-        env:
-          SPRING_PROFILES_ACTIVE: test
-
-      - name: "Wait for application to be ready"
-        run: |
-          echo "Waiting for Spring Boot to start..."
-          sleep 30
-          curl --retry 10 --retry-delay 3 --retry-connrefused http://localhost:8080/actuator/health
-
-      - name: "OWASP ZAP Baseline Scan"
-        uses: zaproxy/action-baseline@v0.14.0
+      - name: Download Final SBOM artifact
+        uses: actions/download-artifact@v4
         with:
-          target: 'http://localhost:8080'
-          fail_action: false
+          name: final-sbom-${{ github.ref_name }}
+          path: ./sbom
+
+      - name: Locate draft release for this tag
+        id: find_release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          echo "Looking for draft release with tag $TAG..."
+          RELEASE_ID=$(gh api \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/$REPO/releases" \
+            --jq ".[] | select(.tag_name == \"$TAG\") | .id")
+
+          if [ -z "$RELEASE_ID" ]; then
+            echo "ERROR: No release found for tag $TAG."
+            echo "release-please should have created a draft release before this workflow ran."
+            exit 1
+          fi
+          echo "Found release ID: $RELEASE_ID"
+          echo "release_id=$RELEASE_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Upload JAR and SBOM to draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          echo "Uploading assets to draft release $TAG..."
+          gh release upload "$TAG" \
+            cantinas-cinfaes-backend/target/*.jar \
+            ./sbom/bom.json \
+            --clobber
+
+      - name: Promote draft release to published
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RELEASE_ID="${{ steps.find_release.outputs.release_id }}"
+          echo "Promoting release $RELEASE_ID from draft to published..."
+          gh api \
+            --method PATCH \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${{ github.repository }}/releases/$RELEASE_ID" \
+            -F draft=false
+          echo "Release published successfully."

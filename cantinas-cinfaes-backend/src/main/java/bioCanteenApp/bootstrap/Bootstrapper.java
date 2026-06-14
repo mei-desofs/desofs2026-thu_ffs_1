@@ -37,6 +37,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import org.springframework.security.crypto.password.PasswordEncoder; // added
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -61,6 +62,7 @@ public class Bootstrapper implements CommandLineRunner {
     private final ICanteenRepo canteenRepository;
     private final IDiningHallRepository diningHallRepository;
     private final IWasteRepo wasteRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
@@ -100,17 +102,17 @@ public class Bootstrapper implements CommandLineRunner {
         Canteen c2 = canteenRepository.findByName("Cantina ISEP").orElseThrow();
         DiningHall h2 = diningHallRepository.findByName("Refeitório Engenharia").orElseThrow();
 
-        userRepository.save(new User("admin@biocanteens.com", "Admin", "Admin#123", Role.ADMIN));
-        userRepository.save(new User("dietitian@biocanteens.com", "Dietitian", "Dietitian#123", Role.DIETITIAN));
-        userRepository.save(new User("user@biocanteens.com", "User", "User#123", Role.USER));
-        userRepository.save(new User("canteenmanager@cantinascinfaes.com", "Manager", "CanteenManager#123", Role.CANTEEN_MANAGER, c1));
-        userRepository.save(new User("canteenmanager2@cantinascinfaes.com", "Manager 2", "CanteenManager#123", Role.CANTEEN_MANAGER, c2));
-        userRepository.save(new User("hallmanager@cantinascinfaes.com", "Hall Manager", "HallManager#123", Role.DINING_HALL_MANAGER, h1));
-        userRepository.save(new User("hallmanager2@cantinascinfaes.com", "Hall Manager 2", "HallManager#123", Role.DINING_HALL_MANAGER, h2));
-        userRepository.save(new User("networkmanager@cantinascinfaes.com", "Network Manager", "NetworkManager#123", Role.NETWORK_MANAGER));
+        userRepository.save(new User("admin@biocanteens.com", "Admin", passwordEncoder.encode("Admin#123"), Role.ADMIN));
+        userRepository.save(new User("dietitian@biocanteens.com", "Dietitian", passwordEncoder.encode("Dietitian#123"), Role.DIETITIAN));
+        userRepository.save(new User("user@biocanteens.com", "User", passwordEncoder.encode("User#123"), Role.USER));
+        userRepository.save(new User("canteenmanager@cantinascinfaes.com", "Manager", passwordEncoder.encode("CanteenManager#123"), Role.CANTEEN_MANAGER, c1));
+        userRepository.save(new User("canteenmanager2@cantinascinfaes.com", "Manager 2", passwordEncoder.encode("CanteenManager#123"), Role.CANTEEN_MANAGER, c2));
+        userRepository.save(new User("hallmanager@cantinascinfaes.com", "Hall Manager", passwordEncoder.encode("HallManager#123"), Role.DINING_HALL_MANAGER, h1));
+        userRepository.save(new User("hallmanager2@cantinascinfaes.com", "Hall Manager 2", passwordEncoder.encode("HallManager#123"), Role.DINING_HALL_MANAGER, h2));
+        userRepository.save(new User("networkmanager@cantinascinfaes.com", "Network Manager", passwordEncoder.encode("NetworkManager#123"), Role.NETWORK_MANAGER));
 
         for (int i = 1; i <= 15; i++) {
-            userRepository.save(new User("tester" + i + "@test.com", "Tester " + i, "Pass#123", Role.USER));
+            userRepository.save(new User("tester" + i + "@test.com", "Tester " + i, passwordEncoder.encode("Pass#123"), Role.USER));
         }
     }
 
@@ -309,7 +311,7 @@ public class Bootstrapper implements CommandLineRunner {
         for (int i = 0; i < supData.length; i++) {
 
             User u = userRepository.save(
-                    new User("sup" + i + "@test.pt", supData[i][0], "Pass#123", Role.USER)
+                    new User("sup" + i + "@test.pt", supData[i][0], passwordEncoder.encode("Pass#123"), Role.USER)
             );
 
             List<SupplierCapacity> caps = new ArrayList<>();

@@ -11,4 +11,5 @@ public interface IUserRepo {
     void delete(String email);
     User findById(Long id);
     User findCentralCanteenManager();
+    Optional<User> findByRefreshToken(String refreshToken);
 }
