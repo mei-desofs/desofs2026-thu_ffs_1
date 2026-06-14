@@ -46,6 +46,36 @@ jobs:
             p/java
             p/owasp-top-ten
             p/secrets
+      - name: Fail on High or Critical Code Scanning Alerts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+
+          high_count=$(gh api \
+            "/repos/${REPO}/code-scanning/alerts" \
+            -f state=open \
+            -f severity=high \
+            -f ref="${REF}" \
+            -f per_page=100 \
+            --jq 'length')
+
+          critical_count=$(gh api \
+            "/repos/${REPO}/code-scanning/alerts" \
+            -f state=open \
+            -f severity=critical \
+            -f ref="${REF}" \
+            -f per_page=100 \
+            --jq 'length')
+
+          total_count=$((high_count + critical_count))
+
+          if [ "$total_count" -gt 0 ]; then
+            echo "Found ${total_count} open high/critical code scanning alert(s)."
+            exit 1
+          fi
 
   # ──────────────────────────────────────────────
   # Full CVE Scan — OWASP Dependency Check + Trivy Filesystem
@@ -75,11 +105,13 @@ jobs:
           -Dnvd.api.key=$NVD_API_KEY
           -Dnvd.api.delay=2000
           -Dnvd.api.maxRetryCount=10
+          -DfailBuildOnCVSS=0
       - name: Trivy Filesystem Scan
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: fs
           scan-ref: .
+          exit-code: '1'
           severity: HIGH,CRITICAL
       - name: Upload CVE Report
         if: always()
@@ -195,7 +227,7 @@ jobs:
         uses: zaproxy/action-baseline@v0.14.0
         with:
           target: 'http://localhost:8080'
-          fail_action: false
+          fail_action: true
           issue_title: 'ZAP Baseline Scan Report'
       - name: Upload ZAP Report
         uses: actions/upload-artifact@v4
@@ -235,8 +267,12 @@ jobs:
           path: cantinas-cinfaes-backend/target/bom.json
 
   # ──────────────────────────────────────────────
-  # Release Publication
+  # Release Publication — Promote draft release to published
   # ──────────────────────────────────────────────
+  # This job only runs if all security/scan jobs above have passed.
+  # It assumes release-please has already created a DRAFT release for this tag.
+  # We attach the JAR to that draft and then promote it from draft -> published.
+  # If any upstream job fails, the release remains as a draft (invisible to consumers).
   release:
     name: Release Publication
     runs-on: ubuntu-latest
@@ -264,9 +300,53 @@ jobs:
         working-directory: cantinas-cinfaes-backend
         run: mvn clean package -DskipTests
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+      - name: Download Final SBOM artifact
+        uses: actions/download-artifact@v4
         with:
-          files: cantinas-cinfaes-backend/target/*.jar
+          name: final-sbom-${{ github.ref_name }}
+          path: ./sbom
+
+      - name: Locate draft release for this tag
+        id: find_release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          echo "Looking for draft release with tag $TAG..."
+          RELEASE_ID=$(gh api \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/$REPO/releases" \
+            --jq ".[] | select(.tag_name == \"$TAG\") | .id")
+
+          if [ -z "$RELEASE_ID" ]; then
+            echo "ERROR: No release found for tag $TAG."
+            echo "release-please should have created a draft release before this workflow ran."
+            exit 1
+          fi
+          echo "Found release ID: $RELEASE_ID"
+          echo "release_id=$RELEASE_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Upload JAR and SBOM to draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          echo "Uploading assets to draft release $TAG..."
+          gh release upload "$TAG" \
+            cantinas-cinfaes-backend/target/*.jar \
+            ./sbom/bom.json \
+            --clobber
+
+      - name: Promote draft release to published
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RELEASE_ID="${{ steps.find_release.outputs.release_id }}"
+          echo "Promoting release $RELEASE_ID from draft to published..."
+          gh api \
+            --method PATCH \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${{ github.repository }}/releases/$RELEASE_ID" \
+            -F draft=false
+          echo "Release published successfully."
