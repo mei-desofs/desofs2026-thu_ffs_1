@@ -34,17 +34,15 @@ public class EmailService implements IEmailService {
     }
 
     @Override
-    public void sendSupplierWelcomeEmail(String toEmail, String temporaryPassword) {
+    public void sendSupplierWelcomeEmail(String toEmail, String name) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(toEmail);
-        message.setSubject("BioCantinas — Your Supplier Account Has Been Approved");
+        message.setSubject("BioCantinas — Supplier Application Update");
         message.setText(
-                "Hello,\n\n"
-                        + "Congratulations! Your supplier application has been approved.\n\n"
-                        + "Your account credentials are:\n"
-                        + "  Email: " + toEmail + "\n"
-                        + "  Temporary Password: " + temporaryPassword + "\n\n"
-                        + "Please log in and change your password immediately.\n\n"
+                "Hello " + name + ",\n\n"
+                        + "Thank you for your interest in becoming a BioCantinas supplier.\n\n"
+                        + "After careful review, we regret to inform you that your application "
+                        + "has not been approved at this time.\n\n"
                         + "— The BioCantinas Team"
         );
         mailSender.send(message);
@@ -82,6 +80,20 @@ public class EmailService implements IEmailService {
                         + "  Time:    " + loginTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) + "\n\n"
                         + "If this was you, no action is needed.\n"
                         + "If you do not recognise this login, change your password immediately.\n\n"
+                        + "— The BioCantinas Team"
+        );
+        mailSender.send(message);
+    }
+
+    public void sendSupplierRejectionEmail(String toEmail, String name) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(toEmail);
+        message.setSubject("BioCantinas — Supplier Application Update");
+        message.setText(
+                "Hello " + name + ",\n\n"
+                        + "Thank you for your interest in becoming a BioCantinas supplier.\n\n"
+                        + "After careful review, we regret to inform you that your application "
+                        + "has not been approved at this time.\n\n"
                         + "— The BioCantinas Team"
         );
         mailSender.send(message);

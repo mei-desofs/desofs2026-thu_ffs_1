@@ -62,46 +62,28 @@ public class SupplierService implements ISupplierService {
         SupplierApplication application = supplierRepo.findByEmail(dto.getEmail())
                 .orElseThrow(() -> new RuntimeException("Application not found for email: " + dto.getEmail()));
 
-        application.setStatus(SupplierApplicationStatus.APPROVED);
-        supplierRepo.save(application);
+        if (application.getInterviewStatus() != InterviewStatus.APPROVED) {
+            throw new IllegalStateException("Cannot approve supplier: interview not passed.");
+        }
 
-        String temporaryPassword = generateTemporaryPassword();
         userRepo.findByEmail(dto.getEmail()).orElseGet(() -> {
-            User supplierUser = new User(dto.getEmail(), application.getName(),
-                    passwordEncoder.encode(temporaryPassword), Role.USER);
-            return userRepo.save(supplierUser);
+            User newUser = new User(
+                    dto.getEmail(),
+                    application.getName(),
+                    passwordEncoder.encode(UUID.randomUUID().toString()),
+                    Role.USER
+            );
+            return userRepo.save(newUser);
         });
 
-        emailService.sendSupplierWelcomeEmail(dto.getEmail(), temporaryPassword);
+        emailService.sendSupplierWelcomeEmail(dto.getEmail(), dto.getName());
 
-        Optional<Supplier> supplier = supplierRepo.findAll().stream()
+        Supplier supplier = supplierRepo.findAll().stream()
                 .filter(s -> s.getUser().getEmail().equals(dto.getEmail()))
-                .findFirst();
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Supplier not found after approval: " + dto.getEmail()));
 
-        return supplier.map(supplierMapper::toDTO)
-                .orElseThrow(() -> new RuntimeException("Supplier record not found after approval for: " + dto.getEmail()));
-    }
-
-    private String generateTemporaryPassword() {
-        SecureRandom random = new SecureRandom();
-        String upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        String lower = "abcdefghijklmnopqrstuvwxyz";
-        String digits = "0123456789";
-        String special = "!@#$%^&*";
-
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < 2; i++) sb.append(upper.charAt(random.nextInt(upper.length())));
-        for (int i = 0; i < 4; i++) sb.append(lower.charAt(random.nextInt(lower.length())));
-        for (int i = 0; i < 2; i++) sb.append(digits.charAt(random.nextInt(digits.length())));
-        for (int i = 0; i < 2; i++) sb.append(special.charAt(random.nextInt(special.length())));
-
-        List<Character> chars = new ArrayList<>();
-        for (char c : sb.toString().toCharArray()) chars.add(c);
-        Collections.shuffle(chars, random);
-
-        StringBuilder result = new StringBuilder();
-        for (char c : chars) result.append(c);
-        return result.toString();
+        return supplierMapper.toDTO(supplier);
     }
 
     @Override
@@ -114,11 +96,14 @@ public class SupplierService implements ISupplierService {
         application.setStatus(SupplierApplicationStatus.REJECTED);
         supplierRepo.save(application);
 
-        Optional<Supplier> supplier = supplierRepo.findAll().stream()
-                .filter(s -> s.getUser().getEmail().equals(dto.getEmail()))
-                .findFirst();
+        emailService.sendSupplierRejectionEmail(dto.getEmail(), application.getName()); // ← novo
 
-        return supplierMapper.toDTO(supplier.get());
+        Supplier supplier = supplierRepo.findAll().stream()
+                .filter(s -> s.getUser().getEmail().equals(dto.getEmail()))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Supplier not found after rejection: " + dto.getEmail()));
+
+        return supplierMapper.toDTO(supplier);
     }
 
     @Override
