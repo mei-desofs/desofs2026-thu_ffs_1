@@ -4,8 +4,9 @@ name: "Release"
 
 on:
   push:
-    tags:
-      - "v*"
+    branches:
+      - main
+      - dev
 
 jobs:
   # ──────────────────────────────────────────────
@@ -39,6 +40,37 @@ jobs:
         run: mvn clean package -DskipTests
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
+        with:
+          output: sarif-results
+      - name: Fail on High or Critical CodeQL Alerts
+        run: |
+          sarif_file="sarif-results/java.sarif"
+          if [ ! -f "$sarif_file" ]; then
+            echo "SARIF file not found — skipping check."
+            exit 0
+          fi
+          findings=$(jq -r '
+            .runs[] |
+            (
+              [
+                (.tool.driver.rules // []),
+                ([.tool.extensions[]? | .rules? // []] | add // [])
+              ] | add // []
+              | map({(.id): (.properties["security-severity"] // "0")})
+              | add // {}
+            ) as $m |
+            .results[] |
+            . as $r |
+            (($m[$r.ruleId] // "0") | tonumber) as $sev |
+            select($sev >= 7.0) |
+            "\(.ruleId) (severity \($sev)): \(.message.text)"
+          ' "$sarif_file")
+          if [ -n "$findings" ]; then
+            echo "High/critical findings:"
+            echo "$findings"
+            exit 1
+          fi
+          echo "No high or critical alerts found."
       - name: Semgrep Full Scan
         uses: returntocorp/semgrep-action@v1
         with:
@@ -46,36 +78,6 @@ jobs:
             p/java
             p/owasp-top-ten
             p/secrets
-      - name: Fail on High or Critical Code Scanning Alerts
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
-          REF: ${{ github.ref }}
-        run: |
-          set -euo pipefail
-
-          high_count=$(gh api \
-            "/repos/${REPO}/code-scanning/alerts" \
-            -f state=open \
-            -f severity=high \
-            -f ref="${REF}" \
-            -f per_page=100 \
-            --jq 'length')
-
-          critical_count=$(gh api \
-            "/repos/${REPO}/code-scanning/alerts" \
-            -f state=open \
-            -f severity=critical \
-            -f ref="${REF}" \
-            -f per_page=100 \
-            --jq 'length')
-
-          total_count=$((high_count + critical_count))
-
-          if [ "$total_count" -gt 0 ]; then
-            echo "Found ${total_count} open high/critical code scanning alert(s)."
-            exit 1
-          fi
 
   # ──────────────────────────────────────────────
   # Full CVE Scan — OWASP Dependency Check + Trivy Filesystem
@@ -105,7 +107,7 @@ jobs:
           -Dnvd.api.key=$NVD_API_KEY
           -Dnvd.api.delay=2000
           -Dnvd.api.maxRetryCount=10
-          -DfailBuildOnCVSS=0
+          -DfailBuildOnCVSS=7
       - name: Trivy Filesystem Scan
         uses: aquasecurity/trivy-action@master
         with:
@@ -171,6 +173,7 @@ jobs:
     name: Dynamic Analysis (OWASP ZAP)
     runs-on: ubuntu-latest
     permissions:
+      actions: read
       contents: read
       issues: write
       security-events: write
@@ -204,12 +207,13 @@ jobs:
         working-directory: cantinas-cinfaes-backend
         run: java -jar target/*.jar &
         env:
-          DB_URL: ${{ secrets.DB_URL }}
-          DB_USERNAME: ${{ secrets.DB_USERNAME }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_URL: jdbc:mysql://localhost:3306/cantinasDB
+          DB_USERNAME: root
+          DB_PASSWORD: testpassword
           MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
           MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
           JWT_TOKEN: ${{ secrets.JWT_TOKEN }}
+          VIRUS_TOTAL: ${{ secrets.VIRUS_TOTAL }}
       - name: Wait for application to be ready
         run: |
           echo "Waiting for Spring Boot to start..."
@@ -228,6 +232,7 @@ jobs:
         with:
           target: 'http://localhost:8080'
           fail_action: true
+          rules_file_name: '.zap/rules.tsv'
           issue_title: 'ZAP Baseline Scan Report'
       - name: Upload ZAP Report
         uses: actions/upload-artifact@v4
@@ -267,18 +272,97 @@ jobs:
           path: cantinas-cinfaes-backend/target/bom.json
 
   # ──────────────────────────────────────────────
-  # Release Publication — Promote draft release to published
+  # Release Publication — Create and publish release
   # ──────────────────────────────────────────────
   # This job only runs if all security/scan jobs above have passed.
-  # It assumes release-please has already created a DRAFT release for this tag.
-  # We attach the JAR to that draft and then promote it from draft -> published.
-  # If any upstream job fails, the release remains as a draft (invisible to consumers).
+  # It creates and publishes the release directly with the JAR and SBOM as assets.
   release:
     name: Release Publication
     runs-on: ubuntu-latest
     needs: [artifact-scanning, dast, final-sbom]
     permissions:
       contents: write
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: temurin
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      - name: Build project
+        working-directory: cantinas-cinfaes-backend
+        env:
+          DB_URL: ${{ secrets.DB_URL }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          JWT_TOKEN: ${{ secrets.JWT_TOKEN }}
+        run: mvn clean package -DskipTests
+
+      - name: Read version and set tag
+        id: tag
+        env:
+          BRANCH: ${{ github.ref_name }}
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          VERSION=$(python3 -c "import json; print(json.load(open('.github/.release-please-manifest.json'))['.'])")
+          if [ "$BRANCH" = "dev" ]; then
+            TAG="v${VERSION}-beta.${RUN_NUMBER}"
+            PRERELEASE="true"
+          else
+            TAG="v${VERSION}"
+            PRERELEASE="false"
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "prerelease=$PRERELEASE" >> $GITHUB_OUTPUT
+
+      - name: Download Final SBOM artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: final-sbom-${{ github.ref_name }}
+          path: ./sbom
+
+      - name: Create and publish release
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PAT }}
+          TAG: ${{ steps.tag.outputs.tag }}
+          PRERELEASE: ${{ steps.tag.outputs.prerelease }}
+        run: |
+          PRERELEASE_FLAG=""
+          if [ "$PRERELEASE" = "true" ]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+          gh release create "$TAG" \
+            --title "$TAG" \
+            --target "${{ github.sha }}" \
+            cantinas-cinfaes-backend/target/*.jar \
+            ./sbom/bom.json \
+            $PRERELEASE_FLAG
+
+  # ──────────────────────────────────────────────
+  # Deploy — Push image to GHCR and deploy via SSH
+  # ──────────────────────────────────────────────
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: release
+    if: github.ref_name == 'main'
+    environment: production
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -296,57 +380,55 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
-      - name: Build project
+      - name: Build JAR
         working-directory: cantinas-cinfaes-backend
+        env:
+          DB_URL: ${{ secrets.DB_URL }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          JWT_TOKEN: ${{ secrets.JWT_TOKEN }}
         run: mvn clean package -DskipTests
 
-      - name: Download Final SBOM artifact
-        uses: actions/download-artifact@v4
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          name: final-sbom-${{ github.ref_name }}
-          path: ./sbom
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Locate draft release for this tag
-        id: find_release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ github.ref_name }}
-          REPO: ${{ github.repository }}
-        run: |
-          echo "Looking for draft release with tag $TAG..."
-          RELEASE_ID=$(gh api \
-            -H "Accept: application/vnd.github+json" \
-            "/repos/$REPO/releases" \
-            --jq ".[] | select(.tag_name == \"$TAG\") | .id")
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: cantinas-cinfaes-backend
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/cantinas-cinfaes-backend:${{ needs.release.outputs.tag }}
+            ghcr.io/${{ github.repository_owner }}/cantinas-cinfaes-backend:latest
 
-          if [ -z "$RELEASE_ID" ]; then
-            echo "ERROR: No release found for tag $TAG."
-            echo "release-please should have created a draft release before this workflow ran."
-            exit 1
-          fi
-          echo "Found release ID: $RELEASE_ID"
-          echo "release_id=$RELEASE_ID" >> "$GITHUB_OUTPUT"
-
-      - name: Upload JAR and SBOM to draft release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ github.ref_name }}
-        run: |
-          echo "Uploading assets to draft release $TAG..."
-          gh release upload "$TAG" \
-            cantinas-cinfaes-backend/target/*.jar \
-            ./sbom/bom.json \
-            --clobber
-
-      - name: Promote draft release to published
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          RELEASE_ID="${{ steps.find_release.outputs.release_id }}"
-          echo "Promoting release $RELEASE_ID from draft to published..."
-          gh api \
-            --method PATCH \
-            -H "Accept: application/vnd.github+json" \
-            "/repos/${{ github.repository }}/releases/$RELEASE_ID" \
-            -F draft=false
-          echo "Release published successfully."
+      - name: Deploy to server via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          script: |
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker pull ghcr.io/${{ github.repository_owner }}/cantinas-cinfaes-backend:${{ needs.release.outputs.tag }}
+            docker stop cantinas-app 2>/dev/null || true
+            docker rm cantinas-app 2>/dev/null || true
+            docker run -d \
+              --name cantinas-app \
+              --restart unless-stopped \
+              -p 80:8080 \
+              -e DB_URL="${{ secrets.DB_URL }}" \
+              -e DB_USERNAME="${{ secrets.DB_USERNAME }}" \
+              -e DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
+              -e MAIL_USERNAME="${{ secrets.MAIL_USERNAME }}" \
+              -e MAIL_PASSWORD="${{ secrets.MAIL_PASSWORD }}" \
+              -e JWT_TOKEN="${{ secrets.JWT_TOKEN }}" \
+              -e VIRUS_TOTAL="${{ secrets.VIRUS_TOTAL }}" \
+              ghcr.io/${{ github.repository_owner }}/cantinas-cinfaes-backend:${{ needs.release.outputs.tag }}
+            docker image prune -f

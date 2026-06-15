@@ -9,6 +9,8 @@ import bioCanteenApp.menu.domain.MenuEntryDish;
 import bioCanteenApp.menu.domain.MenuStatus;
 import bioCanteenApp.menu.dto.MenuDto;
 import bioCanteenApp.menu.mapper.IMenuMapper;
+import bioCanteenApp.menu.repository.IMenuRepo;
+import bioCanteenApp.menu.repository.MenuRepo;
 import bioCanteenApp.notifications.repository.INotificationRepo;
 import bioCanteenApp.products.domain.Allergen;
 import bioCanteenApp.products.domain.Product;
@@ -48,6 +50,7 @@ class ProvisioningServiceTest {
     private IUserRepo userRepo;
     private IProvisioningItemRepo provisioningItemRepo;
     private ISupplierRepo supplierRepo;
+    private IMenuRepo menuRepo;
 
     private ProvisioningService service;
 
@@ -61,6 +64,7 @@ class ProvisioningServiceTest {
         userRepo = mock(IUserRepo.class);
         provisioningItemRepo = mock(IProvisioningItemRepo.class);
         supplierRepo = mock(ISupplierRepo.class);
+        menuRepo = mock(IMenuRepo.class);
 
         service = new ProvisioningService(
                 reservationRepo,
@@ -70,7 +74,8 @@ class ProvisioningServiceTest {
                 notificationRepo,
                 userRepo,
                 provisioningItemRepo,
-                supplierRepo
+                supplierRepo,
+                menuRepo
         );
     }
 

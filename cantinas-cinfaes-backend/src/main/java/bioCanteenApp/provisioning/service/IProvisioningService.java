@@ -25,6 +25,8 @@ public interface IProvisioningService {
     Optional<Map<Product, Double>> findAdjusted(Menu menu);
     List<ProductionOrderDTO> generateProductionPlan(Menu menu, Map<Product, Double> productNeeds);
     Map<Product, Double> recalculatePlanned(Menu menu);
+    Map<Product, Double> calculateNextWeekProductNeedsFromCurrentWeekReservations();
+
 
 
 }

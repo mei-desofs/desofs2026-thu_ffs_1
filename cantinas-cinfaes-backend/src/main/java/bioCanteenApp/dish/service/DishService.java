@@ -38,8 +38,11 @@ public class DishService implements IDishService {
         List<String> translatedAllergens = new ArrayList<>();
 
         for (IngredientDto ing : dto.getIngredients()) {
-            Ingredient ingredient = ingredientRepo.findByName(ing.getName()).getFirst();
-
+            List<Ingredient> ingredients = ingredientRepo.findByName(ing.getName());
+            if (ingredients.isEmpty()) {
+                throw new IllegalArgumentException("Ingredient not found: " + ing.getName());
+            }
+            Ingredient ingredient = ingredients.get(0);
             detectedAllergens.addAll(ingredient.getProduct().getAllergens());
         }
 
@@ -54,7 +57,6 @@ public class DishService implements IDishService {
     }
 
     private String generateNutritionalInfo(Set<Allergen> allergens) {
-
         List<String> parts = new ArrayList<>();
 
         if (allergens.contains(Allergen.FISH)) {
@@ -102,12 +104,18 @@ public class DishService implements IDishService {
 
     public List<DishDto> getAlternatives(Long menuEntryDishId) {
         MenuEntryDish med = menuRepository.findMenuEntryDishById(menuEntryDishId);
-        if (med == null) throw new IllegalArgumentException("MenuEntryDish não encontrado: " + menuEntryDishId);
 
-        if (med.getDish() == null)
+        if (med == null) {
+            throw new IllegalArgumentException("MenuEntryDish não encontrado: " + menuEntryDishId);
+        }
+
+        if (med.getDish() == null) {
             throw new IllegalStateException("MenuEntryDish não tem Dish associado: " + menuEntryDishId);
-        if (med.getMenuEntry() == null || med.getMenuEntry().getDate() == null)
+        }
+
+        if (med.getMenuEntry() == null || med.getMenuEntry().getDate() == null) {
             throw new IllegalStateException("MenuEntry ou Data é null para MenuEntryDish: " + menuEntryDishId);
+        }
 
         Season season = Season.fromMonth(med.getMenuEntry().getDate().getMonth());
 
@@ -144,6 +152,7 @@ public class DishService implements IDishService {
     @Transactional
     public void replaceDish(Long oldDishId, Long newDishDto) {
         MenuEntryDish med = menuRepository.findMenuEntryDishById(oldDishId);
+
         if (med == null) {
             throw new IllegalArgumentException("MenuEntryDish não encontrado: " + oldDishId);
         }
@@ -152,6 +161,12 @@ public class DishService implements IDishService {
                 .orElseThrow(() ->
                         new IllegalArgumentException("Dish não encontrado: " + newDishDto)
                 );
+
+        if (!med.getDish().getDishType().equals(newDish.getDishType())) {
+            throw new IllegalArgumentException(
+                    "Replacement dish must have the same dish type."
+            );
+        }
 
         med.setDish(newDish);
     }
@@ -163,9 +178,63 @@ public class DishService implements IDishService {
 
     @Override
     public DishDto createDish(DishDto dto) {
+        validateDishRequirements(dto);
+
         Dish dish = dishMapper.toDomain(dto);
         Dish savedDish = dishRepo.save(dish);
+
         return dishMapper.toDTO(savedDish);
+    }
+
+    private void validateDishRequirements(DishDto dto) {
+        if (!hasStockForDish(dto)) {
+            throw new IllegalArgumentException(
+                    "Dish ingredients do not have enough available stock."
+            );
+        }
+
+        boolean hasProtein = dto.getIngredients().stream()
+                .anyMatch(i -> {
+                    String name = i.getIngredientName().toLowerCase();
+
+                    return name.contains("meat")
+                            || name.contains("fish")
+                            || name.contains("egg")
+                            || name.contains("tofu")
+                            || name.contains("chicken")
+                            || name.contains("beef")
+                            || name.contains("pork")
+                            || name.contains("salmon")
+                            || name.contains("atum")
+                            || name.contains("frango")
+                            || name.contains("carne")
+                            || name.contains("peixe")
+                            || name.contains("ovo");
+                });
+
+        if (!hasProtein) {
+            throw new IllegalArgumentException(
+                    "Dish must contain a protein source."
+            );
+        }
+
+        boolean hasSideDish = dto.getIngredients().stream()
+                .anyMatch(i -> {
+                    String name = i.getIngredientName().toLowerCase();
+
+                    return name.contains("rice")
+                            || name.contains("pasta")
+                            || name.contains("potato")
+                            || name.contains("massa")
+                            || name.contains("arroz")
+                            || name.contains("batata");
+                });
+
+        if (!hasSideDish) {
+            throw new IllegalArgumentException(
+                    "Dish must contain a side dish."
+            );
+        }
     }
 
     @Override
