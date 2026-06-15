@@ -17,7 +17,9 @@ import java.util.Map;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/suppliers")
+@Slf4j
 public class SupplierController {
+
     private final ISupplierService supplierService;
 
     // UC3: Send a supplier application (REQ3.1, REQ3.2, REQ3.3)
@@ -50,7 +52,7 @@ public class SupplierController {
         return ResponseEntity.ok(supplierService.getSupplierStats());
     }
 
-    @GetMapping
+      @GetMapping
     public ResponseEntity<List<SupplierDTO>> findAllSuppliers() {
         return ResponseEntity.ok(supplierService.findAllSuppliers());
     }
