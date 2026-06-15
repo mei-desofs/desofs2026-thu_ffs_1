@@ -79,8 +79,7 @@ public class PasswordService implements IPasswordService {
             throw new IllegalArgumentException("Current password is incorrect.");
         }
 
-        validatePasswordStrength(newPassword);
-        validateHistoricalPasswords(userId, newPassword);
+        validateNewPassword(user, newPassword);
 
         applyNewPassword(user, newPassword);
     }
@@ -181,5 +180,15 @@ public class PasswordService implements IPasswordService {
 
         // Manda o token em plain text para usar no Postman
         emailService.sendSupplierWelcomeEmail(user.getEmail(), rawToken);
+    }
+
+    private void validateNewPassword(User user, String newPassword) {
+
+        if (passwordEncoder.matches(newPassword, user.getPassword())) {
+            throw new IllegalArgumentException("New password cannot be same as current password.");
+        }
+
+        validatePasswordStrength(newPassword);
+        validateHistoricalPasswords(user, newPassword);
     }
 }
