@@ -165,6 +165,7 @@ public class PasswordService implements IPasswordService {
 
         // Mark token as used
         resetToken.setUsed(true);
+        passwordResetTokenRepo.save(resetToken);
     }
 
     @Transactional

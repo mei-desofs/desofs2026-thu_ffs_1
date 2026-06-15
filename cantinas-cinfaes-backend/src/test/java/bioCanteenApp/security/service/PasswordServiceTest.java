@@ -245,8 +245,11 @@ class PasswordServiceTest {
         service.sendSupplierActivationEmail("user@email.com");
 
         verify(passwordResetTokenRepo).deleteAllByUserId(1L);
-        verify(passwordResetTokenRepo).save(any());
-        verify(emailService).sendSupplierWelcomeEmail(eq("user@email.com"), anyString());
+        verify(passwordResetTokenRepo).save(any(PasswordResetToken.class));
+        verify(emailService).sendSupplierWelcomeEmail(
+                eq("user@email.com"),
+                anyString()
+        );
     }
 
     @Test
@@ -268,4 +271,64 @@ class PasswordServiceTest {
                 () -> service.validatePasswordStrength("")
         );
     }
+
+    @Test
+    void shouldResetPasswordWithTokenSuccessfully() {
+        User user = new User("user@email.com", "User", "oldPassword");
+        user.setId(1L);
+
+        PasswordResetToken token = mock(PasswordResetToken.class);
+
+        when(passwordResetTokenRepo.findByToken("token123"))
+                .thenReturn(Optional.of(token));
+
+        when(token.isUsed()).thenReturn(false);
+        when(token.isExpired()).thenReturn(false);
+        when(token.getUser()).thenReturn(user);
+
+        when(passwordEncoder.encode("StrongPass1!"))
+                .thenReturn("encoded");
+
+        service.resetPasswordWithToken("token123", "StrongPass1!");
+
+        verify(token).setUsed(true);
+        verify(passwordResetTokenRepo).save(any()); // se quiseres mais realismo
+    }
+
+    @Test
+    void shouldThrowWhenTokenAlreadyUsed() {
+        PasswordResetToken token = mock(PasswordResetToken.class);
+
+        when(passwordResetTokenRepo.findByToken("t"))
+                .thenReturn(Optional.of(token));
+
+        when(token.isUsed()).thenReturn(true);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> service.resetPasswordWithToken("t", "StrongPass1!"));
+    }
+
+    @Test
+    void shouldThrowWhenTokenExpired() {
+        PasswordResetToken token = mock(PasswordResetToken.class);
+
+        when(passwordResetTokenRepo.findByToken("t"))
+                .thenReturn(Optional.of(token));
+
+        when(token.isUsed()).thenReturn(false);
+        when(token.isExpired()).thenReturn(true);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> service.resetPasswordWithToken("t", "StrongPass1!"));
+    }
+
+    @Test
+    void shouldThrowWhenTokenInvalid() {
+        when(passwordResetTokenRepo.findByToken("bad"))
+                .thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class,
+                () -> service.resetPasswordWithToken("bad", "StrongPass1!"));
+    }
+
 }
