@@ -233,4 +233,39 @@ class PasswordServiceTest {
 
         verify(emailService, never()).sendEmail(any(), any());
     }
+
+    @Test
+    void shouldSendSupplierActivationEmail() {
+        User user = new User("user@email.com", "User", "password");
+        user.setId(1L);
+
+        when(userRepository.findByEmail("user@email.com"))
+                .thenReturn(Optional.of(user));
+
+        service.sendSupplierActivationEmail("user@email.com");
+
+        verify(passwordResetTokenRepo).deleteAllByUserId(1L);
+        verify(passwordResetTokenRepo).save(any());
+        verify(emailService).sendSupplierWelcomeEmail(eq("user@email.com"), anyString());
+    }
+
+    @Test
+    void shouldGenerateToken() {
+        User user = new User("user@email.com", "User", "password");
+        user.setId(1L);
+
+        String token = service.generateSupplierSetupToken(user);
+
+        assertNotNull(token);
+
+        verify(passwordResetTokenRepo).deleteAllByUserId(1L);
+        verify(passwordResetTokenRepo).save(any());
+    }
+
+    @Test
+    void shouldThrowWhenEmptyPassword() {
+        assertThrows(IllegalArgumentException.class,
+                () -> service.validatePasswordStrength("")
+        );
+    }
 }
