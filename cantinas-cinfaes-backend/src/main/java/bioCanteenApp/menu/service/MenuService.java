@@ -1,13 +1,11 @@
 package bioCanteenApp.menu.service;
 
 import bioCanteenApp.dish.domain.Dish;
-import bioCanteenApp.dish.domain.DishIngredient;
 import bioCanteenApp.dish.domain.DishType;
 import bioCanteenApp.dish.dto.DishDto;
 import bioCanteenApp.dish.dto.DishIngredientDto;
 import bioCanteenApp.dish.repository.DishRepo;
 import bioCanteenApp.dish.service.DishService;
-import bioCanteenApp.ingredients.dto.IngredientDto;
 import bioCanteenApp.menu.domain.*;
 import bioCanteenApp.menu.dto.MenuDto;
 import bioCanteenApp.menu.mapper.MenuEntryMapper;
@@ -19,11 +17,9 @@ import bioCanteenApp.products.service.ProductService;
 import bioCanteenApp.users.domain.Role;
 import bioCanteenApp.users.domain.User;
 import bioCanteenApp.users.dto.GetUserDTO;
-import bioCanteenApp.users.dto.UserDTO;
 import bioCanteenApp.users.mapper.UserMapper;
 import bioCanteenApp.users.repository.UserRepo;
 import bioCanteenApp.users.service.IUserService;
-import bioCanteenApp.users.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -34,6 +30,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class MenuService implements IMenuService {
+
     private final MenuRepo menuRepo;
     private final MenuMapper menuMapper;
     private final IUserService userService;
@@ -44,7 +41,6 @@ public class MenuService implements IMenuService {
     private final UserMapper userMapper;
     private final UserRepo userRepository;
     private final ProductBatchRepo productBatchRepo;
-
 
     @Override
     public List<MenuDto> getAllMenus() {
@@ -79,8 +75,6 @@ public class MenuService implements IMenuService {
     @Override
     public MenuDto generateMenu(LocalDate startDate, LocalDate endDate) {
 
-        System.out.println("=== Generating menu from " + startDate + " to " + endDate + " ===");
-
         Menu menu = new Menu(startDate, endDate, MenuStatus.GENERATED);
 
         //1. Ver todos os produtos sazonais disponiveis
@@ -89,43 +83,45 @@ public class MenuService implements IMenuService {
 
         //Lista de produtos sazonais disponiveis
         List<ProductDTO> seasonalProducts = productService.getAvailableSeasonalProducts();
+
         List<String> seasonalProductsNames = seasonalProducts.stream()
                 .map(ProductDTO::getName)
                 .collect(Collectors.toList());
-        System.out.println("=== Generating menu from " + startDate + " to " + endDate + " ===");
 
-
-        // 2. Pratos que usam apenas produtos sazonais
-        List<DishDto> dishesWithSeasonalIngredients = dishService.getDishesWithSeasonalIngredients(seasonalProductsNames);
-        System.out.println("Seasonal product names: " + seasonalProductsNames);
+        List<DishDto> dishesWithSeasonalIngredients =
+                dishService.getDishesWithSeasonalIngredients(seasonalProductsNames);
 
         List<DishDto> dishesWithSeasonalAndStock = dishesWithSeasonalIngredients.stream()
                 .filter(this::hasStockForDish)
                 .collect(Collectors.toList());
 
-        System.out.println("Dishes with seasonal ingredients before stock check: " + dishesWithSeasonalAndStock);
-
         if (dishesWithSeasonalAndStock.isEmpty()) {
-            throw new IllegalArgumentException("No dishes available with seasonal ingredients AND sufficient stock");
+            throw new IllegalArgumentException("No dishes available with seasonal ingredients and sufficient stock");
         }
 
         // 4. Distribuir pratos por tipo
         Map<DishType, List<DishDto>> dishesByType = new HashMap<>();
+
         for (DishType type : DishType.values()) {
             dishesByType.put(type, new ArrayList<>());
         }
 
-        for (DishDto d : dishesWithSeasonalAndStock) {
-            DishType type = DishType.valueOf(d.getDishType());
-            dishesByType.get(type).add(d);
+        for (DishDto dish : dishesWithSeasonalAndStock) {
+            DishType type = DishType.valueOf(dish.getDishType());
+            dishesByType.get(type).add(dish);
         }
-        System.out.println("Dishes with seasonal ingredients: " + dishesWithSeasonalIngredients);
 
-        // 5. Criar MenuEntries para cada dia da semana
+        for (DishType type : DishType.values()) {
+            if (dishesByType.get(type).isEmpty()) {
+                throw new IllegalStateException(
+                        "Cannot generate menu. Missing available dishes for type: " + type
+                );
+            }
+        }
+
         List<MenuEntry> entries = new ArrayList<>();
         Random random = new Random();
         WeekDay[] weekDays = WeekDay.values();
-        System.out.println("Week days: " + Arrays.toString(weekDays));
 
         for (int i = 0; i < weekDays.length; i++) {
             LocalDate date = startDate.plusDays(i);
@@ -139,29 +135,23 @@ public class MenuService implements IMenuService {
 
             for (DishType type : DishType.values()) {
                 List<DishDto> list = dishesByType.get(type);
-                System.out.println("Dishes for type " + type + ": " + list);
-                if (list != null && !list.isEmpty()) {
-                    DishDto selectedDto = list.get(random.nextInt(list.size()));
-                    System.out.println("Selected dish for " + type + ": " + selectedDto.getDishName());
-                    Dish dishEntity = dishRepo.findById(selectedDto.getId())
-                            .orElseThrow(() -> new RuntimeException("Dish not found: " + selectedDto.getId()));
-                    entryDishes.add(new MenuEntryDish(entry, dishEntity));
-                }
+
+                DishDto selectedDto = list.get(random.nextInt(list.size()));
+
+                Dish dishEntity = dishRepo.findById(selectedDto.getId())
+                        .orElseThrow(() -> new RuntimeException("Dish not found: " + selectedDto.getId()));
+
+                entryDishes.add(new MenuEntryDish(entry, dishEntity));
             }
 
             entry.setMenuEntryDishes(entryDishes);
-            System.out.println("MenuEntry created for " + weekDays[i] + " with dishes: " + entryDishes);
             entries.add(entry);
         }
 
         menu.setEntries(entries);
         menu = menuRepo.save(menu);
-        System.out.println("Menu saved with entries: " + menu.getEntries());
 
-        MenuDto dto = menuMapper.toDTO(menu);
-        System.out.println("MenuDto mapped: " + dto);
-
-        return dto;
+        return menuMapper.toDTO(menu);
     }
 
     @Override
@@ -170,6 +160,12 @@ public class MenuService implements IMenuService {
 
         if (dietician == null) {
             throw new IllegalArgumentException("Dietician not found");
+        }
+
+        if (LocalDate.now().isAfter(start.minusWeeks(1))) {
+            throw new IllegalArgumentException(
+                    "Menu must be published at least one week before the target week starts."
+            );
         }
 
         menuRepo.findByMenuDates(start, end, start, end).forEach(menu -> {
@@ -192,10 +188,10 @@ public class MenuService implements IMenuService {
         long totalMenus = menuRepo.count();
         long totalDishes = dishRepo.count();
 
-        System.out.println("Total" + totalMenus);
-
         long approvedMenus = menuRepo.countByStatus(MenuStatus.PUBLISHED);
-        String approvalRate = totalMenus > 0 ? String.format("%.0f%%", (approvedMenus * 100.0 / totalMenus)) : "0%";
+        String approvalRate = totalMenus > 0
+                ? String.format("%.0f%%", (approvedMenus * 100.0 / totalMenus))
+                : "0%";
 
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalMenus", totalMenus);
