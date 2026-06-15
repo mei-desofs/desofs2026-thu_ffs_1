@@ -17,11 +17,9 @@ import bioCanteenApp.products.service.ProductService;
 import bioCanteenApp.users.domain.Role;
 import bioCanteenApp.users.domain.User;
 import bioCanteenApp.users.dto.GetUserDTO;
-import bioCanteenApp.users.dto.UserDTO;
 import bioCanteenApp.users.mapper.UserMapper;
 import bioCanteenApp.users.repository.UserRepo;
 import bioCanteenApp.users.service.IUserService;
-import bioCanteenApp.users.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
