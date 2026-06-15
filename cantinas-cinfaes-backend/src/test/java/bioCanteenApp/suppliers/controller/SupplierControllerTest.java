@@ -199,7 +199,7 @@ class SupplierControllerTest {
                 .thenReturn(suppliers);
 
         ResponseEntity<List<SupplierDTO>> response =
-                controller.getSuppliersByName("Supplier");
+                controller.filterSuppliers("Supplier", null, null);
 
         assertEquals(200, response.getStatusCode().value());
         assertEquals(suppliers, response.getBody());
@@ -218,7 +218,7 @@ class SupplierControllerTest {
                 .thenReturn(suppliers);
 
         ResponseEntity<List<SupplierDTO>> response =
-                controller.getSuppliersByVillage("ANSIAES");
+                controller.filterSuppliers(null,"ANSIAES", null);
 
         assertEquals(200, response.getStatusCode().value());
         assertEquals(suppliers, response.getBody());
@@ -238,7 +238,7 @@ class SupplierControllerTest {
                 .thenReturn(suppliers);
 
         ResponseEntity<List<SupplierDTO>> response =
-                controller.getSuppliersByMunicipality("RESENDE");
+                controller.filterSuppliers(null, null, "RESENDE");
 
         assertEquals(200, response.getStatusCode().value());
         assertEquals(suppliers, response.getBody());

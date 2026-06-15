@@ -75,19 +75,17 @@ public class SupplierController {
         return ResponseEntity.ok(supplierService.unquarantineSupplier(request));
     }
 
-    @GetMapping("/filter/{name}")
-    public ResponseEntity<List<SupplierDTO>> getSuppliersByName(@PathVariable("name") String name) {
-        return ResponseEntity.ok(supplierService.getSuppliersByName(name));
-    }
+    @GetMapping("/filter")
+    public ResponseEntity<List<SupplierDTO>> filterSuppliers(
+            @RequestParam(name = "name", required = false) String name,
+            @RequestParam(name = "village", required = false) String village,
+            @RequestParam(name = "municipality", required = false) String municipality) {
 
-    @GetMapping("/filter/{village}")
-    public ResponseEntity<List<SupplierDTO>> getSuppliersByVillage(@PathVariable("village") String village) {
-        return ResponseEntity.ok(supplierService.getSuppliersByVillage(village));
-    }
+        if (name != null) return ResponseEntity.ok(supplierService.getSuppliersByName(name));
+        if (village != null) return ResponseEntity.ok(supplierService.getSuppliersByVillage(village));
+        if (municipality != null) return ResponseEntity.ok(supplierService.getSuppliersByMunicipality(municipality));
 
-    @GetMapping("/filter/{municipality}")
-    public ResponseEntity<List<SupplierDTO>> getSuppliersByMunicipality(@PathVariable("municipality") String municipality) {
-        return ResponseEntity.ok(supplierService.getSuppliersByMunicipality(municipality));
+        return ResponseEntity.badRequest().build();
     }
 
     @GetMapping("/application/{id}/certificate")

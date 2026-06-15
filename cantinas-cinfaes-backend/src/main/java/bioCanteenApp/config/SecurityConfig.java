@@ -71,6 +71,7 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/api/passwords/recover-password").permitAll()
                         .requestMatchers("/api/passwords/reset-password").permitAll()
+                        .requestMatchers("/api/passwords/activate-account").permitAll()
                         .requestMatchers("/api/suppliers/apply").permitAll()
 
                         // --- Endpoints Autenticados (Qualquer User Logado) ---

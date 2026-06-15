@@ -1,6 +1,7 @@
 package bioCanteenApp.suppliers.controller;
 
 import bioCanteenApp.security.service.VirusTotalService;
+import bioCanteenApp.suppliers.dto.AddressDTO;
 import bioCanteenApp.suppliers.dto.SupplierApplicationDTO;
 import bioCanteenApp.suppliers.dto.SupplierDTO;
 import bioCanteenApp.suppliers.service.ISupplierService;
@@ -16,6 +17,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -45,8 +47,29 @@ class SupplierControllerIntegrationTest {
 
     @Test
     void shouldApplyToSupplierPosition() throws Exception {
-        SupplierApplicationDTO inputDto = new SupplierApplicationDTO();
-        SupplierApplicationDTO savedDto = new SupplierApplicationDTO();
+        AddressDTO address = AddressDTO.builder()
+                .street("Rua das Flores 123")
+                .municipality("Resende")
+                .village("Anciaes")
+                .country("Portugal")
+                .postalCode("4660-000")
+                .build();
+
+        SupplierApplicationDTO.SupplierCapacityDTO capacity = SupplierApplicationDTO.SupplierCapacityDTO.builder()
+                .productName("Tomates Bio")
+                .startDate(LocalDate.of(2026, 1, 1))
+                .endDate(LocalDate.of(2026, 12, 31))
+                .quantity(100.0)
+                .build();
+
+        SupplierApplicationDTO savedDto = SupplierApplicationDTO.builder()
+                .name("Bio Fornecedor")
+                .email("fornecedor@gmail.com")
+                .phoneNumber("912345678")
+                .nif("123456789")
+                .address(address)
+                .supplierCapacity(List.of(capacity))
+                .build();
 
         when(supplierService.applyToSupplierPosition(any(SupplierApplicationDTO.class), any()))
                 .thenReturn(savedDto);
@@ -55,12 +78,11 @@ class SupplierControllerIntegrationTest {
                 "certificate", "certificado.pdf", MediaType.APPLICATION_PDF_VALUE, "fake-pdf-content".getBytes()
         );
 
-        // Altera o nome de "dto" para "application" para coincidir com o @RequestPart("application")
         MockMultipartFile dtoPart = new MockMultipartFile(
                 "application",
                 "",
                 MediaType.APPLICATION_JSON_VALUE,
-                objectMapper.writeValueAsBytes(inputDto)
+                objectMapper.writeValueAsBytes(savedDto)
         );
 
         mockMvc.perform(multipart("/api/suppliers/apply")
@@ -169,7 +191,7 @@ class SupplierControllerIntegrationTest {
 
         when(supplierService.getSuppliersByName("BioCorp")).thenReturn(List.of(dto));
 
-        mockMvc.perform(get("/api/suppliers/filter/name/{name}", "BioCorp"))
+        mockMvc.perform(get("/api/suppliers/filter").param("name", "BioCorp"))
                 .andExpect(status().isOk());
     }
 
@@ -179,7 +201,7 @@ class SupplierControllerIntegrationTest {
 
         when(supplierService.getSuppliersByVillage("Anciaes")).thenReturn(List.of(dto));
 
-        mockMvc.perform(get("/api/suppliers/filter/village/{village}", "Anciaes"))
+        mockMvc.perform(get("/api/suppliers/filter").param("village", "Anciaes"))
                 .andExpect(status().isOk());
     }
 }
