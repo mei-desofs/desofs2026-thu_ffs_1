@@ -123,23 +123,36 @@ class PasswordControllerIntegrationTest {
     }
 
     @Test
-    void shouldActivateAccountdWithValidTokenAndPayload() throws Exception {
-        mockMvc.perform(post("/api/passwords/activate-account")
-                        .param("token", "valid-token-123")
+    void shouldResetPasswordWithValidTokenAndPayload() throws Exception {
+        Map<String, String> payload = Map.of(
+                "token", "valid-token-123",
+                "newPassword", "brandNewPassword"
+        );
+
+        doNothing().when(passwordService).resetPasswordWithToken("valid-token-123", "brandNewPassword");
+
+        mockMvc.perform(post("/api/passwords/reset-password")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"newPassword\":\"brandNewPassword\"}"))
+                        .content(objectMapper.writeValueAsString(payload)))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Account activated successfully. You can now log in."));
+                .andExpect(content().string("Password reset successfully. You can now log in."));
+
+        verify(passwordService).resetPasswordWithToken("valid-token-123", "brandNewPassword");
     }
 
     @Test
-    void shouldReturn400OnActivateAccountWhenTokenOrPasswordIsMissing() throws Exception {
-        mockMvc.perform(post("/api/passwords/activate-account")
+    void shouldReturn400OnResetPasswordWhenTokenOrPasswordIsMissing() throws Exception {
+        Map<String, String> incompletePayload = Map.of(
+                "token", "only-the-token"
+        );
+
+        mockMvc.perform(post("/api/passwords/reset-password")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"newPassword\":\"brandNewPassword\"}"))
-                .andExpect(status().isBadRequest());
+                        .content(objectMapper.writeValueAsString(incompletePayload)))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Both 'token' and 'newPassword' are required."));
     }
 
     @Test

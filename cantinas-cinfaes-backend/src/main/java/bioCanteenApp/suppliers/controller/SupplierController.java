@@ -3,13 +3,10 @@ package bioCanteenApp.suppliers.controller;
 import bioCanteenApp.suppliers.dto.SupplierApplicationDTO;
 import bioCanteenApp.suppliers.dto.SupplierDTO;
 import bioCanteenApp.suppliers.service.ISupplierService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -17,84 +14,243 @@ import java.util.Map;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/suppliers")
+@Slf4j
 public class SupplierController {
+
     private final ISupplierService supplierService;
 
-    // UC3: Send a supplier application (REQ3.1, REQ3.2, REQ3.3)
-    @PostMapping(value = "/apply", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    @PostMapping("/apply")
     public ResponseEntity<SupplierApplicationDTO> applyToSupplierPosition(
-            @Valid @RequestPart("application") SupplierApplicationDTO dto,
-            @RequestPart("certificate") MultipartFile certificate) {
+            @RequestBody SupplierApplicationDTO dto
+    ) {
 
-        return ResponseEntity.ok(supplierService.applyToSupplierPosition(dto, certificate));
+        log.info(
+                "New supplier application submitted by: {}",
+                dto.getEmail()
+        );
+
+        SupplierApplicationDTO createdApplication =
+                supplierService.applyToSupplierPosition(dto);
+
+        log.info(
+                "Supplier application created successfully with id: {}",
+                createdApplication.getId()
+        );
+
+        return ResponseEntity.ok(createdApplication);
     }
 
-    // UC4: Approve an application (REQ4.1, REQ4.2, REQ4.3)
-    @PostMapping("/approve/{id}")
-    public ResponseEntity<SupplierDTO> approveSupplier(@PathVariable("id") Long id) {
-        return ResponseEntity.ok(supplierService.approveSupplier(id));
+    @PostMapping("/approval")
+    public ResponseEntity<SupplierDTO> approveSupplier(
+            @RequestBody SupplierDTO dto
+    ) {
+
+        log.warn(
+                "Approving supplier with name: {}",
+                dto.getName()
+        );
+
+        SupplierDTO supplier =
+                supplierService.approveSupplier(dto);
+
+        log.info(
+                "Supplier approved successfully with application id: {}",
+                supplier.getApplicationId()
+        );
+
+        return ResponseEntity.ok(supplier);
     }
 
-    // UC4: Reject an application (REQ4.4)
-    @PostMapping("/reject/{id}")
+    @PostMapping("/reject")
     public ResponseEntity<SupplierDTO> rejectSupplier(
-            @PathVariable("id") Long id,
-            @RequestBody String reason) {
-        return ResponseEntity.ok(supplierService.rejectSupplier(id, reason));
-    }
+            @RequestBody SupplierDTO dto
+    ) {
 
-    // --- Restantes métodos inalterados ---
+        log.warn(
+                "Rejecting supplier with name: {}",
+                dto.getName()
+        );
+
+        SupplierDTO supplier =
+                supplierService.rejectSupplier(dto);
+
+        log.info(
+                "Supplier rejected successfully with application id: {}",
+                supplier.getApplicationId()
+        );
+
+        return ResponseEntity.ok(supplier);
+    }
 
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Long>> getSupplierStats() {
-        return ResponseEntity.ok(supplierService.getSupplierStats());
+
+        log.info("Fetching supplier statistics");
+
+        Map<String, Long> stats =
+                supplierService.getSupplierStats();
+
+        log.info("Supplier statistics fetched successfully");
+
+        return ResponseEntity.ok(stats);
     }
 
     @GetMapping
     public ResponseEntity<List<SupplierDTO>> findAllSuppliers() {
-        return ResponseEntity.ok(supplierService.findAllSuppliers());
+
+        log.info("Fetching all suppliers");
+
+        List<SupplierDTO> suppliers =
+                supplierService.findAllSuppliers();
+
+        log.info("Found {} suppliers", suppliers.size());
+
+        return ResponseEntity.ok(suppliers);
     }
 
     @GetMapping("/applications")
     public ResponseEntity<List<SupplierApplicationDTO>> findAllApplications() {
-        return ResponseEntity.ok(supplierService.findAllApplications());
+
+        log.info("Fetching all supplier applications");
+
+        List<SupplierApplicationDTO> applications =
+                supplierService.findAllApplications();
+
+        log.info(
+                "Found {} supplier applications",
+                applications.size()
+        );
+
+        return ResponseEntity.ok(applications);
     }
 
     @GetMapping("/order/{productId}")
-    public ResponseEntity<List<SupplierDTO>> findAllSuppliersByOrderByProduct(@PathVariable("productId") Long id) {
-        return ResponseEntity.ok(supplierService.findAllSuppliersByOrderByProduct(id));
+    public ResponseEntity<List<SupplierDTO>> findAllSuppliersByOrderByProduct(
+            @PathVariable("productId") Long id
+    ) {
+
+        log.info(
+                "Fetching suppliers ordered by product id: {}",
+                id
+        );
+
+        List<SupplierDTO> suppliers =
+                supplierService.findAllSuppliersByOrderByProduct(id);
+
+        log.info(
+                "Found {} suppliers for product id: {}",
+                suppliers.size(),
+                id
+        );
+
+        return ResponseEntity.ok(suppliers);
     }
 
     @PostMapping("/quarantine")
-    public ResponseEntity<SupplierDTO> quarantineSupplier(@RequestBody SupplierDTO request) {
-        return ResponseEntity.ok(supplierService.quarantineSupplier(request));
+    public ResponseEntity<SupplierDTO> quarantineSupplier(
+            @RequestBody SupplierDTO request
+    ) {
+
+        log.warn(
+                "Quarantining supplier with application id: {}",
+                request.getApplicationId()
+        );
+
+        SupplierDTO dto =
+                supplierService.quarantineSupplier(request);
+
+        log.info(
+                "Supplier quarantined successfully with application id: {}",
+                dto.getApplicationId()
+        );
+
+        return ResponseEntity.ok(dto);
     }
 
     @PostMapping("/unquarantine")
-    public ResponseEntity<SupplierDTO> unquarantineSupplier(@RequestBody SupplierDTO request) {
-        return ResponseEntity.ok(supplierService.unquarantineSupplier(request));
+    public ResponseEntity<SupplierDTO> unquarantineSupplier(
+            @RequestBody SupplierDTO request
+    ) {
+
+        log.warn(
+                "Removing supplier from quarantine with application id: {}",
+                request.getApplicationId()
+        );
+
+        SupplierDTO dto =
+                supplierService.unquarantineSupplier(request);
+
+        log.info(
+                "Supplier unquarantined successfully with application id: {}",
+                dto.getApplicationId()
+        );
+
+        return ResponseEntity.ok(dto);
     }
 
-    @GetMapping("/filter")
-    public ResponseEntity<List<SupplierDTO>> filterSuppliers(
-            @RequestParam(name = "name", required = false) String name,
-            @RequestParam(name = "village", required = false) String village,
-            @RequestParam(name = "municipality", required = false) String municipality) {
+    @GetMapping("/filter/name/{name}")
+    ResponseEntity<List<SupplierDTO>> getSuppliersByName(
+            @PathVariable("name") String name
+    ) {
 
-        if (name != null) return ResponseEntity.ok(supplierService.getSuppliersByName(name));
-        if (village != null) return ResponseEntity.ok(supplierService.getSuppliersByVillage(village));
-        if (municipality != null) return ResponseEntity.ok(supplierService.getSuppliersByMunicipality(municipality));
+        log.info(
+                "Filtering suppliers by name: {}",
+                name
+        );
 
-        return ResponseEntity.badRequest().build();
+        List<SupplierDTO> dto =
+                supplierService.getSuppliersByName(name);
+
+        log.info(
+                "Found {} suppliers with name filter: {}",
+                dto.size(),
+                name
+        );
+
+        return ResponseEntity.ok(dto);
     }
 
-    @GetMapping("/application/{id}/certificate")
-    public ResponseEntity<byte[]> getBioCertificate(@PathVariable("id") Long id) {
-        byte[] certificate = supplierService.getBioCertificate(id);
+    @GetMapping("/filter/village/{village}")
+    ResponseEntity<List<SupplierDTO>> getSuppliersByVillage(
+            @PathVariable("village") String village
+    ) {
 
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"bio_certificate_" + id + ".pdf\"")
-                .contentType(MediaType.APPLICATION_PDF)
-                .body(certificate);
+        log.info(
+                "Filtering suppliers by village: {}",
+                village
+        );
+
+        List<SupplierDTO> dto =
+                supplierService.getSuppliersByVillage(village);
+
+        log.info(
+                "Found {} suppliers in village: {}",
+                dto.size(),
+                village
+        );
+
+        return ResponseEntity.ok(dto);
+    }
+
+    @GetMapping("/filter/municipality/{municipality}")
+    ResponseEntity<List<SupplierDTO>> getSuppliersByMunicipality(
+            @PathVariable("municipality") String village
+    ) {
+
+        log.info(
+                "Filtering suppliers by municipality: {}",
+                village
+        );
+
+        List<SupplierDTO> dto =
+                supplierService.getSuppliersByMunicipality(village);
+
+        log.info(
+                "Found {} suppliers in municipality: {}",
+                dto.size(),
+                village
+        );
+
+        return ResponseEntity.ok(dto);
     }
 }

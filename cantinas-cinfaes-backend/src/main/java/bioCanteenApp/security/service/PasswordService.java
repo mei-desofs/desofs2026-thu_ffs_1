@@ -127,21 +127,6 @@ public class PasswordService implements IPasswordService {
         emailService.sendEmail(user.getEmail(), resetLink);
     }
 
-    @Override
-    public String generateSupplierSetupToken(User user) {
-        // 1. Limpa os tokens antigos e força a atualização na BD
-        passwordResetTokenRepo.deleteAllByUserId(user.getId());
-
-        // 2. Gera o token novo
-        String rawToken = UUID.randomUUID().toString();
-        PasswordResetToken resetToken = new PasswordResetToken(user, rawToken);
-
-        // 3. Guarda na BD e força a escrita imediata
-        passwordResetTokenRepo.save(resetToken);
-
-        return rawToken;
-    }
-
     @Transactional
     public void resetPasswordWithToken(String token, String newPassword) {
         PasswordResetToken resetToken = passwordResetTokenRepo.findByToken(token)
@@ -165,21 +150,5 @@ public class PasswordService implements IPasswordService {
 
         // Mark token as used
         resetToken.setUsed(true);
-        passwordResetTokenRepo.save(resetToken);
-    }
-
-    @Transactional
-    public void sendSupplierActivationEmail(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("No account found for that email."));
-
-        passwordResetTokenRepo.deleteAllByUserId(user.getId());
-
-        String rawToken = UUID.randomUUID().toString();
-        PasswordResetToken resetToken = new PasswordResetToken(user, rawToken);
-        passwordResetTokenRepo.save(resetToken);
-
-        // Manda o token em plain text para usar no Postman
-        emailService.sendSupplierWelcomeEmail(user.getEmail(), rawToken);
     }
 }

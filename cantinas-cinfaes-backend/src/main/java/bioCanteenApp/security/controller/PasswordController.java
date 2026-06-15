@@ -1,6 +1,5 @@
 package bioCanteenApp.security.controller;
 
-import bioCanteenApp.security.dto.ActivateAccountDTO;
 import bioCanteenApp.security.dto.ForgotPasswordDTO;
 import bioCanteenApp.security.service.PasswordService;
 import bioCanteenApp.users.domain.User;
@@ -107,24 +106,33 @@ public class PasswordController {
         );
     }
 
-    @PostMapping("/activate-account")
-    public ResponseEntity<String> activateAccount(
-            @RequestParam(name = "token") String token,
-            @RequestBody ActivateAccountDTO dto
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(
+            @RequestBody Map<String, String> payload
     ) {
 
-        log.info("Account activation attempt using token");
+        String token = payload.get("token");
+        String newPassword = payload.get("newPassword");
+
+        log.info("Password reset attempt using reset token");
+
+        if (token == null || newPassword == null) {
+
+            log.warn("Password reset request failed due to missing fields");
+
+            return ResponseEntity.badRequest()
+                    .body("Both 'token' and 'newPassword' are required.");
+        }
 
         passwordService.resetPasswordWithToken(
                 token,
-                dto.getNewPassword()
+                newPassword
         );
 
-        log.info("Account activated successfully");
-
+        log.info("Password reset completed successfully");
 
         return ResponseEntity.ok(
-                "Account activated successfully. You can now log in."
+                "Password reset successfully. You can now log in."
         );
     }
 

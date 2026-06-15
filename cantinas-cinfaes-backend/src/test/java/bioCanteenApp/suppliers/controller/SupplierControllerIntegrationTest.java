@@ -1,7 +1,5 @@
 package bioCanteenApp.suppliers.controller;
 
-import bioCanteenApp.security.service.VirusTotalService;
-import bioCanteenApp.suppliers.dto.AddressDTO;
 import bioCanteenApp.suppliers.dto.SupplierApplicationDTO;
 import bioCanteenApp.suppliers.dto.SupplierDTO;
 import bioCanteenApp.suppliers.service.ISupplierService;
@@ -13,17 +11,16 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -42,52 +39,20 @@ class SupplierControllerIntegrationTest {
     @MockBean
     private ISupplierService supplierService;
 
-    @MockBean
-    private VirusTotalService virusTotalService;
-
     @Test
     void shouldApplyToSupplierPosition() throws Exception {
-        AddressDTO address = AddressDTO.builder()
-                .street("Rua das Flores 123")
-                .municipality("Resende")
-                .village("Anciaes")
-                .country("Portugal")
-                .postalCode("4660-000")
-                .build();
+        SupplierApplicationDTO inputDto = new SupplierApplicationDTO();
+        // Configure as propriedades necessárias do inputDto se houverem, ex:
+        // inputDto.setCompanyName("BioSupplier");
 
-        SupplierApplicationDTO.SupplierCapacityDTO capacity = SupplierApplicationDTO.SupplierCapacityDTO.builder()
-                .productName("Tomates Bio")
-                .startDate(LocalDate.of(2026, 1, 1))
-                .endDate(LocalDate.of(2026, 12, 31))
-                .quantity(100.0)
-                .build();
+        SupplierApplicationDTO savedDto = new SupplierApplicationDTO();
 
-        SupplierApplicationDTO savedDto = SupplierApplicationDTO.builder()
-                .name("Bio Fornecedor")
-                .email("fornecedor@gmail.com")
-                .phoneNumber("912345678")
-                .nif("123456789")
-                .address(address)
-                .supplierCapacity(List.of(capacity))
-                .build();
-
-        when(supplierService.applyToSupplierPosition(any(SupplierApplicationDTO.class), any()))
+        when(supplierService.applyToSupplierPosition(any(SupplierApplicationDTO.class)))
                 .thenReturn(savedDto);
 
-        MockMultipartFile certificate = new MockMultipartFile(
-                "certificate", "certificado.pdf", MediaType.APPLICATION_PDF_VALUE, "fake-pdf-content".getBytes()
-        );
-
-        MockMultipartFile dtoPart = new MockMultipartFile(
-                "application",
-                "",
-                MediaType.APPLICATION_JSON_VALUE,
-                objectMapper.writeValueAsBytes(savedDto)
-        );
-
-        mockMvc.perform(multipart("/api/suppliers/apply")
-                        .file(certificate)
-                        .file(dtoPart))
+        mockMvc.perform(post("/api/suppliers/apply")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(inputDto)))
                 .andExpect(status().isOk());
     }
 
@@ -95,23 +60,23 @@ class SupplierControllerIntegrationTest {
     void shouldApproveSupplier() throws Exception {
         SupplierDTO dto = new SupplierDTO();
 
-        // O serviço recebe um Long (applicationId) e devolve o DTO
-        when(supplierService.approveSupplier(anyLong())).thenReturn(dto);
+        when(supplierService.approveSupplier(any(SupplierDTO.class))).thenReturn(dto);
 
-        // O Endpoint real é um POST com o ID no URL
-        mockMvc.perform(post("/api/suppliers/approve/{id}", 1L))
+        mockMvc.perform(post("/api/suppliers/approval")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk());
     }
 
     @Test
     void shouldRejectSupplier() throws Exception {
         SupplierDTO dto = new SupplierDTO();
-        when(supplierService.rejectSupplier(anyLong(), anyString())).thenReturn(dto);
 
-        // Envia o motivo no .content() e usa text/plain
-        mockMvc.perform(post("/api/suppliers/reject/{id}", 2L)
-                        .content("Doesn't meet bio standards")
-                        .contentType(MediaType.TEXT_PLAIN))
+        when(supplierService.rejectSupplier(any(SupplierDTO.class))).thenReturn(dto);
+
+        mockMvc.perform(post("/api/suppliers/reject")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk());
     }
 
@@ -191,7 +156,7 @@ class SupplierControllerIntegrationTest {
 
         when(supplierService.getSuppliersByName("BioCorp")).thenReturn(List.of(dto));
 
-        mockMvc.perform(get("/api/suppliers/filter").param("name", "BioCorp"))
+        mockMvc.perform(get("/api/suppliers/filter/name/{name}", "BioCorp"))
                 .andExpect(status().isOk());
     }
 
@@ -201,7 +166,7 @@ class SupplierControllerIntegrationTest {
 
         when(supplierService.getSuppliersByVillage("Anciaes")).thenReturn(List.of(dto));
 
-        mockMvc.perform(get("/api/suppliers/filter").param("village", "Anciaes"))
+        mockMvc.perform(get("/api/suppliers/filter/village/{village}", "Anciaes"))
                 .andExpect(status().isOk());
     }
 }
