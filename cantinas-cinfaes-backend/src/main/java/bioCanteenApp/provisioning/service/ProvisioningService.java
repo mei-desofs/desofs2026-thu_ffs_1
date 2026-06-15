@@ -19,16 +19,14 @@ import bioCanteenApp.provisioning.domain.ProvisioningType;
 import bioCanteenApp.provisioning.dto.ProductionOrderDTO;
 import bioCanteenApp.provisioning.repository.IProvisioningItemRepo;
 import bioCanteenApp.reservation.repository.IReservationRepo;
-import bioCanteenApp.suppliers.domain.Supplier;
 import bioCanteenApp.suppliers.domain.SupplierApplication;
-import bioCanteenApp.suppliers.domain.SupplierApplicationStatus;
 import bioCanteenApp.suppliers.domain.SupplierCapacity;
 import bioCanteenApp.suppliers.repository.ISupplierRepo;
 import bioCanteenApp.users.domain.User;
 import bioCanteenApp.users.repository.IUserRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import bioCanteenApp.menu.repository.IMenuRepo;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -47,6 +45,7 @@ public class ProvisioningService implements IProvisioningService  {
     private final IUserRepo userRepo;
     private final IProvisioningItemRepo provisioningItemRepo;
     private final ISupplierRepo supplierRepo;
+    private final IMenuRepo menuRepo;
 
     /**
      * PREVISÃO: histórico + ementa - stock existente
@@ -252,5 +251,49 @@ public class ProvisioningService implements IProvisioningService  {
                 .filter(cap -> cap.getProductName().equalsIgnoreCase(productName))
                 .mapToDouble(SupplierCapacity::getQuantity)
                 .sum();
+    }
+
+    public Map<Product, Double> calculateNextWeekProductNeedsFromCurrentWeekReservations() {
+        LocalDate today = LocalDate.now();
+
+        LocalDate currentWeekStart = today.minusDays(today.getDayOfWeek().getValue() - 1);
+        LocalDate currentWeekEnd = currentWeekStart.plusDays(6);
+
+        LocalDate nextWeekStart = currentWeekStart.plusWeeks(1);
+        LocalDate nextWeekEnd = nextWeekStart.plusDays(6);
+
+        Menu nextWeekMenu = menuRepo.findNextWeekMenu(nextWeekStart, nextWeekEnd)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("No menu found for next week.")
+                );
+
+        Map<Product, Double> neededProducts = new HashMap<>();
+
+        for (MenuEntry entry : nextWeekMenu.getEntries()) {
+            for (MenuEntryDish med : entry.getMenuEntryDishes()) {
+                Long dishId = med.getDish().getId();
+
+                long currentWeekReservations =
+                        reservationRepo.countConfirmedByDishBetweenDates(
+                                dishId,
+                                currentWeekStart.atStartOfDay(),
+                                currentWeekEnd.atTime(23, 59, 59)
+                        );
+
+                for (DishIngredient di : med.getDish().getDishIngredients()) {
+                    Ingredient ingredient = di.getIngredient();
+                    Product product = ingredient.getProduct();
+
+                    double totalNeeded =
+                            currentWeekReservations
+                                    * di.getQuantity()
+                                    * ingredient.getQuantity();
+
+                    neededProducts.merge(product, totalNeeded, Double::sum);
+                }
+            }
+        }
+
+        return neededProducts;
     }
 }

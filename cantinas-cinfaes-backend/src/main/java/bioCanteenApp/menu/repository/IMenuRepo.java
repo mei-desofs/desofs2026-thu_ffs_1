@@ -13,6 +13,6 @@ public interface IMenuRepo {
     Optional<Menu> findById(Long id);
     Optional<Menu> findByMenuEntryDishId(Long menuEntryDishId);
     MenuEntryDish findMenuEntryDishById(Long id);
-
+    Optional<Menu> findNextWeekMenu(LocalDate startDate, LocalDate endDate);
     List<Menu> findByMenuDates(LocalDate startDate, LocalDate endDate, LocalDate startDate1, LocalDate endDate1);
 }
