@@ -9,14 +9,26 @@
     The vulnerable class (Log4j1XmlLayout / SslConfiguration) is not present in log4j-api.
   -->
   <suppress>
-    <notes>False positive: CVE affects log4j-1-to-2 bridge, not log4j-api. Bridge is not used.</notes>
+    <notes>False positive: CVE affects log4j-1-to-2 bridge, not log4j-api or log4j-to-slf4j. Bridge is not used.</notes>
     <packageUrl regex="true">^pkg:maven/org\.apache\.logging\.log4j/log4j\-api@.*$</packageUrl>
     <cve>CVE-2026-34479</cve>
   </suppress>
 
   <suppress>
-    <notes>False positive: CVE affects log4j-1-to-2 bridge, not log4j-api. Bridge is not used.</notes>
+    <notes>False positive: CVE affects log4j-1-to-2 bridge, not log4j-api or log4j-to-slf4j. Bridge is not used.</notes>
     <packageUrl regex="true">^pkg:maven/org\.apache\.logging\.log4j/log4j\-api@.*$</packageUrl>
+    <cve>CVE-2026-34477</cve>
+  </suppress>
+
+  <suppress>
+    <notes>False positive: CVE affects log4j-1-to-2 bridge, not log4j-to-slf4j. Bridge is not used.</notes>
+    <packageUrl regex="true">^pkg:maven/org\.apache\.logging\.log4j/log4j\-to\-slf4j@.*$</packageUrl>
+    <cve>CVE-2026-34479</cve>
+  </suppress>
+
+  <suppress>
+    <notes>False positive: CVE affects log4j-1-to-2 bridge, not log4j-to-slf4j. Bridge is not used.</notes>
+    <packageUrl regex="true">^pkg:maven/org\.apache\.logging\.log4j/log4j\-to\-slf4j@.*$</packageUrl>
     <cve>CVE-2026-34477</cve>
   </suppress>
 
