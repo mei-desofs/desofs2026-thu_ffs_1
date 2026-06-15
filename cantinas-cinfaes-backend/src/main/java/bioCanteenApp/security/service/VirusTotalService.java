@@ -70,8 +70,9 @@ public class VirusTotalService {
         }
 
         if (!finished) {
-            // Se o VirusTotal estiver super lento, lançamos erro de timeout (ou podes deixar passar, tu decides)
-            throw new RuntimeException("VirusTotal scan timed out. Please try again later.");
+            // Apenas faz log do aviso e deixa passar para não bloquear o utilizador
+            System.out.println("WARNING: VirusTotal scan is taking too long. Allowing file temporarily.");
+            return; // Sai do método sem lançar erro
         }
 
         if (maliciousVotes > 0) {

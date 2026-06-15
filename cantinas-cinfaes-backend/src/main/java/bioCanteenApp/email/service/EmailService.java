@@ -88,7 +88,7 @@ public class EmailService implements IEmailService {
     }
 
     @Override
-    public void sendRejectionEmail(String toEmail, String reason) {
+    public void sendSupplierRejectionEmail(String toEmail, String reason) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(toEmail);
         message.setSubject("BioCantinas — Supplier Application Status");

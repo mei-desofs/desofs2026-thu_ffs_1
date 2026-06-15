@@ -109,7 +109,7 @@ public class PasswordController {
 
     @PostMapping("/activate-account")
     public ResponseEntity<String> activateAccount(
-            @RequestParam String token,
+            @RequestParam(name = "token") String token,
             @RequestBody ActivateAccountDTO dto
     ) {
 

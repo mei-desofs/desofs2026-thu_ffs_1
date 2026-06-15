@@ -115,7 +115,6 @@ public class SupplierService implements ISupplierService {
             return userRepo.save(newUser);
         });
 
-        emailService.sendSupplierWelcomeEmail(dto.getEmail(), dto.getName());
         // Cria a entidade de Supplier
         Supplier supplier = new Supplier();
         supplier.setUser(supplierUser);
@@ -127,12 +126,10 @@ public class SupplierService implements ISupplierService {
 
         supplierRepo.save(supplier);
 
-        // REQ 4.3: Gerar o token real na Base de Dados usando o teu PasswordService
-        // NOTA: Substitui 'generateResetToken' pelo nome real do método que tens no teu PasswordService
-        // que cria e guarda o token de recuperação.
+        // REQ 4.3: Gerar o token real na Base de Dados usando o PasswordService
         String setupToken = passwordService.generateSupplierSetupToken(supplierUser);
 
-        // Como não há frontend, enviamos instruções claras para testar no Postman
+        // Envia UM ÚNICO email, com o Token correto
         emailService.sendSupplierWelcomeEmail(application.getEmail(), setupToken);
 
         return supplierMapper.toDTO(supplier);
@@ -149,7 +146,7 @@ public class SupplierService implements ISupplierService {
 
         // REQ 4.4: Enviar email com a razão da rejeição
         // Garante que o teu EmailService tem um método similar a este
-        emailService.sendRejectionEmail(application.getEmail(), reason);
+        emailService.sendSupplierRejectionEmail(application.getEmail(), reason);
 
         // Retornar um SupplierDTO representativo ou vazio dependendo da arquitetura
         SupplierDTO response = new SupplierDTO();
