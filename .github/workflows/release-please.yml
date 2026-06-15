@@ -1,3 +1,5 @@
+name: release-please
+
 on:
   push:
     branches:
@@ -6,16 +8,54 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
-
-name: release-please
 
 jobs:
-  release-please:
+  release:
     runs-on: ubuntu-latest
     steps:
-      - uses: google-github-actions/release-please-action@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          config-file: .github/release-please-config.json
-          manifest-file: .github/.release-please-manifest.json
+      - uses: actions/checkout@v4
+
+      - name: Read version from manifest
+        id: version
+        run: |
+          VERSION=$(python3 -c "import json; print(json.load(open('.github/.release-please-manifest.json'))['.'])")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Set tag name
+        id: tag
+        env:
+          BRANCH: ${{ github.ref_name }}
+          VERSION: ${{ steps.version.outputs.version }}
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          if [ "$BRANCH" = "dev" ]; then
+            TAG="v${VERSION}-beta.${RUN_NUMBER}"
+            PRERELEASE="true"
+          else
+            TAG="v${VERSION}"
+            PRERELEASE="false"
+          fi
+
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "prerelease=$PRERELEASE" >> $GITHUB_OUTPUT
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.tag.outputs.tag }}
+          PRERELEASE: ${{ steps.tag.outputs.prerelease }}
+          SHA: ${{ github.sha }}
+        run: |
+          if gh release view "$TAG" &>/dev/null; then
+            echo "Release $TAG already exists, skipping"
+          else
+            PRERELEASE_FLAG=""
+            if [ "$PRERELEASE" = "true" ]; then
+              PRERELEASE_FLAG="--prerelease"
+            fi
+            gh release create "$TAG" \
+              --title "$TAG" \
+              --draft \
+              --target "$SHA" \
+              $PRERELEASE_FLAG
+          fi
