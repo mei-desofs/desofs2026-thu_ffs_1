@@ -73,4 +73,18 @@ public class UserRepo implements IUserRepo {
         List<User> result = query.getResultList();
         return result.isEmpty() ? null : result.getFirst();
     }
+
+    @Override
+    public Optional<User> findByRefreshToken(String refreshToken) {
+        TypedQuery<User> query = entityManager.createQuery(
+                "SELECT u FROM User u WHERE u.refreshToken = :refreshToken",
+                User.class
+        );
+
+        query.setParameter("refreshToken", refreshToken);
+
+        List<User> results = query.getResultList();
+
+        return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
+    }
 }

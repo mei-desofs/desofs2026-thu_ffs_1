@@ -18,6 +18,18 @@ public class SupplierRepo implements ISupplierRepo {
     @PersistenceContext
     private EntityManager entityManager;
 
+    // --- NOVOS MÉTODOS ADICIONADOS PARA SUPORTE AOS IDs ---
+    @Override
+    public Optional<SupplierApplication> findApplicationById(Long id) {
+        try {
+            SupplierApplication sa = entityManager.find(SupplierApplication.class, id);
+            return Optional.ofNullable(sa);
+        } catch (Exception e) {
+            return Optional.empty();
+        }
+    }
+    // --------------------------------------------------------
+
     @Override
     public Supplier save(Supplier supplier) {
         if (supplier.getId() == null) {
@@ -25,7 +37,8 @@ public class SupplierRepo implements ISupplierRepo {
             return supplier;
         } else {
             return entityManager.merge(supplier);
-        }    }
+        }
+    }
 
     @Override
     public SupplierApplication save(SupplierApplication supplierApplication) {
@@ -34,7 +47,8 @@ public class SupplierRepo implements ISupplierRepo {
             return supplierApplication;
         } else {
             return entityManager.merge(supplierApplication);
-        }    }
+        }
+    }
 
     @Override
     public Optional<SupplierApplication> findByEmail(String email) {

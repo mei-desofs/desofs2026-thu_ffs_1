@@ -1,5 +1,6 @@
 package bioCanteenApp.config;
 
+import bioCanteenApp.users.repository.IUserRepo;
 import io.jsonwebtoken.io.Decoders;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -27,49 +28,76 @@ public class SecurityConfig {
     }
 
     @Bean
-    public JwtDecoder jwtDecoder() {
-        if (jwtSecret == null || jwtSecret.isBlank()) {
-            throw new IllegalStateException("JWT secret is not configured. Set 'jwt.secret' (base64-encoded 256-bit key) in application.properties or environment variables to enable JWT decoding for the resource server.");
-        }
+    public JwtDecoder tokenVersionValidatingDecoder(IUserRepo userRepo) {
+        NimbusJwtDecoder delegate = NimbusJwtDecoder
+                .withSecretKey(new javax.crypto.spec.SecretKeySpec(
+                        Decoders.BASE64.decode(jwtSecret), "HmacSHA256"))
+                .build();
 
-        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
-        return NimbusJwtDecoder.withSecretKey(new javax.crypto.spec.SecretKeySpec(keyBytes, "HmacSHA256")).build();
+        return token -> {
+            var jwt = delegate.decode(token);
+
+            String email = jwt.getSubject();
+            long tokenVersion = ((Number) jwt.getClaim("tokenVersion")).longValue();
+
+            userRepo.findByEmail(email).ifPresent(user -> {
+                if (tokenVersion != user.getTokenVersion()) {
+                    throw new org.springframework.security.oauth2.jwt.BadJwtException(
+                            "Session invalidated. Please log in again.");
+                }
+            });
+
+            return jwt;
+        };
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, IUserRepo userRepo) throws Exception {
 
         JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
         grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
+
         grantedAuthoritiesConverter.setAuthoritiesClaimName("role");
 
         JwtAuthenticationConverter authenticationConverter = new JwtAuthenticationConverter();
         authenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
 
         return http
-                // Stateless JWT API — no browser frontend, no cookie-based auth.
-                // CSRF not applicable: using ignoringRequestMatchers instead of disable()
-                // to avoid false-positive static analysis alerts.
-                // disable() desativa o mecanismo completamente, ignoringRequestMatchers("/**") mantém o mecanismo mas configura-o para não aplicar a nada
                 .csrf(csrf -> csrf.ignoringRequestMatchers(AntPathRequestMatcher.antMatcher("/**")))
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // --- Endpoints Públicos ---
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/api/passwords/recover-password").permitAll()
                         .requestMatchers("/api/passwords/reset-password").permitAll()
+                        .requestMatchers("/api/passwords/activate-account").permitAll()
+                        .requestMatchers("/api/suppliers/apply").permitAll()
+
+                        // --- Endpoints Autenticados (Qualquer User Logado) ---
                         .requestMatchers("/api/passwords/change").authenticated()
+
+                        // --- Endpoints Restritos por Role ---
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
-                        .requestMatchers("/api/suppliers/approval").hasRole("ADMIN")
-                        .requestMatchers("/api/suppliers/reject").hasRole("ADMIN")
-                        .requestMatchers("/api/suppliers/edit").hasRole("ADMIN") // no code
-                        .requestMatchers("/api/suppliers/deactivate").hasRole("ADMIN") //no code
-                        .requestMatchers("/api/menus/**").hasRole("DIETITIAN") // no code para o edit menu
+
+                        // Foram adicionados os ** e os prefixos corretos aqui:
+                        .requestMatchers("/api/suppliers/approve/**").hasRole("ADMIN")
+                        .requestMatchers("/api/suppliers/reject/**").hasRole("ADMIN")
+                        .requestMatchers("/api/suppliers/application/*/certificate").hasRole("ADMIN")
+
+                        .requestMatchers("/api/suppliers/edit").hasRole("ADMIN")
+                        .requestMatchers("/api/suppliers/deactivate").hasRole("ADMIN")
+
+                        .requestMatchers("/api/menus/**").hasRole("DIETITIAN")
                         .requestMatchers("/api/provisioning/**").hasRole("CANTEEN_MANAGER")
+
+                        // --- O resto obriga sempre a estar logado ---
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> jwt.jwtAuthenticationConverter(authenticationConverter))
+                        .jwt(jwt -> jwt
+                                .jwtAuthenticationConverter(authenticationConverter)
+                                .decoder(tokenVersionValidatingDecoder(userRepo)))
                 )
                 .build();
     }

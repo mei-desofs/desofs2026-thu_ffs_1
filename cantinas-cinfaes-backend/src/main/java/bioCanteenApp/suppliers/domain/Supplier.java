@@ -30,7 +30,7 @@ public class Supplier {
     private String phoneNumber;
 
     @Lob
-    @Column(name = "certified_organic", columnDefinition = "BLOB")
+    @Column(name = "certified_organic", columnDefinition = "MEDIUMBLOB")
     private byte[] certifiedOrganic;
 
     @OneToOne(optional = false)
@@ -60,5 +60,5 @@ public class Supplier {
         this.isQuarantined = false;
     }
 
-    protected Supplier() { }
+    public Supplier() { }
 }
