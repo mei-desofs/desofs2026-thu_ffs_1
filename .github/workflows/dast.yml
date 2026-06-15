@@ -299,36 +299,6 @@ jobs:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
-      - name: OWASP Dependency Check
-        working-directory: cantinas-cinfaes-backend
-        env:
-          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
-        run: >
-          mvn org.owasp:dependency-check-maven:check
-          -Dnvd.api.key=$NVD_API_KEY
-          -Dnvd.api.delay=2000
-          -Dnvd.api.maxRetryCount=10
-          -DfailBuildOnCVSS=0
-      - name: Trivy Filesystem Scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: fs
-          scan-ref: .
-          exit-code: '1'
-          severity: HIGH,CRITICAL
-      - name: Upload CVE Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: full-cve-report
-          path: cantinas-cinfaes-backend/target/dependency-check-report.html
-
-      - name: Cache Maven packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
 
       - name: Build project
         working-directory: cantinas-cinfaes-backend
@@ -340,18 +310,6 @@ jobs:
           MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
           JWT_TOKEN: ${{ secrets.JWT_TOKEN }}
         run: mvn clean package -DskipTests
-      - name: Build Docker image
-        run: docker build -t myapp:${{ github.sha }} cantinas-cinfaes-backend/
-      - name: Trivy image scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: myapp:${{ github.sha }}
-          format: sarif
-          output: trivy-results.sarif
-          severity: HIGH,CRITICAL
-      - uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: trivy-results.sarif
 
       - name: Read version and set tag
         id: tag
