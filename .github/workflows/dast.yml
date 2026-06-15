@@ -107,7 +107,7 @@ jobs:
           -Dnvd.api.key=$NVD_API_KEY
           -Dnvd.api.delay=2000
           -Dnvd.api.maxRetryCount=10
-          -DfailBuildOnCVSS=0
+          -DfailBuildOnCVSS=7
       - name: Trivy Filesystem Scan
         uses: aquasecurity/trivy-action@master
         with:
@@ -230,6 +230,7 @@ jobs:
         with:
           target: 'http://localhost:8080'
           fail_action: true
+          rules_file_name: '.zap/rules.tsv'
           issue_title: 'ZAP Baseline Scan Report'
       - name: Upload ZAP Report
         uses: actions/upload-artifact@v4
