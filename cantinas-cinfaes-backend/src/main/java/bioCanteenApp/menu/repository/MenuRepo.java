@@ -87,4 +87,21 @@ public class MenuRepo implements IMenuRepo{
         query.setParameter("status", status);
         return query.getSingleResult();
     }
+
+    @Override
+    public Optional<Menu> findNextWeekMenu(LocalDate startDate, LocalDate endDate) {
+        TypedQuery<Menu> query = entityManager.createQuery(
+                "SELECT m FROM Menu m " +
+                        "WHERE m.weekStartDate >= :startDate " +
+                        "AND m.weekEndDate <= :endDate",
+                Menu.class
+        );
+
+        query.setParameter("startDate", startDate);
+        query.setParameter("endDate", endDate);
+
+        List<Menu> results = query.getResultList();
+
+        return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
+    }
 }

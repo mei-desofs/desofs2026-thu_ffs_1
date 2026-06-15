@@ -7,6 +7,7 @@ import jakarta.persistence.TypedQuery;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -94,6 +95,27 @@ public class ReservationRepo implements IReservationRepo {
                 ).setParameter("dishId", dishId).setParameter("menuId", menuId)
                 .getSingleResult();
         return menus;
+    }
+
+    @Override
+    public long countConfirmedByDishBetweenDates(
+            Long dishId,
+            LocalDateTime startDate,
+            LocalDateTime endDate
+    ) {
+        TypedQuery<Long> query = entityManager.createQuery(
+                "SELECT COUNT(r) FROM Reservation r " +
+                        "WHERE r.menuEntryDish.dish.id = :dishId " +
+                        "AND r.status = 'CONFIRMED' " +
+                        "AND r.reservationDateTime BETWEEN :startDate AND :endDate",
+                Long.class
+        );
+
+        query.setParameter("dishId", dishId);
+        query.setParameter("startDate", startDate);
+        query.setParameter("endDate", endDate);
+
+        return query.getSingleResult();
     }
 
 }
