@@ -421,5 +421,6 @@ jobs:
               -e MAIL_USERNAME="${{ secrets.MAIL_USERNAME }}" \
               -e MAIL_PASSWORD="${{ secrets.MAIL_PASSWORD }}" \
               -e JWT_TOKEN="${{ secrets.JWT_TOKEN }}" \
+              -e VIRUS_TOTAL="${{ secrets.VIRUS_TOTAL }}" \
               ghcr.io/${{ github.repository_owner }}/cantinas-cinfaes-backend:${{ needs.release.outputs.tag }}
             docker image prune -f
