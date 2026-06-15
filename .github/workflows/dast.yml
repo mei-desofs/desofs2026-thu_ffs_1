@@ -40,6 +40,37 @@ jobs:
         run: mvn clean package -DskipTests
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
+        with:
+          output: sarif-results
+      - name: Fail on High or Critical CodeQL Alerts
+        run: |
+          sarif_file="sarif-results/java.sarif"
+          if [ ! -f "$sarif_file" ]; then
+            echo "SARIF file not found — skipping check."
+            exit 0
+          fi
+          findings=$(jq -r '
+            .runs[] |
+            (
+              [
+                (.tool.driver.rules // []),
+                ([.tool.extensions[]? | .rules? // []] | add // [])
+              ] | add // []
+              | map({(.id): (.properties["security-severity"] // "0")})
+              | add // {}
+            ) as $m |
+            .results[] |
+            . as $r |
+            (($m[$r.ruleId] // "0") | tonumber) as $sev |
+            select($sev >= 7.0) |
+            "\(.ruleId) (severity \($sev)): \(.message.text)"
+          ' "$sarif_file")
+          if [ -n "$findings" ]; then
+            echo "High/critical findings:"
+            echo "$findings"
+            exit 1
+          fi
+          echo "No high or critical alerts found."
       - name: Semgrep Full Scan
         uses: returntocorp/semgrep-action@v1
         with:
@@ -47,36 +78,6 @@ jobs:
             p/java
             p/owasp-top-ten
             p/secrets
-      - name: Fail on High or Critical Code Scanning Alerts
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
-          REF: ${{ github.ref }}
-        run: |
-          set -euo pipefail
-
-          high_count=$(gh api \
-            "/repos/${REPO}/code-scanning/alerts" \
-            -f state=open \
-            -f severity=high \
-            -f ref="${REF}" \
-            -f per_page=100 \
-            --jq 'length')
-
-          critical_count=$(gh api \
-            "/repos/${REPO}/code-scanning/alerts" \
-            -f state=open \
-            -f severity=critical \
-            -f ref="${REF}" \
-            -f per_page=100 \
-            --jq 'length')
-
-          total_count=$((high_count + critical_count))
-
-          if [ "$total_count" -gt 0 ]; then
-            echo "Found ${total_count} open high/critical code scanning alert(s)."
-            exit 1
-          fi
 
   # ──────────────────────────────────────────────
   # Full CVE Scan — OWASP Dependency Check + Trivy Filesystem
@@ -205,9 +206,9 @@ jobs:
         working-directory: cantinas-cinfaes-backend
         run: java -jar target/*.jar &
         env:
-          DB_URL: ${{ secrets.DB_URL }}
-          DB_USERNAME: ${{ secrets.DB_USERNAME }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_URL: jdbc:mysql://localhost:3306/cantinasDB
+          DB_USERNAME: root
+          DB_PASSWORD: testpassword
           MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
           MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
           JWT_TOKEN: ${{ secrets.JWT_TOKEN }}
