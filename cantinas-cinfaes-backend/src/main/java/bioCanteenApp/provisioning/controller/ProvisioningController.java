@@ -4,16 +4,12 @@ import bioCanteenApp.menu.domain.Menu;
 import bioCanteenApp.menu.domain.MenuStatus;
 import bioCanteenApp.menu.dto.MenuDto;
 import bioCanteenApp.menu.mapper.IMenuMapper;
-import bioCanteenApp.menu.repository.IMenuRepo;
 import bioCanteenApp.menu.service.IMenuService;
 import bioCanteenApp.products.domain.Product;
-import bioCanteenApp.products.dto.ProductDTO;
 import bioCanteenApp.products.dto.ProductQuantityDTO;
 import bioCanteenApp.products.mapper.IProductMapper;
 import bioCanteenApp.provisioning.dto.ProductionOrderDTO;
-import bioCanteenApp.provisioning.dto.ProvisioningItemDTO;
 import bioCanteenApp.provisioning.service.IProvisioningService;
-import bioCanteenApp.provisioning.service.ProvisioningService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -22,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -282,6 +277,21 @@ public class ProvisioningController {
                 dtoList.size(),
                 menuId
         );
+
+        return ResponseEntity.ok(dtoList);
+    }
+
+    @GetMapping("/next-week/needs")
+    public ResponseEntity<List<ProductQuantityDTO>> calculateNextWeekNeeds() {
+        Map<Product, Double> needs =
+                provisioningService.calculateNextWeekProductNeedsFromCurrentWeekReservations();
+
+        List<ProductQuantityDTO> dtoList = needs.entrySet().stream()
+                .map(e -> ProductQuantityDTO.builder()
+                        .product(productMapper.toDTO(e.getKey()))
+                        .quantity(e.getValue())
+                        .build())
+                .collect(Collectors.toList());
 
         return ResponseEntity.ok(dtoList);
     }

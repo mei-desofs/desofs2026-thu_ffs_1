@@ -1,4 +1,4 @@
-package bioCanteenApp.provisioning.mapper;
+package bioCanteenApp.provisioning.mappers;
 
 import bioCanteenApp.menu.repository.IMenuRepo;
 import bioCanteenApp.products.repository.IProductRepo;

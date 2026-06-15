@@ -12,6 +12,7 @@ import bioCanteenApp.products.domain.Season;
 import bioCanteenApp.products.dto.ProductDTO;
 import bioCanteenApp.products.dto.ProductQuantityDTO;
 import bioCanteenApp.products.mapper.IProductMapper;
+import bioCanteenApp.provisioning.dto.ProductionOrderDTO;
 import bioCanteenApp.provisioning.service.IProvisioningService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -296,5 +297,156 @@ class ProvisioningControllerTest {
                 LocalDate.of(2026, 5, 17),
                 status
         );
+    }
+
+    @Test
+    void shouldGetPlannedProductionPlan() {
+        MenuDto menuDto = createMenuDto(1L);
+        Menu menu = createMenu(MenuStatus.GENERATED);
+
+        Product product = new Product(
+                "Rice",
+                "kg",
+                30,
+                List.of(Season.SPRING),
+                List.of(Allergen.GLUTEN)
+        );
+
+        ProductionOrderDTO order = new ProductionOrderDTO(
+                "Supplier A",
+                "Rice",
+                10.0,
+                "PLANNED"
+        );
+
+        when(menuService.getAllMenus())
+                .thenReturn(List.of(menuDto));
+
+        when(menuMapper.toDomain(menuDto))
+                .thenReturn(menu);
+
+        when(provisioningService.getPlannedQuantities(menu))
+                .thenReturn(Map.of(product, 10.0));
+
+        when(provisioningService.generateProductionPlan(menu, Map.of(product, 10.0)))
+                .thenReturn(List.of(order));
+
+        ResponseEntity<List<ProductionOrderDTO>> response =
+                controller.getPlannedProductionPlan(1L);
+
+        assertEquals(200, response.getStatusCode().value());
+        assertEquals(1, response.getBody().size());
+        verify(provisioningService).getPlannedQuantities(menu);
+        verify(provisioningService).generateProductionPlan(menu, Map.of(product, 10.0));
+    }
+
+    @Test
+    void shouldGetAdjustedProductionPlan() {
+        MenuDto menuDto = createMenuDto(1L);
+        Menu menu = createMenu(MenuStatus.GENERATED);
+
+        Product product = new Product(
+                "Rice",
+                "kg",
+                30,
+                List.of(Season.SPRING),
+                List.of(Allergen.GLUTEN)
+        );
+
+        ProductionOrderDTO order = new ProductionOrderDTO(
+                "Supplier A",
+                "Rice",
+                15.0,
+                "PLANNED"
+        );
+
+        when(menuService.getAllMenus())
+                .thenReturn(List.of(menuDto));
+
+        when(menuMapper.toDomain(menuDto))
+                .thenReturn(menu);
+
+        when(provisioningService.getAdjustedQuantities(menu))
+                .thenReturn(Map.of(product, 15.0));
+
+        when(provisioningService.generateProductionPlan(menu, Map.of(product, 15.0)))
+                .thenReturn(List.of(order));
+
+        ResponseEntity<List<ProductionOrderDTO>> response =
+                controller.getAdjustedProductionPlan(1L);
+
+        assertEquals(200, response.getStatusCode().value());
+        assertEquals(1, response.getBody().size());
+
+        verify(provisioningService).getAdjustedQuantities(menu);
+        verify(provisioningService).generateProductionPlan(menu, Map.of(product, 15.0));
+    }
+
+    @Test
+    void shouldCalculateNextWeekNeeds() {
+        Product product = new Product(
+                "Rice",
+                "kg",
+                30,
+                List.of(Season.SPRING),
+                List.of(Allergen.GLUTEN)
+        );
+
+        ProductDTO productDTO = new ProductDTO();
+
+        when(provisioningService.calculateNextWeekProductNeedsFromCurrentWeekReservations())
+                .thenReturn(Map.of(product, 25.0));
+
+        when(productMapper.toDTO(product))
+                .thenReturn(productDTO);
+
+        ResponseEntity<List<ProductQuantityDTO>> response =
+                controller.calculateNextWeekNeeds();
+
+        assertEquals(200, response.getStatusCode().value());
+        assertEquals(1, response.getBody().size());
+        assertEquals(25.0, response.getBody().get(0).getQuantity());
+
+        verify(provisioningService)
+                .calculateNextWeekProductNeedsFromCurrentWeekReservations();
+    }
+
+    @Test
+    void shouldThrowWhenMenuNotFoundForPlannedQuantities() {
+        when(menuService.getAllMenus())
+                .thenReturn(List.of());
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> controller.getPlannedQuantities(99L)
+        );
+
+        assertEquals("Menu not found with id: 99", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenMenuNotFoundForAdjustedQuantities() {
+        when(menuService.getAllMenus())
+                .thenReturn(List.of());
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> controller.getAdjustedQuantities(99L, List.of())
+        );
+
+        assertEquals("Menu not found with id: 99", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenMenuNotFoundForProductionPlan() {
+        when(menuService.getAllMenus())
+                .thenReturn(List.of());
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> controller.getPlannedProductionPlan(99L)
+        );
+
+        assertEquals("Menu not found", exception.getMessage());
     }
 }

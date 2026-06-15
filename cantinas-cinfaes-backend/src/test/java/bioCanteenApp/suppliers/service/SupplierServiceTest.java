@@ -7,6 +7,8 @@ import bioCanteenApp.email.service.EmailService;
 import bioCanteenApp.email.validator.EmailDomainValidator;
 import bioCanteenApp.products.domain.*;
 import bioCanteenApp.products.repository.IProductRepo;
+import bioCanteenApp.security.service.PasswordService;
+import bioCanteenApp.security.service.VirusTotalService;
 import bioCanteenApp.suppliers.domain.*;
 import bioCanteenApp.suppliers.dto.SupplierApplicationDTO;
 import bioCanteenApp.suppliers.dto.SupplierDTO;
@@ -18,6 +20,7 @@ import bioCanteenApp.users.repository.IUserRepo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -40,6 +43,8 @@ class SupplierServiceTest {
     private EmailService emailService;
     private PasswordEncoder passwordEncoder;
     private EmailDomainValidator emailDomainValidator;
+    private PasswordService passwordService;
+    private VirusTotalService virusTotalService;
 
     private SupplierService service;
 
@@ -52,6 +57,8 @@ class SupplierServiceTest {
         emailService = mock(EmailService.class);
         passwordEncoder = mock(PasswordEncoder.class);
         emailDomainValidator = mock(EmailDomainValidator.class);
+        passwordService = mock(PasswordService.class);
+        virusTotalService = mock(VirusTotalService.class);
 
         service = new SupplierService(
                 supplierMapper,
@@ -60,21 +67,17 @@ class SupplierServiceTest {
                 userRepo,
                 emailService,
                 passwordEncoder,
-                emailDomainValidator
+                emailDomainValidator,
+                passwordService,
+                virusTotalService
         );
     }
 
     @Test
-    void shouldApplyToSupplierPosition() {
+    void shouldApplyToSupplierPosition() throws Exception {
         SupplierApplicationDTO dto = mock(SupplierApplicationDTO.class);
         SupplierApplicationDTO resultDto = mock(SupplierApplicationDTO.class);
-
-        SupplierCapacity capacity = new SupplierCapacity(
-                "Rice",
-                LocalDate.of(2026, 1, 1),
-                LocalDate.of(2026, 12, 31),
-                1000.0
-        );
+        MultipartFile certificate = mock(MultipartFile.class);
 
         SupplierApplication application = createSupplierApplication();
 
@@ -82,84 +85,127 @@ class SupplierServiceTest {
         when(supplierMapper.toDomain(dto)).thenReturn(application);
         when(supplierMapper.toDTO(application)).thenReturn(resultDto);
 
-        SupplierApplicationDTO result = service.applyToSupplierPosition(dto);
+        // Mock do ficheiro Multipart
+        when(certificate.isEmpty()).thenReturn(false);
+        when(certificate.getContentType()).thenReturn("application/pdf");
+        when(certificate.getSize()).thenReturn(1024L);
+        when(certificate.getBytes()).thenReturn(new byte[]{1, 2, 3});
+
+        SupplierApplicationDTO result = service.applyToSupplierPosition(dto, certificate);
 
         assertEquals(resultDto, result);
         verify(emailDomainValidator).validate("supplier@email.com");
+        verify(virusTotalService).scanFile(certificate); // Verifica se o anti-vírus foi chamado
         verify(supplierRepo).save(application);
         verify(supplierMapper).toDTO(application);
     }
 
     @Test
+    void shouldThrowWhenCertificateIsMissingOrInvalid() {
+        SupplierApplicationDTO dto = mock(SupplierApplicationDTO.class);
+        when(dto.getEmail()).thenReturn("supplier@email.com");
+
+        // 1. Missing certificate
+        assertThrows(IllegalArgumentException.class,
+                () -> service.applyToSupplierPosition(dto, null));
+
+        // 2. Invalid type
+        MultipartFile badTypeCert = mock(MultipartFile.class);
+        when(badTypeCert.isEmpty()).thenReturn(false);
+        when(badTypeCert.getContentType()).thenReturn("image/png");
+        assertThrows(IllegalArgumentException.class,
+                () -> service.applyToSupplierPosition(dto, badTypeCert));
+
+        // 3. Exceeds size
+        MultipartFile bigCert = mock(MultipartFile.class);
+        when(bigCert.isEmpty()).thenReturn(false);
+        when(bigCert.getContentType()).thenReturn("application/pdf");
+        when(bigCert.getSize()).thenReturn(6L * 1024 * 1024); // 6MB
+        assertThrows(IllegalArgumentException.class,
+                () -> service.applyToSupplierPosition(dto, bigCert));
+    }
+
+    @Test
     void shouldApproveSupplier() {
-        SupplierDTO dto = mock(SupplierDTO.class);
+        Long applicationId = 1L;
         SupplierDTO resultDto = mock(SupplierDTO.class);
 
-        SupplierApplication application = createSupplierApplication();
-        Supplier supplier = createSupplier("supplier@email.com");
+        // Usar um mock para simular perfeitamente os métodos da entidade
+        SupplierApplication application = mock(SupplierApplication.class);
 
-        when(dto.getEmail()).thenReturn("supplier@email.com");
-        when(supplierRepo.findByEmail("supplier@email.com"))
-                .thenReturn(Optional.of(application));
-        when(userRepo.findByEmail("supplier@email.com"))
-                .thenReturn(Optional.empty());
-        when(passwordEncoder.encode(anyString()))
-                .thenReturn("encodedPassword");
-        when(userRepo.save(any(User.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-        when(supplierRepo.findAll())
-                .thenReturn(List.of(supplier));
-        when(supplierMapper.toDTO(supplier))
-                .thenReturn(resultDto);
+        when(application.getInterviewStatus()).thenReturn(InterviewStatus.APPROVED); // Aprovou na entrevista
+        when(application.getEmail()).thenReturn("supplier@email.com");
+        when(application.getName()).thenReturn("BioCorp");
+        when(application.getNif()).thenReturn(Long.valueOf("123456789"));
 
-        SupplierDTO result = service.approveSupplier(dto);
+        when(supplierRepo.findApplicationById(applicationId)).thenReturn(Optional.of(application));
+        when(userRepo.findByEmail("supplier@email.com")).thenReturn(Optional.empty());
+        when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
+
+        when(userRepo.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(passwordService.generateSupplierSetupToken(any(User.class))).thenReturn("fake-token-123");
+        when(supplierMapper.toDTO(any(Supplier.class))).thenReturn(resultDto);
+
+        SupplierDTO result = service.approveSupplier(applicationId);
 
         assertEquals(resultDto, result);
-        assertEquals(SupplierApplicationStatus.APPROVED, application.getStatus());
-
+        verify(application).setStatus(SupplierApplicationStatus.APPROVED);
         verify(supplierRepo).save(application);
-        verify(userRepo).save(any(User.class));
-        verify(emailService).sendSupplierWelcomeEmail(eq("supplier@email.com"), anyString());
+        verify(supplierRepo).save(any(Supplier.class)); // Guarda a nova entidade Supplier
+        verify(emailService).sendSupplierWelcomeEmail("supplier@email.com", "fake-token-123");
     }
 
     @Test
     void shouldThrowWhenApplicationNotFoundOnApproveSupplier() {
-        SupplierDTO dto = mock(SupplierDTO.class);
+        when(supplierRepo.findApplicationById(1L)).thenReturn(Optional.empty());
 
-        when(dto.getEmail()).thenReturn("missing@email.com");
-        when(supplierRepo.findByEmail("missing@email.com"))
-                .thenReturn(Optional.empty());
-
-        assertThrows(
-                RuntimeException.class,
-                () -> service.approveSupplier(dto)
-        );
-
+        assertThrows(RuntimeException.class, () -> service.approveSupplier(1L));
         verify(emailService, never()).sendSupplierWelcomeEmail(any(), any());
     }
 
     @Test
+    void shouldThrowWhenApplicationDidNotPassInterview() {
+        Long applicationId = 1L;
+        SupplierApplication application = mock(SupplierApplication.class);
+
+        when(application.getInterviewStatus()).thenReturn(InterviewStatus.APPROVED);
+        when(supplierRepo.findApplicationById(applicationId)).thenReturn(Optional.of(application));
+    }
+
+    @Test
     void shouldRejectSupplier() {
-        SupplierDTO dto = mock(SupplierDTO.class);
-        SupplierDTO resultDto = mock(SupplierDTO.class);
+        Long applicationId = 1L;
+        String reason = "Does not meet the criteria";
 
-        SupplierApplication application = createSupplierApplication();
-        Supplier supplier = createSupplier("supplier@email.com");
+        SupplierApplication application = mock(SupplierApplication.class);
+        when(application.getEmail()).thenReturn("supplier@email.com");
+        when(application.getName()).thenReturn("BioCorp");
 
-        when(dto.getEmail()).thenReturn("supplier@email.com");
-        when(supplierRepo.findByEmail("supplier@email.com"))
-                .thenReturn(Optional.of(application));
-        when(supplierRepo.findAll())
-                .thenReturn(List.of(supplier));
-        when(supplierMapper.toDTO(supplier))
-                .thenReturn(resultDto);
+        when(supplierRepo.findApplicationById(applicationId)).thenReturn(Optional.of(application));
 
-        SupplierDTO result = service.rejectSupplier(dto);
+        SupplierDTO result = service.rejectSupplier(applicationId, reason);
 
-        assertEquals(resultDto, result);
-        assertEquals(SupplierApplicationStatus.REJECTED, application.getStatus());
+        assertNotNull(result);
+        assertEquals("supplier@email.com", result.getEmail());
 
+        verify(application).setStatus(SupplierApplicationStatus.REJECTED);
         verify(supplierRepo).save(application);
+        verify(emailService).sendSupplierRejectionEmail("supplier@email.com", reason);
+    }
+
+    @Test
+    void shouldGetBioCertificate() {
+        Long applicationId = 1L;
+        byte[] fakePdfBytes = new byte[]{1, 2, 3};
+
+        SupplierApplication application = mock(SupplierApplication.class);
+        when(application.getBioCertificate()).thenReturn(fakePdfBytes);
+
+        when(supplierRepo.findApplicationById(applicationId)).thenReturn(Optional.of(application));
+
+        byte[] result = service.getBioCertificate(applicationId);
+
+        assertArrayEquals(fakePdfBytes, result);
     }
 
     @Test
@@ -324,6 +370,8 @@ class SupplierServiceTest {
 
         assertEquals(List.of(dto), result);
     }
+
+    // --- Helpers de Criação ---
 
     private Supplier createSupplier(String email) {
         Address address = new Address(

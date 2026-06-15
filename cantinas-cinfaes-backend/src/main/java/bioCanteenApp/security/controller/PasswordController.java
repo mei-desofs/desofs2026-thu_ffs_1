@@ -1,10 +1,10 @@
 package bioCanteenApp.security.controller;
 
+import bioCanteenApp.security.dto.ActivateAccountDTO;
 import bioCanteenApp.security.dto.ForgotPasswordDTO;
 import bioCanteenApp.security.service.PasswordService;
 import bioCanteenApp.users.domain.User;
 import bioCanteenApp.users.repository.UserRepo;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -28,7 +28,7 @@ public class PasswordController {
         this.userRepository = userRepository;
     }
 
-    @PostMapping(value = "/change", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping("/change")
     public ResponseEntity<String> changePassword(
             Authentication authentication,
             @RequestBody Map<String, String> payload
@@ -83,7 +83,7 @@ public class PasswordController {
         return ResponseEntity.ok("Password changed successfully.");
     }
 
-    @PostMapping(value = "/recover-password", produces =  MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping("/recover-password")
     public ResponseEntity<String> forgotPassword(
             @RequestBody ForgotPasswordDTO payload
     ) {
@@ -107,37 +107,28 @@ public class PasswordController {
         );
     }
 
-    @PostMapping(value = "/reset-password", produces =   MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> resetPassword(
-            @RequestBody Map<String, String> payload
+    @PostMapping("/activate-account")
+    public ResponseEntity<String> activateAccount(
+            @RequestParam(name = "token") String token,
+            @RequestBody ActivateAccountDTO dto
     ) {
 
-        String token = payload.get("token");
-        String newPassword = payload.get("newPassword");
-
-        log.info("Password reset attempt using reset token");
-
-        if (token == null || newPassword == null) {
-
-            log.warn("Password reset request failed due to missing fields");
-
-            return ResponseEntity.badRequest()
-                    .body("Both 'token' and 'newPassword' are required.");
-        }
+        log.info("Account activation attempt using token");
 
         passwordService.resetPasswordWithToken(
                 token,
-                newPassword
+                dto.getNewPassword()
         );
 
-        log.info("Password reset completed successfully");
+        log.info("Account activated successfully");
+
 
         return ResponseEntity.ok(
-                "Password reset successfully. You can now log in."
+                "Account activated successfully. You can now log in."
         );
     }
 
-    @GetMapping(value = "/expired", produces =    MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping("/expired")
     public ResponseEntity<Boolean> isPasswordExpired(
             Authentication authentication
     ) {
