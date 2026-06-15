@@ -3,6 +3,7 @@ package bioCanteenApp.canteens.controller;
 import bioCanteenApp.canteens.dto.CanteenDTO;
 import bioCanteenApp.canteens.service.ICanteenService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,7 +20,7 @@ public class CanteenController {
         this.service = service;
     }
 
-    @PostMapping
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CanteenDTO> createCanteen(@RequestBody CanteenDTO request) {
 
         log.info("Creating canteen with name: {}", request.getName());
@@ -31,7 +32,7 @@ public class CanteenController {
         return ResponseEntity.ok(created);
     }
 
-    @GetMapping
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<CanteenDTO>> getAllCanteens() {
 
         log.info("Fetching all canteens");
@@ -43,7 +44,7 @@ public class CanteenController {
         return ResponseEntity.ok(canteens);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping(value = "/{id}", produces =  MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CanteenDTO> getCanteenById(@PathVariable("id") Long id) {
 
         log.info("Fetching canteen with id: {}", id);
@@ -53,7 +54,7 @@ public class CanteenController {
         return ResponseEntity.ok(dto);
     }
 
-    @PostMapping("/quarantine/{village}")
+    @PostMapping(value = "/quarantine/{village}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<CanteenDTO>> quarantineVillage(
             @PathVariable("village") String village
     ) {
@@ -72,7 +73,7 @@ public class CanteenController {
         return ResponseEntity.ok(quarantined);
     }
 
-    @PostMapping("/unquarantine/{village}")
+    @PostMapping(value = "/unquarantine/{village}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<CanteenDTO>> unquarantineVillage(
             @PathVariable("village") String village
     ) {
@@ -91,7 +92,7 @@ public class CanteenController {
         return ResponseEntity.ok(unquarantined);
     }
 
-    @GetMapping("/filter/municipality/{municipality}")
+    @GetMapping(value = "/filter/municipality/{municipality}", produces =  MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<CanteenDTO>> getCanteensByMunicipality(
             @PathVariable("municipality") String municipality
     ) {
@@ -110,7 +111,7 @@ public class CanteenController {
         return ResponseEntity.ok(dto);
     }
 
-    @GetMapping("/filter/village/{village}")
+    @GetMapping(value = "/filter/village/{village}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<CanteenDTO>> getCanteensByVillage(
             @PathVariable("village") String village
     ) {

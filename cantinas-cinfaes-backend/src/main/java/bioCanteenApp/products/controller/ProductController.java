@@ -4,6 +4,7 @@ import bioCanteenApp.products.dto.ProductDTO;
 import bioCanteenApp.products.service.IProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,7 +20,7 @@ public class ProductController {
 
     private final IProductService productService;
 
-    @GetMapping
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<ProductDTO>> getAllProducts() {
 
         log.info("Fetching all products");
@@ -32,7 +33,7 @@ public class ProductController {
         return ResponseEntity.ok(products);
     }
 
-    @GetMapping("/seasonal")
+    @GetMapping(value = "/seasonal", produces =  MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<ProductDTO>> getSeasonalProducts() {
 
         log.info("Fetching seasonal products");
@@ -48,7 +49,7 @@ public class ProductController {
         return ResponseEntity.ok(products);
     }
 
-    @GetMapping("/stats")
+    @GetMapping(value = "/stats", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Long> getProductCount() {
 
         log.info("Fetching product statistics");

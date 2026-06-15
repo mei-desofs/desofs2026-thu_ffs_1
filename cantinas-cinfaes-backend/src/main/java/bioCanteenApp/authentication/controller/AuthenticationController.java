@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,7 +20,7 @@ public class AuthenticationController {
 
     private final IAuthenticationService authenticationService;
 
-    @PostMapping
+    @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<UserDTO> login(@RequestBody LoginDTO dto,
                                          HttpServletRequest request) {
 
@@ -69,7 +70,7 @@ public class AuthenticationController {
                 .body(user);
     }
 
-    @PostMapping("/refresh")
+    @PostMapping(value = "/refresh", produces =  MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<UserDTO> refresh(@RequestHeader("X-Refresh-Token") String refreshToken) {
         LoginResponse response = authenticationService.refreshToken(refreshToken);
 

@@ -8,6 +8,7 @@ import bioCanteenApp.provisioning.service.IProvisioningService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,7 +29,7 @@ public class MenuController {
     private final IProvisioningService provisioningService;
     private final IMenuMapper menuMapper;
 
-    @GetMapping
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public List<MenuDto> getAllMenus() {
 
         log.info("Fetching all menus");
@@ -41,7 +42,7 @@ public class MenuController {
         return menus;
     }
 
-    @PostMapping
+    @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public MenuDto createMenu(@RequestBody MenuDto dto) {
 
         log.info(
@@ -61,7 +62,7 @@ public class MenuController {
         return createdMenu;
     }
 
-    @GetMapping("/generate")
+    @GetMapping(value = "/generate", produces =  MediaType.APPLICATION_JSON_VALUE)
     public MenuDto generateMenu(
             @RequestParam("startDate") String startDate,
             @RequestParam("endDate") String endDate
@@ -91,7 +92,7 @@ public class MenuController {
         return menu;
     }
 
-    @GetMapping("/week")
+    @GetMapping(value = "/week", produces =   MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<MenuDto>> getMenusByWeek(
             @RequestParam(name = "startDate")
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
@@ -123,7 +124,7 @@ public class MenuController {
         return ResponseEntity.ok(menus);
     }
 
-    @PostMapping("/publish")
+    @PostMapping(value = "/publish", produces =   MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> publishMenu(
             @RequestParam("startDate") String startDate,
             @RequestParam("endDate") String endDate,
@@ -151,7 +152,7 @@ public class MenuController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/close")
+    @PostMapping(value = "/close", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> closeMenu(
             @RequestParam("startDate") String startDate,
             @RequestParam("endDate") String endDate
@@ -189,7 +190,7 @@ public class MenuController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/stats")
+    @GetMapping(value = "/stats", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, Object>> getPlanningStats() {
 
         log.info("Fetching menu planning statistics");

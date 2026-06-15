@@ -4,6 +4,7 @@ import bioCanteenApp.notifications.dto.NotificationDTO;
 import bioCanteenApp.notifications.service.INotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,7 +18,7 @@ public class NotificationController {
 
     private final INotificationService notificationService;
 
-    @GetMapping
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<NotificationDTO>> getAllNotifications() {
 
         log.info("Fetching all notifications");
@@ -30,7 +31,7 @@ public class NotificationController {
         return ResponseEntity.ok(notifications);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping(value = "/{id}", produces =  MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<NotificationDTO> getNotificationById(
             @PathVariable("id") Long id
     ) {
@@ -43,7 +44,7 @@ public class NotificationController {
         return ResponseEntity.ok(notification);
     }
 
-    @GetMapping("/user/{email}")
+    @GetMapping(value = "/user/{email}", produces =   MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<NotificationDTO>> getNotificationsByUser(
             @PathVariable("email") String email
     ) {
@@ -62,7 +63,7 @@ public class NotificationController {
         return ResponseEntity.ok(notifications);
     }
 
-    @PostMapping
+    @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<NotificationDTO> createNotification(
             @RequestBody NotificationDTO dto
     ) {
@@ -83,7 +84,7 @@ public class NotificationController {
         return ResponseEntity.ok(createdNotification);
     }
 
-    @PutMapping("/{id}/read")
+    @PutMapping(value = "/{id}/read", produces =  MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> markAsRead(
             @PathVariable("id") Long id
     ) {
@@ -100,7 +101,7 @@ public class NotificationController {
         return ResponseEntity.noContent().build();
     }
 
-    @PutMapping("/user/{userId}/read")
+    @PutMapping(value = "/user/{userId}/read", produces =   MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> markAllAsReadForUser(
             @PathVariable("userId") Long userId
     ) {
@@ -120,7 +121,7 @@ public class NotificationController {
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping(value = "/{id}", produces =   MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> deleteNotification(
             @PathVariable("id") Long id
     ) {
@@ -137,7 +138,7 @@ public class NotificationController {
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/user/{userId}")
+    @DeleteMapping(value = "/user/{userId}", produces =    MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> deleteAllNotificationsForUser(
             @PathVariable("userId") Long userId
     ) {

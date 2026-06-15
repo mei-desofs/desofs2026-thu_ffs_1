@@ -3,6 +3,7 @@ package bioCanteenApp.reservation.controller;
 import bioCanteenApp.reservation.dto.ReservationDTO;
 import bioCanteenApp.reservation.service.IReservationService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,7 +20,7 @@ public class ReservationController {
         this.service = service;
     }
 
-    @PostMapping
+    @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ReservationDTO> createReservation(
             @RequestBody ReservationDTO request
     ) {
@@ -40,7 +41,7 @@ public class ReservationController {
         return ResponseEntity.ok(created);
     }
 
-    @GetMapping
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<ReservationDTO>> getAllReservations() {
 
         log.info("Fetching all reservations");
@@ -56,7 +57,7 @@ public class ReservationController {
         return ResponseEntity.ok(reservations);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping(value = "/{id}", produces =  MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ReservationDTO> getReservationById(
             @PathVariable("id") Long id
     ) {
@@ -69,7 +70,7 @@ public class ReservationController {
         return ResponseEntity.ok(dto);
     }
 
-    @GetMapping("/user/{userId}")
+    @GetMapping(value = "/user/{userId}", produces =   MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<ReservationDTO>> getReservationsByUserId(
             @PathVariable("userId") Long userId
     ) {

@@ -7,6 +7,7 @@ import bioCanteenApp.waste.service.IWasteService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -21,7 +22,7 @@ public class WasteController {
     private final IWasteService wasteService;
     private final UserRepo userRepository;
 
-    @GetMapping("/daily")
+    @GetMapping(value = "/daily", produces = MediaType.APPLICATION_JSON_VALUE)
     public WasteDTO getDailyWaste() {
 
         log.info("Fetching daily waste statistics");
@@ -34,7 +35,7 @@ public class WasteController {
         return waste;
     }
 
-    @GetMapping("/weekly")
+    @GetMapping(value = "/weekly", produces =  MediaType.APPLICATION_JSON_VALUE)
     public WasteDTO getWeeklyWaste() {
 
         log.info("Fetching weekly waste statistics");
@@ -47,7 +48,7 @@ public class WasteController {
         return waste;
     }
 
-    @GetMapping("/monthly")
+    @GetMapping(value = "/monthly", produces =   MediaType.APPLICATION_JSON_VALUE)
     public WasteDTO getMonthlyWaste() {
 
         log.info("Fetching monthly waste statistics");
@@ -60,7 +61,7 @@ public class WasteController {
         return waste;
     }
 
-    @GetMapping("/all")
+    @GetMapping(value = "/all", produces = MediaType.APPLICATION_JSON_VALUE)
     public WasteDTO getAllWaste() {
 
         log.info("Fetching overall waste statistics");
@@ -73,7 +74,7 @@ public class WasteController {
         return waste;
     }
 
-    @GetMapping("/kpis/{period}")
+    @GetMapping(value = "/kpis/{period}", produces = MediaType.APPLICATION_JSON_VALUE)
     public WasteDTO getKPIs(
             @PathVariable("period") String period,
             @RequestParam("userId") Long userId,

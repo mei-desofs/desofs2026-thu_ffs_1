@@ -4,6 +4,7 @@ import bioCanteenApp.security.dto.ForgotPasswordDTO;
 import bioCanteenApp.security.service.PasswordService;
 import bioCanteenApp.users.domain.User;
 import bioCanteenApp.users.repository.UserRepo;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +28,7 @@ public class PasswordController {
         this.userRepository = userRepository;
     }
 
-    @PostMapping("/change")
+    @PostMapping(value = "/change", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> changePassword(
             Authentication authentication,
             @RequestBody Map<String, String> payload
@@ -82,7 +83,7 @@ public class PasswordController {
         return ResponseEntity.ok("Password changed successfully.");
     }
 
-    @PostMapping("/recover-password")
+    @PostMapping(value = "/recover-password", produces =  MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> forgotPassword(
             @RequestBody ForgotPasswordDTO payload
     ) {
@@ -106,7 +107,7 @@ public class PasswordController {
         );
     }
 
-    @PostMapping("/reset-password")
+    @PostMapping(value = "/reset-password", produces =   MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> resetPassword(
             @RequestBody Map<String, String> payload
     ) {
@@ -136,7 +137,7 @@ public class PasswordController {
         );
     }
 
-    @GetMapping("/expired")
+    @GetMapping(value = "/expired", produces =    MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Boolean> isPasswordExpired(
             Authentication authentication
     ) {

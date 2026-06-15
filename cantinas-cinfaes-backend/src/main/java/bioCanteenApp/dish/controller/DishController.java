@@ -5,6 +5,7 @@ import bioCanteenApp.dish.dto.GetDishDTO;
 import bioCanteenApp.dish.service.IDishService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,7 +20,7 @@ public class DishController {
 
     private final IDishService dishService;
 
-    @PostMapping
+    @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<DishDto> createDish(@RequestBody DishDto dto) {
 
         log.info("Creating dish with name: {}", dto.getDishName());
@@ -35,7 +36,7 @@ public class DishController {
         return ResponseEntity.ok(createdDish);
     }
 
-    @GetMapping("/dish-types")
+    @GetMapping(value = "/dish-types", produces =  MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<String>> getDishTypes() {
 
         log.info("Fetching all dish types");
@@ -50,7 +51,7 @@ public class DishController {
         return ResponseEntity.ok(dishTypes);
     }
 
-    @PostMapping("/nutrition-allergens")
+    @PostMapping(value = "/nutrition-allergens", produces =   MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<GetDishDTO> generateDishInformation(
             @RequestBody GetDishDTO dto
     ) {
@@ -65,7 +66,7 @@ public class DishController {
         return ResponseEntity.ok(generatedInfo);
     }
 
-    @GetMapping("/alternatives/{menuEntryDishId}")
+    @GetMapping(value = "/alternatives/{menuEntryDishId}", produces =   MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<DishDto>> getAlternatives(
             @PathVariable("menuEntryDishId") Long menuEntryDishId
     ) {
@@ -87,7 +88,7 @@ public class DishController {
         return ResponseEntity.ok(alternatives);
     }
 
-    @PutMapping("/{menuEntryDishId}/replace")
+    @PutMapping(value = "/{menuEntryDishId}/replace", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> replaceDish(
             @PathVariable("menuEntryDishId") Long menuEntryDishId,
             @RequestParam("newDishId") Long newDishId
@@ -109,7 +110,7 @@ public class DishController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/organic")
+    @GetMapping(value = "/organic", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Double> getOrganicProducts() {
 
         log.info("Fetching organic products percentage");

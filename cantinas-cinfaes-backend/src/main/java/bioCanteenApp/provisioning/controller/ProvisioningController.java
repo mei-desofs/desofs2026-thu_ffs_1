@@ -16,6 +16,7 @@ import bioCanteenApp.provisioning.service.IProvisioningService;
 import bioCanteenApp.provisioning.service.ProvisioningService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,7 +36,7 @@ public class ProvisioningController {
     private final IMenuService menuService;
     private final IMenuMapper menuMapper;
 
-    @GetMapping("/planned/{id}")
+    @GetMapping(value = "/planned/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<ProductQuantityDTO>> getPlannedQuantities(
             @PathVariable("id") Long id
     ) {
@@ -69,7 +70,7 @@ public class ProvisioningController {
         return ResponseEntity.ok(dtoList);
     }
 
-    @PostMapping("/adjusted/{menuId}")
+    @PostMapping(value = "/adjusted/{menuId}", produces =  MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<ProductQuantityDTO>> getAdjustedQuantities(
             @PathVariable("menuId") Long menuId,
             @RequestBody List<ProductQuantityDTO> plannedDtos
@@ -104,7 +105,7 @@ public class ProvisioningController {
         return ResponseEntity.ok(dtoList);
     }
 
-    @GetMapping("/planned/find/{menuId}")
+    @GetMapping(value = "/planned/find/{menuId}", produces =   MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<ProductQuantityDTO>> findPlanned(
             @PathVariable("menuId") Long menuId
     ) {
@@ -131,7 +132,7 @@ public class ProvisioningController {
                 .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
-    @GetMapping("/adjusted/find/{menuId}")
+    @GetMapping(value = "/adjusted/find/{menuId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<ProductQuantityDTO>> findAdjusted(
             @PathVariable("menuId") Long menuId
     ) {
@@ -158,7 +159,7 @@ public class ProvisioningController {
                 .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
-    @GetMapping("/production-plan/planned/{menuId}")
+    @GetMapping(value = "/production-plan/planned/{menuId}", produces =  MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<ProductionOrderDTO>> getPlannedProductionPlan(
             @PathVariable("menuId") Long menuId
     ) {
@@ -194,7 +195,7 @@ public class ProvisioningController {
         return ResponseEntity.ok(plan);
     }
 
-    @GetMapping("/production-plan/adjusted/{menuId}")
+    @GetMapping(value = "/production-plan/adjusted/{menuId}", produces =   MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<ProductionOrderDTO>> getAdjustedProductionPlan(
             @PathVariable("menuId") Long menuId
     ) {
@@ -230,7 +231,7 @@ public class ProvisioningController {
         return ResponseEntity.ok(plan);
     }
 
-    @GetMapping("/planned/update/{menuId}")
+    @GetMapping(value = "/planned/update/{menuId}", produces =   MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<ProductQuantityDTO>> getUpdatedPlanned(
             @PathVariable("menuId") Long menuId
     ) {

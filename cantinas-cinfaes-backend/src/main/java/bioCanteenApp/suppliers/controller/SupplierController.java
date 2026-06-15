@@ -5,6 +5,7 @@ import bioCanteenApp.suppliers.dto.SupplierDTO;
 import bioCanteenApp.suppliers.service.ISupplierService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,7 +20,7 @@ public class SupplierController {
 
     private final ISupplierService supplierService;
 
-    @PostMapping("/apply")
+    @PostMapping(value = "/apply", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<SupplierApplicationDTO> applyToSupplierPosition(
             @RequestBody SupplierApplicationDTO dto
     ) {
@@ -40,7 +41,7 @@ public class SupplierController {
         return ResponseEntity.ok(createdApplication);
     }
 
-    @PostMapping("/approval")
+    @PostMapping(value = "/approval", produces =  MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<SupplierDTO> approveSupplier(
             @RequestBody SupplierDTO dto
     ) {
@@ -61,7 +62,7 @@ public class SupplierController {
         return ResponseEntity.ok(supplier);
     }
 
-    @PostMapping("/reject")
+    @PostMapping(value = "/reject", produces =   MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<SupplierDTO> rejectSupplier(
             @RequestBody SupplierDTO dto
     ) {
@@ -82,7 +83,7 @@ public class SupplierController {
         return ResponseEntity.ok(supplier);
     }
 
-    @GetMapping("/stats")
+    @GetMapping(value = "/stats", produces =    MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, Long>> getSupplierStats() {
 
         log.info("Fetching supplier statistics");
@@ -95,7 +96,7 @@ public class SupplierController {
         return ResponseEntity.ok(stats);
     }
 
-    @GetMapping
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<SupplierDTO>> findAllSuppliers() {
 
         log.info("Fetching all suppliers");
@@ -108,7 +109,7 @@ public class SupplierController {
         return ResponseEntity.ok(suppliers);
     }
 
-    @GetMapping("/applications")
+    @GetMapping(value = "/applications", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<SupplierApplicationDTO>> findAllApplications() {
 
         log.info("Fetching all supplier applications");
@@ -124,7 +125,7 @@ public class SupplierController {
         return ResponseEntity.ok(applications);
     }
 
-    @GetMapping("/order/{productId}")
+    @GetMapping(value = "/order/{productId}", produces =  MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<SupplierDTO>> findAllSuppliersByOrderByProduct(
             @PathVariable("productId") Long id
     ) {
@@ -146,7 +147,7 @@ public class SupplierController {
         return ResponseEntity.ok(suppliers);
     }
 
-    @PostMapping("/quarantine")
+    @PostMapping(value = "/quarantine", produces =   MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<SupplierDTO> quarantineSupplier(
             @RequestBody SupplierDTO request
     ) {
@@ -167,7 +168,7 @@ public class SupplierController {
         return ResponseEntity.ok(dto);
     }
 
-    @PostMapping("/unquarantine")
+    @PostMapping(value = "/unquarantine", produces =    MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<SupplierDTO> unquarantineSupplier(
             @RequestBody SupplierDTO request
     ) {
@@ -188,7 +189,7 @@ public class SupplierController {
         return ResponseEntity.ok(dto);
     }
 
-    @GetMapping("/filter/name/{name}")
+    @GetMapping(value = "/filter/name/{name}", produces = MediaType.APPLICATION_JSON_VALUE)
     ResponseEntity<List<SupplierDTO>> getSuppliersByName(
             @PathVariable("name") String name
     ) {
@@ -210,7 +211,7 @@ public class SupplierController {
         return ResponseEntity.ok(dto);
     }
 
-    @GetMapping("/filter/village/{village}")
+    @GetMapping(value = "/filter/village/{village}", produces =  MediaType.APPLICATION_JSON_VALUE)
     ResponseEntity<List<SupplierDTO>> getSuppliersByVillage(
             @PathVariable("village") String village
     ) {
@@ -232,7 +233,7 @@ public class SupplierController {
         return ResponseEntity.ok(dto);
     }
 
-    @GetMapping("/filter/municipality/{municipality}")
+    @GetMapping(value = "/filter/municipality/{municipality}", produces = MediaType.APPLICATION_JSON_VALUE)
     ResponseEntity<List<SupplierDTO>> getSuppliersByMunicipality(
             @PathVariable("municipality") String village
     ) {

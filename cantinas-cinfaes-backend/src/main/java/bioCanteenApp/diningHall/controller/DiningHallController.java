@@ -3,6 +3,7 @@ package bioCanteenApp.diningHall.controller;
 import bioCanteenApp.diningHall.dto.DiningHallDTO;
 import bioCanteenApp.diningHall.service.IDiningHallService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,7 +22,7 @@ public class DiningHallController {
         this.service = service;
     }
 
-    @GetMapping
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<DiningHallDTO>> getAllDiningHalls() {
 
         log.info("Fetching all dining halls");

@@ -4,6 +4,7 @@ import bioCanteenApp.ingredients.dto.IngredientDto;
 import bioCanteenApp.ingredients.service.IngredientService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,7 +20,7 @@ public class IngredientController {
 
     private final IngredientService ingredientsService;
 
-    @GetMapping("/seasonal")
+    @GetMapping(value = "/seasonal", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<IngredientDto> getSeasonalIngredients() {
 
         log.info("Fetching seasonal ingredients");
@@ -35,7 +36,7 @@ public class IngredientController {
         return ingredients;
     }
 
-    @GetMapping("/all")
+    @GetMapping(value = "/all", produces =  MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<IngredientDto>> getAllIngredients() {
 
         log.info("Fetching all ingredients");
@@ -48,7 +49,7 @@ public class IngredientController {
         return ResponseEntity.ok(products);
     }
 
-    @GetMapping("/stats")
+    @GetMapping(value = "/stats", produces =  MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Long> getIngredientCount() {
 
         log.info("Fetching ingredient statistics");
