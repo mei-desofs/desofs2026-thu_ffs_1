@@ -125,7 +125,7 @@ jobs:
           -Dnvd.api.key=$NVD_API_KEY
           -Dnvd.api.delay=6000
           -Dnvd.api.maxRetryCount=5
-          -DfailBuildOnCVSS=11
+          -DfailBuildOnCVSS=7
 
       - name: Upload Dependency Check Report
         if: always()
