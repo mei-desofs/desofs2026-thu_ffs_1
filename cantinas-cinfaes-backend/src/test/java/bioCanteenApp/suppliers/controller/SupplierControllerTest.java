@@ -5,7 +5,10 @@ import bioCanteenApp.suppliers.dto.SupplierDTO;
 import bioCanteenApp.suppliers.service.ISupplierService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -21,56 +24,59 @@ class SupplierControllerTest {
     @BeforeEach
     void setUp() {
         supplierService = mock(ISupplierService.class);
-
         controller = new SupplierController(supplierService);
     }
 
     @Test
     void shouldApplyToSupplierPosition() {
         SupplierApplicationDTO dto = new SupplierApplicationDTO();
+        MultipartFile certificate = mock(MultipartFile.class);
 
-        when(supplierService.applyToSupplierPosition(dto))
+        when(supplierService.applyToSupplierPosition(dto, certificate))
                 .thenReturn(dto);
 
         ResponseEntity<SupplierApplicationDTO> response =
-                controller.applyToSupplierPosition(dto);
+                controller.applyToSupplierPosition(dto, certificate);
 
         assertEquals(200, response.getStatusCode().value());
         assertEquals(dto, response.getBody());
 
-        verify(supplierService).applyToSupplierPosition(dto);
+        verify(supplierService).applyToSupplierPosition(dto, certificate);
     }
 
     @Test
     void shouldApproveSupplier() {
         SupplierDTO dto = new SupplierDTO();
+        Long applicationId = 1L;
 
-        when(supplierService.approveSupplier(dto))
+        when(supplierService.approveSupplier(applicationId))
                 .thenReturn(dto);
 
         ResponseEntity<SupplierDTO> response =
-                controller.approveSupplier(dto);
+                controller.approveSupplier(applicationId);
 
         assertEquals(200, response.getStatusCode().value());
         assertEquals(dto, response.getBody());
 
-        verify(supplierService).approveSupplier(dto);
+        verify(supplierService).approveSupplier(applicationId);
     }
 
     @Test
     void shouldRejectSupplier() {
         SupplierDTO dto = new SupplierDTO();
+        Long applicationId = 1L;
+        String reason = "Does not meet organic standards";
 
-        when(supplierService.rejectSupplier(dto))
+        when(supplierService.rejectSupplier(applicationId, reason))
                 .thenReturn(dto);
 
         ResponseEntity<SupplierDTO> response =
-                controller.rejectSupplier(dto);
+                controller.rejectSupplier(applicationId, reason);
 
         assertEquals(200, response.getStatusCode().value());
         assertEquals(dto, response.getBody());
 
-        verify(supplierService).rejectSupplier(dto);
+        verify(supplierService).rejectSupplier(applicationId, reason);
     }
 
     @Test
@@ -193,7 +199,7 @@ class SupplierControllerTest {
                 .thenReturn(suppliers);
 
         ResponseEntity<List<SupplierDTO>> response =
-                controller.getSuppliersByName("Supplier");
+                controller.filterSuppliers("Supplier", null, null);
 
         assertEquals(200, response.getStatusCode().value());
         assertEquals(suppliers, response.getBody());
@@ -212,7 +218,7 @@ class SupplierControllerTest {
                 .thenReturn(suppliers);
 
         ResponseEntity<List<SupplierDTO>> response =
-                controller.getSuppliersByVillage("ANSIAES");
+                controller.filterSuppliers(null,"ANSIAES", null);
 
         assertEquals(200, response.getStatusCode().value());
         assertEquals(suppliers, response.getBody());
@@ -232,12 +238,32 @@ class SupplierControllerTest {
                 .thenReturn(suppliers);
 
         ResponseEntity<List<SupplierDTO>> response =
-                controller.getSuppliersByMunicipality("RESENDE");
+                controller.filterSuppliers(null, null, "RESENDE");
 
         assertEquals(200, response.getStatusCode().value());
         assertEquals(suppliers, response.getBody());
 
         verify(supplierService)
                 .getSuppliersByMunicipality("RESENDE");
+    }
+
+    @Test
+    void shouldGetBioCertificate() {
+        Long applicationId = 1L;
+        byte[] fakePdfBytes = "PDF_CONTENT".getBytes();
+
+        when(supplierService.getBioCertificate(applicationId))
+                .thenReturn(fakePdfBytes);
+
+        ResponseEntity<byte[]> response =
+                controller.getBioCertificate(applicationId);
+
+        assertEquals(200, response.getStatusCode().value());
+        assertArrayEquals(fakePdfBytes, response.getBody());
+        assertEquals(MediaType.APPLICATION_PDF, response.getHeaders().getContentType());
+        assertTrue(response.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION)
+                .contains("bio_certificate_1.pdf"));
+
+        verify(supplierService).getBioCertificate(applicationId);
     }
 }

@@ -3,17 +3,18 @@ package bioCanteenApp.suppliers.service;
 import bioCanteenApp.products.domain.Product;
 import bioCanteenApp.suppliers.dto.SupplierApplicationDTO;
 import bioCanteenApp.suppliers.dto.SupplierDTO;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
 
 public interface ISupplierService {
 
-    SupplierApplicationDTO applyToSupplierPosition(SupplierApplicationDTO resource);
+    SupplierApplicationDTO applyToSupplierPosition(SupplierApplicationDTO dto, MultipartFile certificate);
 
-    SupplierDTO approveSupplier(SupplierDTO dto);
+    SupplierDTO approveSupplier(Long applicationId);
 
-    SupplierDTO rejectSupplier(SupplierDTO dto);
+    SupplierDTO rejectSupplier(Long applicationId, String reason);
 
     Map<String, Long> getSupplierStats();
 
@@ -33,4 +34,5 @@ public interface ISupplierService {
 
     List<SupplierDTO> getSuppliersByMunicipality(String municipality);
 
+    byte[] getBioCertificate(Long applicationId);
 }

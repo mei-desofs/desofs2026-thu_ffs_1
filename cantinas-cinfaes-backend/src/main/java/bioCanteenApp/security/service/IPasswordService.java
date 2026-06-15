@@ -14,4 +14,6 @@ public interface IPasswordService {
     boolean isPasswordExpired(User user);
 
     void sendPasswordResetEmail(String email);
+
+    String generateSupplierSetupToken(User user);
 }

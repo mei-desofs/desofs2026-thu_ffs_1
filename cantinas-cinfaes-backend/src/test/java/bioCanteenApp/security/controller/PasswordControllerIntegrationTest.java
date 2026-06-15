@@ -123,36 +123,23 @@ class PasswordControllerIntegrationTest {
     }
 
     @Test
-    void shouldResetPasswordWithValidTokenAndPayload() throws Exception {
-        Map<String, String> payload = Map.of(
-                "token", "valid-token-123",
-                "newPassword", "brandNewPassword"
-        );
-
-        doNothing().when(passwordService).resetPasswordWithToken("valid-token-123", "brandNewPassword");
-
-        mockMvc.perform(post("/api/passwords/reset-password")
+    void shouldActivateAccountdWithValidTokenAndPayload() throws Exception {
+        mockMvc.perform(post("/api/passwords/activate-account")
+                        .param("token", "valid-token-123")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(payload)))
+                        .content("{\"newPassword\":\"brandNewPassword\"}"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Password reset successfully. You can now log in."));
-
-        verify(passwordService).resetPasswordWithToken("valid-token-123", "brandNewPassword");
+                .andExpect(content().string("Account activated successfully. You can now log in."));
     }
 
     @Test
-    void shouldReturn400OnResetPasswordWhenTokenOrPasswordIsMissing() throws Exception {
-        Map<String, String> incompletePayload = Map.of(
-                "token", "only-the-token"
-        );
-
-        mockMvc.perform(post("/api/passwords/reset-password")
+    void shouldReturn400OnActivateAccountWhenTokenOrPasswordIsMissing() throws Exception {
+        mockMvc.perform(post("/api/passwords/activate-account")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(incompletePayload)))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().string("Both 'token' and 'newPassword' are required."));
+                        .content("{\"newPassword\":\"brandNewPassword\"}"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
