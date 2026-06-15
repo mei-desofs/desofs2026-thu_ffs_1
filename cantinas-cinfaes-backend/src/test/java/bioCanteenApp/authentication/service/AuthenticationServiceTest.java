@@ -2,6 +2,7 @@ package bioCanteenApp.authentication.service;
 
 import bioCanteenApp.authentication.dto.LoginDTO;
 import bioCanteenApp.authentication.dto.LoginResponse;
+import bioCanteenApp.authentication.exception.InvalidCredentialsException;
 import bioCanteenApp.users.domain.User;
 import bioCanteenApp.users.dto.UserDTO;
 import bioCanteenApp.users.mapper.UserMapper;
@@ -33,6 +34,9 @@ class AuthenticationServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private LoginAttemptService loginAttemptService;
 
     @InjectMocks
     private AuthenticationService authenticationService;
@@ -74,9 +78,9 @@ class AuthenticationServiceTest {
         when(passwordEncoder.matches("wrongPassword", "encoded-password"))
                 .thenReturn(false);
 
-        LoginResponse response = authenticationService.login(dto);
-
-        assertNull(response);
+        assertThrows(InvalidCredentialsException.class, () -> {
+            authenticationService.login(dto);
+        });
 
         verify(userRepo).findByEmail("user@email.com");
         verify(passwordEncoder).matches("wrongPassword", "encoded-password");

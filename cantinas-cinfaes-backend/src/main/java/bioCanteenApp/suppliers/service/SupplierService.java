@@ -115,6 +115,7 @@ public class SupplierService implements ISupplierService {
             return userRepo.save(newUser);
         });
 
+        emailService.sendSupplierWelcomeEmail(dto.getEmail(), dto.getName());
         // Cria a entidade de Supplier
         Supplier supplier = new Supplier();
         supplier.setUser(supplierUser);

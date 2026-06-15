@@ -96,6 +96,7 @@ public class PasswordService implements IPasswordService {
         // store encoded password on the user
         user.setPassword(encodedPassword);
         user.setPasswordChangedAt(LocalDateTime.now());
+        user.setTokenVersion(user.getTokenVersion() + 1);
         userRepository.save(user);
     }
 
@@ -151,15 +152,18 @@ public class PasswordService implements IPasswordService {
         resetToken.setUsed(true);
     }
 
-    // Remove o @Transactional daqui, ele herda a transação do SupplierService
-    @Override
-    public String generateSupplierSetupToken(User user) {
+    @Transactional
+    public void sendSupplierActivationEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("No account found for that email."));
+
         passwordResetTokenRepo.deleteAllByUserId(user.getId());
 
         String rawToken = UUID.randomUUID().toString();
         PasswordResetToken resetToken = new PasswordResetToken(user, rawToken);
         passwordResetTokenRepo.save(resetToken);
 
-        return rawToken;
+        // Manda o token em plain text para usar no Postman
+        emailService.sendSupplierWelcomeEmail(user.getEmail(), rawToken);
     }
 }
