@@ -108,6 +108,7 @@ jobs:
           -Dnvd.api.delay=2000
           -Dnvd.api.maxRetryCount=10
           -DfailBuildOnCVSS=7
+          -DsuppressionFile=dependency-check-suppressions.xml
       - name: Trivy Filesystem Scan
         uses: aquasecurity/trivy-action@master
         with:
