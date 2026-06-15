@@ -1,5 +1,6 @@
 package bioCanteenApp.suppliers.controller;
 
+import bioCanteenApp.security.service.VirusTotalService;
 import bioCanteenApp.suppliers.dto.SupplierApplicationDTO;
 import bioCanteenApp.suppliers.dto.SupplierDTO;
 import bioCanteenApp.suppliers.service.ISupplierService;
@@ -11,16 +12,16 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 import java.util.Map;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -39,20 +40,32 @@ class SupplierControllerIntegrationTest {
     @MockBean
     private ISupplierService supplierService;
 
+    @MockBean
+    private VirusTotalService virusTotalService;
+
     @Test
     void shouldApplyToSupplierPosition() throws Exception {
         SupplierApplicationDTO inputDto = new SupplierApplicationDTO();
-        // Configure as propriedades necessárias do inputDto se houverem, ex:
-        // inputDto.setCompanyName("BioSupplier");
-
         SupplierApplicationDTO savedDto = new SupplierApplicationDTO();
 
-        when(supplierService.applyToSupplierPosition(any(SupplierApplicationDTO.class)))
+        when(supplierService.applyToSupplierPosition(any(SupplierApplicationDTO.class), any()))
                 .thenReturn(savedDto);
 
-        mockMvc.perform(post("/api/suppliers/apply")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(inputDto)))
+        MockMultipartFile certificate = new MockMultipartFile(
+                "certificate", "certificado.pdf", MediaType.APPLICATION_PDF_VALUE, "fake-pdf-content".getBytes()
+        );
+
+        // Altera o nome de "dto" para "application" para coincidir com o @RequestPart("application")
+        MockMultipartFile dtoPart = new MockMultipartFile(
+                "application",
+                "",
+                MediaType.APPLICATION_JSON_VALUE,
+                objectMapper.writeValueAsBytes(inputDto)
+        );
+
+        mockMvc.perform(multipart("/api/suppliers/apply")
+                        .file(certificate)
+                        .file(dtoPart))
                 .andExpect(status().isOk());
     }
 
@@ -60,23 +73,23 @@ class SupplierControllerIntegrationTest {
     void shouldApproveSupplier() throws Exception {
         SupplierDTO dto = new SupplierDTO();
 
-        when(supplierService.approveSupplier(any(SupplierDTO.class))).thenReturn(dto);
+        // O serviço recebe um Long (applicationId) e devolve o DTO
+        when(supplierService.approveSupplier(anyLong())).thenReturn(dto);
 
-        mockMvc.perform(post("/api/suppliers/approval")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto)))
+        // O Endpoint real é um POST com o ID no URL
+        mockMvc.perform(post("/api/suppliers/approve/{id}", 1L))
                 .andExpect(status().isOk());
     }
 
     @Test
     void shouldRejectSupplier() throws Exception {
         SupplierDTO dto = new SupplierDTO();
+        when(supplierService.rejectSupplier(anyLong(), anyString())).thenReturn(dto);
 
-        when(supplierService.rejectSupplier(any(SupplierDTO.class))).thenReturn(dto);
-
-        mockMvc.perform(post("/api/suppliers/reject")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto)))
+        // Envia o motivo no .content() e usa text/plain
+        mockMvc.perform(post("/api/suppliers/reject/{id}", 2L)
+                        .content("Doesn't meet bio standards")
+                        .contentType(MediaType.TEXT_PLAIN))
                 .andExpect(status().isOk());
     }
 
