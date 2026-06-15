@@ -35,7 +35,7 @@ public class SupplierApplication {
     private Long nif;
 
     @Lob
-    @Column(name = "certified_organic", columnDefinition = "BLOB")
+    @Column(name = "certified_organic", columnDefinition = "MEDIUMBLOB")
     private byte[] bioCertificate;
 
     @ElementCollection()

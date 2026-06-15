@@ -40,7 +40,7 @@ class SupplierMapperTest {
                 .email("supplier@test.com")
                 .phoneNumber("912345678")
                 .address(buildAddressDTO())
-                .nif(123456789L)
+                .nif(String.valueOf(123456789L))
                 .applicationDate(LocalDate.of(2026, 1, 1))
                 .supplierCapacity(List.of(
                         SupplierApplicationDTO.SupplierCapacityDTO.builder()
@@ -133,7 +133,7 @@ class SupplierMapperTest {
         assertNotNull(dto);
         assertEquals("Supplier", dto.getName());
         assertEquals("s@test.com", dto.getEmail());
-        assertEquals(987654321L, dto.getNif());
+        assertEquals(String.valueOf(987654321L), dto.getNif());
         assertEquals("PENDING", dto.getStatus());
         assertEquals("TO_BE_DONE", dto.getInterviewStatus());
         assertEquals(1, dto.getSupplierCapacity().size());
@@ -200,7 +200,7 @@ class SupplierMapperTest {
                 .name("S")
                 .email("s@test.com")
                 .phoneNumber("900000000")
-                .nif(111111111L)
+                .nif(String.valueOf(111111111L))
                 .supplierCapacity(null)
                 .applicationDate(null)
                 .build();
