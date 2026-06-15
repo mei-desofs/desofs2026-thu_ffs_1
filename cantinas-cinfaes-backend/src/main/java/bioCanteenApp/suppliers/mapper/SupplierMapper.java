@@ -100,7 +100,7 @@ public class SupplierMapper implements ISupplierMapper {
                 .name(supplierApplication.getName())
                 .email(supplierApplication.getEmail())
                 .address(mapAddressToDTO(supplierApplication.getAddress()))
-                .nif(supplierApplication.getNif())
+                .nif(String.valueOf(supplierApplication.getNif()))
                 .applicationDate(supplierApplication.getApplicationDate())
                 .status(supplierApplication.getStatus().name())
                 .interviewStatus(supplierApplication.getInterviewStatus() != null
@@ -137,7 +137,7 @@ public class SupplierMapper implements ISupplierMapper {
                 dto.getPhoneNumber(),
                 mapAddressToDomain(dto.getAddress()),
                 bioCertificateBytes,
-                dto.getNif(),
+                Long.parseLong(dto.getNif()),
                 capacities,
                 dto.getApplicationDate() != null ? dto.getApplicationDate() : LocalDate.now()
         );

@@ -1,5 +1,6 @@
 package bioCanteenApp.security.controller;
 
+import bioCanteenApp.security.dto.ActivateAccountDTO;
 import bioCanteenApp.security.dto.ForgotPasswordDTO;
 import bioCanteenApp.security.service.PasswordService;
 import bioCanteenApp.users.domain.Role;
@@ -161,60 +162,27 @@ class PasswordControllerTest {
     }
 
     @Test
-    void shouldResetPassword() {
+    void shouldActivateAccount() {
+        // Criar o DTO que o controlador agora espera
+        ActivateAccountDTO dto = new ActivateAccountDTO();
+        dto.setNewPassword("newPassword123!");
+
+        // Chamar o novo método activateAccount
         ResponseEntity<String> response =
-                controller.resetPassword(
-                        Map.of(
-                                "token", "token123",
-                                "newPassword", "newPassword"
-                        )
-                );
+                controller.activateAccount("token123", dto);
 
         assertEquals(200, response.getStatusCode().value());
         assertEquals(
-                "Password reset successfully. You can now log in.",
+                "Account activated successfully. You can now log in.",
                 response.getBody()
         );
 
+        // Verificar se chamou o serviço corretamente
         verify(passwordService)
                 .resetPasswordWithToken(
                         "token123",
-                        "newPassword"
+                        "newPassword123!"
                 );
-    }
-
-    @Test
-    void shouldReturnBadRequestWhenTokenIsMissing() {
-        ResponseEntity<String> response =
-                controller.resetPassword(
-                        Map.of("newPassword", "newPassword")
-                );
-
-        assertEquals(400, response.getStatusCode().value());
-        assertEquals(
-                "Both 'token' and 'newPassword' are required.",
-                response.getBody()
-        );
-
-        verify(passwordService, never())
-                .resetPasswordWithToken(any(), any());
-    }
-
-    @Test
-    void shouldReturnBadRequestWhenNewPasswordIsMissingOnReset() {
-        ResponseEntity<String> response =
-                controller.resetPassword(
-                        Map.of("token", "token123")
-                );
-
-        assertEquals(400, response.getStatusCode().value());
-        assertEquals(
-                "Both 'token' and 'newPassword' are required.",
-                response.getBody()
-        );
-
-        verify(passwordService, never())
-                .resetPasswordWithToken(any(), any());
     }
 
     @Test

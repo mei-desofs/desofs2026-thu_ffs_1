@@ -5,6 +5,8 @@ import bioCanteenApp.email.validator.EmailDomainValidator;
 import bioCanteenApp.products.domain.Product;
 import bioCanteenApp.products.domain.ProductBatch;
 import bioCanteenApp.products.repository.IProductRepo;
+import bioCanteenApp.security.service.PasswordService;
+import bioCanteenApp.security.service.VirusTotalService;
 import bioCanteenApp.suppliers.domain.*;
 import bioCanteenApp.suppliers.dto.SupplierApplicationDTO;
 import bioCanteenApp.suppliers.dto.SupplierDTO;
@@ -17,7 +19,9 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -33,53 +37,122 @@ public class SupplierService implements ISupplierService {
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
     private final EmailDomainValidator emailDomainValidator;
+    private final PasswordService passwordService;
+    private final VirusTotalService virusTotalService;
 
     @Override
-    public SupplierApplicationDTO applyToSupplierPosition(SupplierApplicationDTO dto) {
-
+    @Transactional
+    public SupplierApplicationDTO applyToSupplierPosition(SupplierApplicationDTO dto, MultipartFile certificate) {
+        // Validação de Email (existente)
         emailDomainValidator.validate(dto.getEmail());
 
-        List<SupplierCapacity> capacities = dto.getSupplierCapacity().stream()
-                .map(c -> new SupplierCapacity(
-                        c.getProductName(),
-                        c.getStartDate(),
-                        c.getEndDate(),
-                        c.getQuantity()
-                ))
-                .collect(Collectors.toList());
+        // REQ 3.3: Validate BIO Certificate (PDF & Max 5MB)
+        if (certificate == null || certificate.isEmpty()) {
+            throw new IllegalArgumentException("BIO Certificate file is required.");
+        }
+        if (!"application/pdf".equalsIgnoreCase(certificate.getContentType())) {
+            throw new IllegalArgumentException("BIO Certificate must be a valid PDF file.");
+        }
+        if (certificate.getSize() > 5 * 1024 * 1024) { // 5MB in bytes
+            throw new IllegalArgumentException("BIO Certificate size cannot exceed 5MB.");
+        }
+
+        try {
+            virusTotalService.scanFile(certificate);
+        } catch (IllegalArgumentException e) {
+            throw e; // Lança o alerta de segurança
+        } catch (Exception e) {
+            throw new RuntimeException("Error during virus scan integration", e);
+        }
 
         SupplierApplication application = supplierMapper.toDomain(dto);
 
+        try {
+            application.setBioCertificate(certificate.getBytes());
+        } catch (IOException e) {
+            throw new RuntimeException("Error reading the BIO Certificate file", e);
+        }
+
+        // Atribuição de Capacidades Produtivas
+        List<SupplierCapacity> capacities = dto.getSupplierCapacity().stream()
+                .map(c -> new SupplierCapacity(c.getProductName(), c.getStartDate(), c.getEndDate(), c.getQuantity()))
+                .collect(Collectors.toList());
         application.setSupplierCapacity(capacities);
+
+        // Define estado inicial
+        application.setStatus(SupplierApplicationStatus.PENDING);
+        application.setApplicationDate(java.time.LocalDate.now());
+
         supplierRepo.save(application);
         return supplierMapper.toDTO(application);
     }
 
     @Override
     @Transactional
-    public SupplierDTO approveSupplier(SupplierDTO dto) {
+    public SupplierDTO approveSupplier(Long applicationId) {
+        SupplierApplication application = supplierRepo.findApplicationById(applicationId)
+                .orElseThrow(() -> new RuntimeException("Application not found"));
 
-        SupplierApplication application = supplierRepo.findByEmail(dto.getEmail())
-                .orElseThrow(() -> new RuntimeException("Application not found for email: " + dto.getEmail()));
+        // REQ 4.2: Only candidates that passed interview can be approved
+        if (!"APPROVED".equalsIgnoreCase(application.getInterviewStatus().toString()) &&
+                !"PASSED".equalsIgnoreCase(application.getInterviewStatus().toString())) {
+            throw new RuntimeException("Application cannot be approved: Candidate has not passed the interview phase.");
+        }
 
         application.setStatus(SupplierApplicationStatus.APPROVED);
         supplierRepo.save(application);
 
-        String temporaryPassword = generateTemporaryPassword();
-        userRepo.findByEmail(dto.getEmail()).orElseGet(() -> {
-            User supplierUser = new User(dto.getEmail(), application.getName(),
+        // Cria um User com password aleatória (o utilizador nunca a vai saber, pois vai redefini-la)
+        String temporaryPassword = UUID.randomUUID().toString();
+
+        User supplierUser = userRepo.findByEmail(application.getEmail()).orElseGet(() -> {
+            User newUser = new User(application.getEmail(), application.getName(),
                     passwordEncoder.encode(temporaryPassword), Role.USER);
-            return userRepo.save(supplierUser);
+
+            // IMPORTANTE: Previne que o PasswordExpiryFilter bloqueie o utilizador logo após o setup
+            newUser.setPasswordChangedAt(java.time.LocalDateTime.now());
+
+            return userRepo.save(newUser);
         });
 
-        emailService.sendSupplierWelcomeEmail(dto.getEmail(), temporaryPassword);
+        // Cria a entidade de Supplier
+        Supplier supplier = new Supplier();
+        supplier.setUser(supplierUser);
+        supplier.setNif(application.getNif().toString());
+        supplier.setApplicationId(application);
+        supplier.setAddress(application.getAddress());
+        supplier.setPhoneNumber(application.getPhoneNumber());
+        supplier.setCertifiedOrganic(application.getBioCertificate());
 
-        Optional<Supplier> supplier = supplierRepo.findAll().stream()
-                .filter(s -> s.getUser().getEmail().equals(dto.getEmail()))
-                .findFirst();
+        supplierRepo.save(supplier);
 
-        return supplier.map(supplierMapper::toDTO)
-                .orElseThrow(() -> new RuntimeException("Supplier record not found after approval for: " + dto.getEmail()));
+        // REQ 4.3: Gerar o token real na Base de Dados usando o PasswordService
+        String setupToken = passwordService.generateSupplierSetupToken(supplierUser);
+
+        // Envia UM ÚNICO email, com o Token correto
+        emailService.sendSupplierWelcomeEmail(application.getEmail(), setupToken);
+
+        return supplierMapper.toDTO(supplier);
+    }
+
+    @Override
+    @Transactional
+    public SupplierDTO rejectSupplier(Long applicationId, String reason) {
+        SupplierApplication application = supplierRepo.findApplicationById(applicationId)
+                .orElseThrow(() -> new RuntimeException("Application not found"));
+
+        application.setStatus(SupplierApplicationStatus.REJECTED);
+        supplierRepo.save(application);
+
+        // REQ 4.4: Enviar email com a razão da rejeição
+        // Garante que o teu EmailService tem um método similar a este
+        emailService.sendSupplierRejectionEmail(application.getEmail(), reason);
+
+        // Retornar um SupplierDTO representativo ou vazio dependendo da arquitetura
+        SupplierDTO response = new SupplierDTO();
+        response.setEmail(application.getEmail());
+        response.setName(application.getName());
+        return response;
     }
 
     private String generateTemporaryPassword() {
@@ -102,23 +175,6 @@ public class SupplierService implements ISupplierService {
         StringBuilder result = new StringBuilder();
         for (char c : chars) result.append(c);
         return result.toString();
-    }
-
-    @Override
-    @Transactional
-    public SupplierDTO rejectSupplier(SupplierDTO dto) {
-
-        SupplierApplication application = supplierRepo.findByEmail(dto.getEmail())
-                .orElseThrow(() -> new RuntimeException("Application not found for email: " + dto.getEmail()));
-
-        application.setStatus(SupplierApplicationStatus.REJECTED);
-        supplierRepo.save(application);
-
-        Optional<Supplier> supplier = supplierRepo.findAll().stream()
-                .filter(s -> s.getUser().getEmail().equals(dto.getEmail()))
-                .findFirst();
-
-        return supplierMapper.toDTO(supplier.get());
     }
 
     @Override
@@ -222,4 +278,15 @@ public class SupplierService implements ISupplierService {
         return suppliers.stream().map(supplierMapper::toDTO).toList();
     }
 
+    @Override
+    public byte[] getBioCertificate(Long applicationId) {
+        SupplierApplication app = supplierRepo.findApplicationById(applicationId)
+                .orElseThrow(() -> new RuntimeException("Application not found"));
+
+        if (app.getBioCertificate() == null) {
+            throw new RuntimeException("No certificate uploaded for this application.");
+        }
+
+        return app.getBioCertificate();
+    }
 }
