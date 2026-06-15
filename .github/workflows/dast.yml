@@ -107,7 +107,7 @@ jobs:
           -Dnvd.api.key=$NVD_API_KEY
           -Dnvd.api.delay=2000
           -Dnvd.api.maxRetryCount=10
-          -DfailBuildOnCVSS=0
+          -DfailBuildOnCVSS=7
       - name: Trivy Filesystem Scan
         uses: aquasecurity/trivy-action@master
         with:
