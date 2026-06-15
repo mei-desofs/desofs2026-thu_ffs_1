@@ -31,17 +31,19 @@ public class EmailService implements IEmailService {
     }
 
     @Override
-    public void sendSupplierWelcomeEmail(String toEmail, String temporaryPassword) {
+    public void sendSupplierWelcomeEmail(String toEmail, String setupToken) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(toEmail);
         message.setSubject("BioCantinas — Your Supplier Account Has Been Approved");
+
+        // O frontend ou o Postman usará este token para chamar o teu /reset-password
+        String setupLink = "http://localhost:8080/set-password?token=" + setupToken;
+
         message.setText(
                 "Hello,\n\n"
                         + "Congratulations! Your supplier application has been approved.\n\n"
-                        + "Your account credentials are:\n"
-                        + "  Email: " + toEmail + "\n"
-                        + "  Temporary Password: " + temporaryPassword + "\n\n"
-                        + "Please log in and change your password immediately.\n\n"
+                        + "Please click the link below to set up your password. This link is valid for 24 hours:\n"
+                        + setupLink + "\n\n"
                         + "— The BioCantinas Team"
         );
         mailSender.send(message);

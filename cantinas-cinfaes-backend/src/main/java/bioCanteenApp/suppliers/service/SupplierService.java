@@ -5,6 +5,8 @@ import bioCanteenApp.email.validator.EmailDomainValidator;
 import bioCanteenApp.products.domain.Product;
 import bioCanteenApp.products.domain.ProductBatch;
 import bioCanteenApp.products.repository.IProductRepo;
+import bioCanteenApp.security.service.PasswordService;
+import bioCanteenApp.security.service.VirusTotalService;
 import bioCanteenApp.suppliers.domain.*;
 import bioCanteenApp.suppliers.dto.SupplierApplicationDTO;
 import bioCanteenApp.suppliers.dto.SupplierDTO;
@@ -35,6 +37,8 @@ public class SupplierService implements ISupplierService {
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
     private final EmailDomainValidator emailDomainValidator;
+    private final PasswordService passwordService;
+    private final VirusTotalService virusTotalService;
 
     @Override
     @Transactional
@@ -51,6 +55,14 @@ public class SupplierService implements ISupplierService {
         }
         if (certificate.getSize() > 5 * 1024 * 1024) { // 5MB in bytes
             throw new IllegalArgumentException("BIO Certificate size cannot exceed 5MB.");
+        }
+
+        try {
+            virusTotalService.scanFile(certificate);
+        } catch (IllegalArgumentException e) {
+            throw e; // Lança o alerta de segurança
+        } catch (Exception e) {
+            throw new RuntimeException("Error during virus scan integration", e);
         }
 
         SupplierApplication application = supplierMapper.toDomain(dto);
@@ -82,20 +94,24 @@ public class SupplierService implements ISupplierService {
                 .orElseThrow(() -> new RuntimeException("Application not found"));
 
         // REQ 4.2: Only candidates that passed interview can be approved
-        if (!"APPROVED".equalsIgnoreCase(application.getInterviewStatus().toString())) {
+        if (!"APPROVED".equalsIgnoreCase(application.getInterviewStatus().toString()) &&
+                !"PASSED".equalsIgnoreCase(application.getInterviewStatus().toString())) {
             throw new RuntimeException("Application cannot be approved: Candidate has not passed the interview phase.");
         }
 
         application.setStatus(SupplierApplicationStatus.APPROVED);
         supplierRepo.save(application);
 
-        // REQ 4.3: Generate setup Token/Password
-        String setupToken = UUID.randomUUID().toString(); // Token linkativo de 24h
-        String temporaryPassword = UUID.randomUUID().toString(); // Fallback genérico para a Entity
+        // Cria um User com password aleatória (o utilizador nunca a vai saber, pois vai redefini-la)
+        String temporaryPassword = UUID.randomUUID().toString();
 
         User supplierUser = userRepo.findByEmail(application.getEmail()).orElseGet(() -> {
             User newUser = new User(application.getEmail(), application.getName(),
                     passwordEncoder.encode(temporaryPassword), Role.USER);
+
+            // IMPORTANTE: Previne que o PasswordExpiryFilter bloqueie o utilizador logo após o setup
+            newUser.setPasswordChangedAt(java.time.LocalDateTime.now());
+
             return userRepo.save(newUser);
         });
 
@@ -104,18 +120,19 @@ public class SupplierService implements ISupplierService {
         supplier.setUser(supplierUser);
         supplier.setNif(application.getNif().toString());
         supplier.setApplicationId(application);
-
         supplier.setAddress(application.getAddress());
         supplier.setPhoneNumber(application.getPhoneNumber());
         supplier.setCertifiedOrganic(application.getBioCertificate());
-        // Assumimos que o Mapper copia o address e o phone corretamente
 
         supplierRepo.save(supplier);
 
-        // REQ 4.3: Send email with setup link (ativo por 24h)
-        String setupLink = "http://localhost:8080/api/auth/set-password?token=" + setupToken;
-        // No teu EmailService, ajusta este método para receber o Link em vez da pass pura.
-        emailService.sendSupplierWelcomeEmail(application.getEmail(), setupLink);
+        // REQ 4.3: Gerar o token real na Base de Dados usando o teu PasswordService
+        // NOTA: Substitui 'generateResetToken' pelo nome real do método que tens no teu PasswordService
+        // que cria e guarda o token de recuperação.
+        String setupToken = passwordService.generateSupplierSetupToken(supplierUser);
+
+        // Como não há frontend, enviamos instruções claras para testar no Postman
+        emailService.sendSupplierWelcomeEmail(application.getEmail(), setupToken);
 
         return supplierMapper.toDTO(supplier);
     }

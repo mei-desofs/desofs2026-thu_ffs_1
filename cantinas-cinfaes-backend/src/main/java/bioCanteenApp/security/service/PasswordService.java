@@ -150,4 +150,16 @@ public class PasswordService implements IPasswordService {
         // Mark token as used
         resetToken.setUsed(true);
     }
+
+    // Remove o @Transactional daqui, ele herda a transação do SupplierService
+    @Override
+    public String generateSupplierSetupToken(User user) {
+        passwordResetTokenRepo.deleteAllByUserId(user.getId());
+
+        String rawToken = UUID.randomUUID().toString();
+        PasswordResetToken resetToken = new PasswordResetToken(user, rawToken);
+        passwordResetTokenRepo.save(resetToken);
+
+        return rawToken;
+    }
 }
