@@ -58,7 +58,6 @@ public class ProductService implements IProductService {
                 .toList();
     }
 
-    @Override
     public double calculateOrganicProductsPercentage(){
         // TODO: Implement this method with new structure for bio products
         /*
