@@ -5,6 +5,7 @@ import bioCanteenApp.menu.mapper.IMenuMapper;
 import bioCanteenApp.menu.service.IMenuService;
 import bioCanteenApp.products.domain.Product;
 import bioCanteenApp.provisioning.service.IProvisioningService;
+import bioCanteenApp.utils.exceptions.LogSanitizer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -46,8 +47,8 @@ public class MenuController {
 
         log.info(
                 "Creating menu from {} to {}",
-                dto.getWeekStartDate(),
-                dto.getWeekEndDate()
+                LogSanitizer.sanitize(dto.getWeekStartDate()),
+                LogSanitizer.sanitize(dto.getWeekEndDate())
         );
 
         MenuDto createdMenu =
@@ -69,8 +70,8 @@ public class MenuController {
 
         log.info(
                 "Generating menu from {} to {}",
-                startDate,
-                endDate
+                LogSanitizer.sanitize(startDate),
+                LogSanitizer.sanitize(endDate)
         );
 
         MenuDto menu =
@@ -104,8 +105,8 @@ public class MenuController {
 
         log.info(
                 "Fetching menus between {} and {}",
-                startDate,
-                endDate
+                LogSanitizer.sanitize(startDate),
+                LogSanitizer.sanitize(endDate)
         );
 
         List<MenuDto> menus = menuService.getAllMenus().stream()
@@ -116,8 +117,8 @@ public class MenuController {
         log.info(
                 "Found {} menus between {} and {}",
                 menus.size(),
-                startDate,
-                endDate
+                LogSanitizer.sanitize(startDate),
+                LogSanitizer.sanitize(endDate)
         );
 
         return ResponseEntity.ok(menus);
@@ -132,9 +133,9 @@ public class MenuController {
 
         log.warn(
                 "Publishing menu from {} to {} by dietitian id: {}",
-                startDate,
-                endDate,
-                dietitianId
+                LogSanitizer.sanitize(startDate),
+                LogSanitizer.sanitize(endDate),
+                LogSanitizer.sanitize(dietitianId)
         );
 
         LocalDate start = LocalDate.parse(startDate);
@@ -144,8 +145,8 @@ public class MenuController {
 
         log.info(
                 "Menu published successfully from {} to {}",
-                startDate,
-                endDate
+                LogSanitizer.sanitize(startDate),
+                LogSanitizer.sanitize(endDate)
         );
 
         return ResponseEntity.ok().build();
@@ -159,8 +160,8 @@ public class MenuController {
 
         log.warn(
                 "Closing menu from {} to {}",
-                startDate,
-                endDate
+                LogSanitizer.sanitize(startDate),
+                LogSanitizer.sanitize(endDate)
         );
 
         LocalDate start = LocalDate.parse(startDate);
@@ -171,10 +172,7 @@ public class MenuController {
         MenuDto menu =
                 menuService.getMenusByWeek(start, end).get(0);
 
-        Optional<Map<Product, Double>> planned =
-                provisioningService.findPlanned(
-                        menuMapper.toDomain(menu)
-                );
+        provisioningService.findPlanned(menuMapper.toDomain(menu));
 
         provisioningService.getAdjustedQuantities(
                 menuMapper.toDomain(menu)
@@ -182,8 +180,8 @@ public class MenuController {
 
         log.info(
                 "Menu closed successfully from {} to {}",
-                startDate,
-                endDate
+                LogSanitizer.sanitize(startDate),
+                LogSanitizer.sanitize(endDate)
         );
 
         return ResponseEntity.ok().build();

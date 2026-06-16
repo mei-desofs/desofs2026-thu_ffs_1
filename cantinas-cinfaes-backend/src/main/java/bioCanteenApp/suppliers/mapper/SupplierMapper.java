@@ -114,6 +114,7 @@ public class SupplierMapper implements ISupplierMapper {
         return builder.build();
     }
 
+    @Override
     public SupplierApplication toDomain(SupplierApplicationDTO dto) {
         List<SupplierCapacity> capacities = (dto.getSupplierCapacity() != null)
                 ? dto.getSupplierCapacity().stream()
@@ -137,7 +138,7 @@ public class SupplierMapper implements ISupplierMapper {
                 dto.getPhoneNumber(),
                 mapAddressToDomain(dto.getAddress()),
                 bioCertificateBytes,
-                Long.parseLong(dto.getNif()),
+                parseNif(dto.getNif()),
                 capacities,
                 dto.getApplicationDate() != null ? dto.getApplicationDate() : LocalDate.now()
         );
@@ -145,6 +146,17 @@ public class SupplierMapper implements ISupplierMapper {
         app.setInterviewStatus(InterviewStatus.TO_BE_DONE);
 
         return app;
+    }
+
+    private Long parseNif(String nif) {
+        if (nif == null || nif.isBlank()) {
+            throw new IllegalArgumentException("NIF não pode ser nulo ou vazio");
+        }
+        try {
+            return Long.parseLong(nif.trim());
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("NIF inválido: " + nif, e);
+        }
     }
 
 }

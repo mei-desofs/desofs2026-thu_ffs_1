@@ -3,6 +3,7 @@ package bioCanteenApp.authentication.service;
 import bioCanteenApp.authentication.exception.AccountLockedException;
 import bioCanteenApp.email.service.EmailService;
 import bioCanteenApp.users.repository.UserRepo;
+import bioCanteenApp.utils.exceptions.LogSanitizer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,7 +25,7 @@ public class LoginAttemptService {
 
         userRepository.findByEmail(email).ifPresent(user -> {
             if (user.isLocked()) {
-                log.warn("Login bloqueado para: {}", email);
+                log.warn("Login bloqueado para: {}", LogSanitizer.sanitize(email));
                 throw new AccountLockedException(user.secondsUntilUnlock());
             }
         });
@@ -43,7 +44,7 @@ public class LoginAttemptService {
                 LocalDateTime lockUntil = LocalDateTime.now().plusMinutes(LOCK_MINUTES);
                 user.setLockedUntil(lockUntil);
 
-                log.warn("Conta bloqueada por {} minutos: {}", LOCK_MINUTES, email);
+                log.warn("Conta bloqueada por {} minutos: {}", LOCK_MINUTES, LogSanitizer.sanitize(email));
                 emailService.sendLockNotification(email, LOCK_MINUTES, MAX_ATTEMPTS); // REQ1.3
             }
 

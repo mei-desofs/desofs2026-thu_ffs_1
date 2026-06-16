@@ -3,6 +3,7 @@ package bioCanteenApp.dish.controller;
 import bioCanteenApp.dish.dto.DishDto;
 import bioCanteenApp.dish.dto.GetDishDTO;
 import bioCanteenApp.dish.service.IDishService;
+import bioCanteenApp.utils.exceptions.LogSanitizer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +23,7 @@ public class DishController {
     @PostMapping
     public ResponseEntity<DishDto> createDish(@RequestBody DishDto dto) {
 
-        log.info("Creating dish with name: {}", dto.getDishName());
+        log.info("Creating dish with name: {}", LogSanitizer.sanitize(dto.getDishName()));
 
         DishDto createdDish =
                 dishService.createDish(dto);
@@ -72,7 +73,7 @@ public class DishController {
 
         log.info(
                 "Fetching dish alternatives for menu entry dish id: {}",
-                menuEntryDishId
+                LogSanitizer.sanitize(menuEntryDishId)
         );
 
         List<DishDto> alternatives =
@@ -81,7 +82,7 @@ public class DishController {
         log.info(
                 "Found {} alternatives for menu entry dish id: {}",
                 alternatives.size(),
-                menuEntryDishId
+                LogSanitizer.sanitize(menuEntryDishId)
         );
 
         return ResponseEntity.ok(alternatives);
@@ -95,15 +96,15 @@ public class DishController {
 
         log.warn(
                 "Replacing dish in menu entry dish id: {} with new dish id: {}",
-                menuEntryDishId,
-                newDishId
+                LogSanitizer.sanitize(menuEntryDishId),
+                LogSanitizer.sanitize(newDishId)
         );
 
         dishService.replaceDish(menuEntryDishId, newDishId);
 
         log.info(
                 "Dish replaced successfully for menu entry dish id: {}",
-                menuEntryDishId
+                LogSanitizer.sanitize(menuEntryDishId)
         );
 
         return ResponseEntity.noContent().build();

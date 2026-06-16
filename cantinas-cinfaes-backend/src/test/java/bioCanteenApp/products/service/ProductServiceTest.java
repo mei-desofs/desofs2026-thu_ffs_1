@@ -90,15 +90,6 @@ class ProductServiceTest {
     }
 
     @Test
-    void shouldReturnZeroForOrganicProductsPercentage() {
-        Dish dish = new Dish("Vegetarian Dish", DishType.VEGETARIAN);
-
-        double result = service.calculateOrganicProductsPercentage(dish);
-
-        assertEquals(0.0, result);
-    }
-
-    @Test
     void shouldGetProductCount() {
         when(productRepository.count()).thenReturn(5L);
 

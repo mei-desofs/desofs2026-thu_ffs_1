@@ -51,6 +51,7 @@ public class ProvisioningService implements IProvisioningService  {
      * PREVISÃO: histórico + ementa - stock existente
      * Implementa: Reservas * Qtd Prato (Y) * Fator Conversão (Z)
      */
+    @Override
     public Map<ProductDTO, Double> calculatePlannedQuantities(MenuDto menuDto) {
         Menu menu = menuMapper.toDomain(menuDto);
         Map<ProductDTO, Double> planned = new HashMap<>();
@@ -90,6 +91,7 @@ public class ProvisioningService implements IProvisioningService  {
     /**
      * AJUSTE FINAL: reservas reais * Y * Z
      */
+    @Override
     public Map<Product, Double> adjustQuantitiesAndAlert(Menu menu, Map<Product, Double> planned) {
         Map<Product, Double> toOrder = new HashMap<>();
         User manager = userRepo.findCentralCanteenManager();
