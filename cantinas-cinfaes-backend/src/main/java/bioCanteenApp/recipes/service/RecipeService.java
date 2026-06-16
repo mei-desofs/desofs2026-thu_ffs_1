@@ -1,6 +1,5 @@
 package bioCanteenApp.recipes.service;
 
-import bioCanteenApp.dish.domain.Dish;
 import bioCanteenApp.recipes.domain.Recipe;
 import bioCanteenApp.recipes.dto.RecipeDTO;
 import bioCanteenApp.recipes.mapper.RecipeMapper;
@@ -24,9 +23,9 @@ public class RecipeService implements IRecipeService {
 
     @Override
     public RecipeDTO getRecipeById(Long id) {
-        Recipe recipe = recipeRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Recipe not found with id: " + id));
-        return recipeMapper.toDTO(recipe);
+        return recipeRepo.findById(id)
+                .map(recipeMapper::toDTO)
+                .orElse(null);
     }
 
     @Override
