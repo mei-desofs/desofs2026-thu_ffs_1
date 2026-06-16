@@ -20,6 +20,7 @@ public class DiningHallService implements IDiningHallService{
         this.mapper = mapper;
     }
 
+    @Override
     public List<DiningHallDTO> getAllDiningHall() {
         return repo.findAll()
                 .stream()

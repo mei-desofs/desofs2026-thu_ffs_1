@@ -27,6 +27,7 @@ public class ReservationService implements IReservationService {
         this.mapper = mapper;
     }
 
+    @Override
     public ReservationDTO createReservation(ReservationDTO dto) {
         Reservation reservation = mapper.toDomain(dto);
 
@@ -89,6 +90,7 @@ public class ReservationService implements IReservationService {
         return mapper.toDTO(saved);
     }
 
+    @Override
     public List<ReservationDTO> getAllReservations() {
         return repo.findAll()
                 .stream()
@@ -96,12 +98,14 @@ public class ReservationService implements IReservationService {
                 .collect(Collectors.toList());
     }
 
+    @Override
     public ReservationDTO getById(Long id) {
         Reservation reservation = repo.findById(id)
                 .orElseThrow(() -> new ReservationNotFound(id));
         return mapper.toDTO(reservation);
     }
 
+    @Override
     public List<ReservationDTO> getByUserId(Long userId) {
         return repo.findByUserId(userId)
                 .stream()

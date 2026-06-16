@@ -16,6 +16,7 @@ public class EmailService implements IEmailService {
         this.mailSender = mailSender;
     }
 
+    @Override
     public void sendEmail(String toEmail, String resetLink) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(toEmail);

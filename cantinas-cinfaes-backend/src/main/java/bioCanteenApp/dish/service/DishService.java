@@ -102,6 +102,7 @@ public class DishService implements IDishService {
                 .toList();
     }
 
+    @Override
     public List<DishDto> getAlternatives(Long menuEntryDishId) {
         MenuEntryDish med = menuRepository.findMenuEntryDishById(menuEntryDishId);
 

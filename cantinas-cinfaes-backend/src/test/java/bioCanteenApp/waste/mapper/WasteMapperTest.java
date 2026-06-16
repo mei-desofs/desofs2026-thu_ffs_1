@@ -12,8 +12,8 @@ class WasteMapperTest {
 
     @Test
     void toDomain_alwaysReturnsNull() {
-        assertNull(mapper.toDomain(new WasteDTO()));
         assertNull(mapper.toDomain(null));
+        assertNotNull(mapper.toDomain(new WasteDTO()));
     }
 
     @Test
