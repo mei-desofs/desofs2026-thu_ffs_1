@@ -18,6 +18,7 @@ jobs:
       contents: read
       security-events: write
       pull-requests: read
+      checks: read
 
     steps:
       - name: Checkout
@@ -51,63 +52,75 @@ jobs:
           category: "/language:java"
           output: sarif-results
 
-      - name: Debug CodeQL SARIF structure
-        run: |
-          sarif_file="sarif-results/java.sarif"
-          if [ ! -f "$sarif_file" ]; then echo "SARIF file not found."; exit 0; fi
-          echo "=== size: $(wc -c < "$sarif_file") bytes, runs: $(jq '.runs | length' "$sarif_file") ==="
-          echo "=== results count per run ==="
-          jq '.runs[] | .results | length' "$sarif_file"
-          echo "=== first result (raw) ==="
-          jq '.runs[0].results[0]' "$sarif_file"
-
       - name: Fail on High or Critical CodeQL Alerts
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          failed=0
+
+          # ── 1. SARIF (new findings in this run) ──────────────────────────────
           sarif_file="sarif-results/java.sarif"
-          if [ ! -f "$sarif_file" ]; then
-            echo "SARIF file not found — skipping check."
-            exit 0
+          if [ -f "$sarif_file" ]; then
+            sarif_findings=$(jq -r '
+              .runs[] |
+              . as $run |
+              (
+                [
+                  ($run.tool.driver.rules // []),
+                  ([$run.tool.extensions[]? | .rules? // []] | add // [])
+                ] | add // []
+              ) as $all_rules |
+              (
+                $all_rules
+                | map({(.id): {sec: (.properties["security-severity"] // "0"), lvl: (.defaultConfiguration.level // "none")}})
+                | add // {}
+              ) as $id_map |
+              $run.results[] |
+              . as $r |
+              (
+                if ($r.ruleId // "") != "" then $r.ruleId
+                elif (($r.rule.id? // "") != "") then $r.rule.id
+                elif ($r.rule.index? != null) then ($all_rules[$r.rule.index].id // "")
+                else "" end
+              ) as $rid |
+              ($id_map[$rid] // {sec:"0",lvl:"none"}) as $rule |
+              (($rule.sec) | tonumber) as $sev |
+              select($sev >= 7.0 or $rule.lvl == "error") |
+              "  [SARIF] \($rid) (severity \($sev)): \($r.message.text)"
+            ' "$sarif_file")
+
+            if [ -n "$sarif_findings" ]; then
+              echo "HIGH/CRITICAL findings in SARIF (this run):"
+              echo "$sarif_findings"
+              failed=1
+            else
+              echo "SARIF: no HIGH/CRITICAL findings in this run."
+            fi
+          else
+            echo "SARIF file not found — skipping SARIF check."
           fi
 
-          # Rules are in tool.extensions[].rules in CodeQL SARIF (not tool.driver.rules).
-          # Build a ruleId -> effective-severity map:
-          #   1. prefer numeric security-severity (CVSS) >= 7.0
-          #   2. fall back to defaultConfiguration.level == "error" (CodeQL High/Error rules
-          #      like spring-disabled-csrf-protection that have no CVSS score)
-          findings=$(jq -r '
-            .runs[] |
-            . as $run |
-            (
-              [
-                ($run.tool.driver.rules // []),
-                ([$run.tool.extensions[]? | .rules? // []] | add // [])
-              ] | add // []
-            ) as $all_rules |
-            (
-              $all_rules
-              | map({(.id): {sec: (.properties["security-severity"] // "0"), lvl: (.defaultConfiguration.level // "none")}})
-              | add // {}
-            ) as $id_map |
-            $run.results[] |
-            . as $r |
-            (
-              if ($r.ruleId // "") != "" then $r.ruleId
-              elif (($r.rule.id? // "") != "") then $r.rule.id
-              elif ($r.rule.index? != null) then ($all_rules[$r.rule.index].id // "")
-              else "" end
-            ) as $rid |
-            ($id_map[$rid] // {sec:"0",lvl:"none"}) as $rule |
-            (($rule.sec) | tonumber) as $sev |
-            select($sev >= 7.0 or $rule.lvl == "error") |
-            "\($rid) (severity \($sev), level \($rule.lvl)): \($r.message.text)"
-          ' "$sarif_file")
+          # ── 2. GitHub API (open historical alerts) ───────────────────────────
+          api_findings=$(gh api \
+            "repos/${{ github.repository }}/code-scanning/alerts?state=open&per_page=100" \
+            --paginate | \
+            jq -r '.[] |
+              select(.rule.security_severity_level == "high" or .rule.security_severity_level == "critical") |
+              "  [API #\(.number)] \(.rule.id) (\(.rule.security_severity_level | ascii_upcase)): \(.most_recent_instance.message.text // .rule.description) @ \(.most_recent_instance.location.path // "unknown"):\(.most_recent_instance.location.start_line // "?")"')
 
-          if [ -n "$findings" ]; then
-            echo "High/critical findings:"
-            echo "$findings"
+          if [ -n "$api_findings" ]; then
+            echo "Open HIGH/CRITICAL alerts in GitHub Code Scanning:"
+            echo "$api_findings"
+            failed=1
+          else
+            echo "GitHub API: no open HIGH/CRITICAL alerts."
+          fi
+
+          # ── Result ───────────────────────────────────────────────────────────
+          if [ "$failed" -eq 1 ]; then
             exit 1
           fi
-          echo "No high or critical alerts found."
+          echo "All checks passed."
 
   # ──────────────────────────────────────────────
   # SCA — OWASP Dependency Check
