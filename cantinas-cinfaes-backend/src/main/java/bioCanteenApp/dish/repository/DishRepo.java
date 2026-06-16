@@ -55,6 +55,7 @@ public class DishRepo implements IDishRepo {
         return result.isEmpty() ? Optional.empty() : Optional.of(result.get(0));
     }
 
+    @Override
     public List<Dish> findSeasonalAlternatives(
             DishType dishType,
             Season season,

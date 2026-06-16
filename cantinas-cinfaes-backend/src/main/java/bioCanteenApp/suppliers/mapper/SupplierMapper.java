@@ -114,6 +114,7 @@ public class SupplierMapper implements ISupplierMapper {
         return builder.build();
     }
 
+    @Override
     public SupplierApplication toDomain(SupplierApplicationDTO dto) {
         List<SupplierCapacity> capacities = (dto.getSupplierCapacity() != null)
                 ? dto.getSupplierCapacity().stream()

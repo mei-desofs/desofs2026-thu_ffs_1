@@ -12,7 +12,7 @@ public interface IProductService {
 
     List<ProductDTO> getAvailableSeasonalProducts();
 
-    double calculateOrganicProductsPercentage(Dish dish);
+    double calculateOrganicProductsPercentage();
 
     Long getProductCount();
 }

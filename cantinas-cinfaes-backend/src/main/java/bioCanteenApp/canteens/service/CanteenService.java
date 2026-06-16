@@ -33,6 +33,7 @@ public class CanteenService implements ICanteenService {
         this.productRepo = productRepo;
     }
 
+    @Override
     public CanteenDTO createCanteen(CanteenDTO dto) {
         Canteen canteen = mapper.toDomain(dto);
 
@@ -44,7 +45,7 @@ public class CanteenService implements ICanteenService {
         return mapper.toDTO(saved);
     }
 
-
+    @Override
     public List<CanteenDTO> getAllCanteens() {
         return repo.findAll()
                 .stream()
@@ -52,6 +53,7 @@ public class CanteenService implements ICanteenService {
                 .toList();
     }
 
+    @Override
     public CanteenDTO getById(Long id) {
         Canteen canteen = repo.findById(id)
                 .orElseThrow(() -> new CanteenNotFound(id));
