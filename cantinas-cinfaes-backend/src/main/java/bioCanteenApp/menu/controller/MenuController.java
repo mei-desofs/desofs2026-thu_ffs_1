@@ -60,7 +60,7 @@ public class MenuController {
         return createdMenu;
     }
 
-    @GetMapping(value = "/generate")
+    @GetMapping("/generate")
     public MenuDto generateMenu(
             @RequestParam("startDate") String startDate,
             @RequestParam("endDate") String endDate
@@ -90,7 +90,7 @@ public class MenuController {
         return menu;
     }
 
-    @GetMapping(value = "/week")
+    @GetMapping( "/week")
     public ResponseEntity<List<MenuDto>> getMenusByWeek(
             @RequestParam(name = "startDate")
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
@@ -122,7 +122,7 @@ public class MenuController {
         return ResponseEntity.ok(menus);
     }
 
-    @PostMapping(value = "/publish")
+    @PostMapping( "/publish")
     public ResponseEntity<Void> publishMenu(
             @RequestParam("startDate") String startDate,
             @RequestParam("endDate") String endDate,
@@ -150,7 +150,7 @@ public class MenuController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping(value = "/close")
+    @PostMapping( "/close")
     public ResponseEntity<Void> closeMenu(
             @RequestParam("startDate") String startDate,
             @RequestParam("endDate") String endDate
@@ -185,7 +185,7 @@ public class MenuController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping(value = "/stats")
+    @GetMapping( "/stats")
     public ResponseEntity<Map<String, Object>> getPlanningStats() {
 
         log.info("Fetching menu planning statistics");

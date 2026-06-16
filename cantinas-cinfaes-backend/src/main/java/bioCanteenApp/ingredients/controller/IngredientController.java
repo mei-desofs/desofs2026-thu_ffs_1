@@ -19,7 +19,7 @@ public class IngredientController {
 
     private final IngredientService ingredientsService;
 
-    @GetMapping(value = "/seasonal")
+    @GetMapping("/seasonal")
     public List<IngredientDto> getSeasonalIngredients() {
 
         log.info("Fetching seasonal ingredients");
@@ -35,7 +35,7 @@ public class IngredientController {
         return ingredients;
     }
 
-    @GetMapping(value = "/all")
+    @GetMapping( "/all")
     public ResponseEntity<List<IngredientDto>> getAllIngredients() {
 
         log.info("Fetching all ingredients");
@@ -48,7 +48,7 @@ public class IngredientController {
         return ResponseEntity.ok(products);
     }
 
-    @GetMapping(value = "/stats")
+    @GetMapping("/stats")
     public ResponseEntity<Long> getIngredientCount() {
 
         log.info("Fetching ingredient statistics");

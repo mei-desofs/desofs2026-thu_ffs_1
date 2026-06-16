@@ -30,7 +30,7 @@ public class RecipeController {
         return ResponseEntity.ok(recipes);
     }
 
-    @GetMapping(value = "/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<RecipeDTO> getRecipeById(
             @PathVariable Long id
     ) {
@@ -61,7 +61,7 @@ public class RecipeController {
         return ResponseEntity.ok(createdRecipe);
     }
 
-    @GetMapping(value = "/stats")
+    @GetMapping("/stats")
     public ResponseEntity<Long> getRecipeCount() {
 
         log.info("Fetching recipe statistics");

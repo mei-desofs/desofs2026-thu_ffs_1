@@ -32,7 +32,7 @@ public class ProductController {
         return ResponseEntity.ok(products);
     }
 
-    @GetMapping(value = "/seasonal")
+    @GetMapping( "/seasonal")
     public ResponseEntity<List<ProductDTO>> getSeasonalProducts() {
 
         log.info("Fetching seasonal products");
@@ -48,7 +48,7 @@ public class ProductController {
         return ResponseEntity.ok(products);
     }
 
-    @GetMapping(value = "/stats")
+    @GetMapping( "/stats")
     public ResponseEntity<Long> getProductCount() {
 
         log.info("Fetching product statistics");

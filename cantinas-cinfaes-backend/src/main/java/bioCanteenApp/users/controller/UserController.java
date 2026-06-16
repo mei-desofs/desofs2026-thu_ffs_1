@@ -56,7 +56,7 @@ public class UserController {
         return ResponseEntity.ok(createdUser);
     }
 
-    @GetMapping(value = "/email/{email}")
+    @GetMapping("/email/{email}")
     public ResponseEntity<GetUserDTO> getUserByEmail(
             @PathVariable("email") String email
     ) {
@@ -72,7 +72,7 @@ public class UserController {
         return ResponseEntity.ok(userDTO);
     }
 
-    @DeleteMapping(value = "/{email}")
+    @DeleteMapping( "/{email}")
     public ResponseEntity<Void> deleteUser(
             @PathVariable("email") String email
     ) {

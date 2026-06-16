@@ -36,7 +36,7 @@ public class DishController {
         return ResponseEntity.ok(createdDish);
     }
 
-    @GetMapping(value = "/dish-types")
+    @GetMapping("/dish-types")
     public ResponseEntity<List<String>> getDishTypes() {
 
         log.info("Fetching all dish types");
@@ -51,7 +51,7 @@ public class DishController {
         return ResponseEntity.ok(dishTypes);
     }
 
-    @PostMapping(value = "/nutrition-allergens")
+    @PostMapping( "/nutrition-allergens")
     public ResponseEntity<GetDishDTO> generateDishInformation(
             @RequestBody GetDishDTO dto
     ) {
@@ -66,7 +66,7 @@ public class DishController {
         return ResponseEntity.ok(generatedInfo);
     }
 
-    @GetMapping(value = "/alternatives/{menuEntryDishId}")
+    @GetMapping( "/alternatives/{menuEntryDishId}")
     public ResponseEntity<List<DishDto>> getAlternatives(
             @PathVariable("menuEntryDishId") Long menuEntryDishId
     ) {
@@ -88,7 +88,7 @@ public class DishController {
         return ResponseEntity.ok(alternatives);
     }
 
-    @PutMapping(value = "/{menuEntryDishId}/replace")
+    @PutMapping( "/{menuEntryDishId}/replace")
     public ResponseEntity<Void> replaceDish(
             @PathVariable("menuEntryDishId") Long menuEntryDishId,
             @RequestParam("newDishId") Long newDishId
@@ -110,7 +110,7 @@ public class DishController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping(value = "/organic")
+    @GetMapping( "/organic")
     public ResponseEntity<Double> getOrganicProducts() {
 
         log.info("Fetching organic products percentage");

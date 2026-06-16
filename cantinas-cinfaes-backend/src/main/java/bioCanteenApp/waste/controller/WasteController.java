@@ -22,7 +22,7 @@ public class WasteController {
     private final IWasteService wasteService;
     private final UserRepo userRepository;
 
-    @GetMapping(value = "/daily")
+    @GetMapping( "/daily")
     public WasteDTO getDailyWaste() {
 
         log.info("Fetching daily waste statistics");
@@ -35,7 +35,7 @@ public class WasteController {
         return waste;
     }
 
-    @GetMapping(value = "/weekly")
+    @GetMapping("/weekly")
     public WasteDTO getWeeklyWaste() {
 
         log.info("Fetching weekly waste statistics");
@@ -48,7 +48,7 @@ public class WasteController {
         return waste;
     }
 
-    @GetMapping(value = "/monthly")
+    @GetMapping( "/monthly")
     public WasteDTO getMonthlyWaste() {
 
         log.info("Fetching monthly waste statistics");
@@ -61,7 +61,7 @@ public class WasteController {
         return waste;
     }
 
-    @GetMapping(value = "/all")
+    @GetMapping("/all")
     public WasteDTO getAllWaste() {
 
         log.info("Fetching overall waste statistics");
@@ -74,7 +74,7 @@ public class WasteController {
         return waste;
     }
 
-    @GetMapping(value = "/kpis/{period}")
+    @GetMapping( "/kpis/{period}")
     public WasteDTO getKPIs(
             @PathVariable("period") String period,
             @RequestParam("userId") Long userId,

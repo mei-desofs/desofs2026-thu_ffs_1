@@ -30,7 +30,7 @@ public class ProvisioningController {
     private final IMenuService menuService;
     private final IMenuMapper menuMapper;
 
-    @GetMapping(value = "/planned/{id}")
+    @GetMapping( "/planned/{id}")
     public ResponseEntity<List<ProductQuantityDTO>> getPlannedQuantities(
             @PathVariable("id") Long id
     ) {
@@ -64,7 +64,7 @@ public class ProvisioningController {
         return ResponseEntity.ok(dtoList);
     }
 
-    @PostMapping(value = "/adjusted/{menuId}")
+    @PostMapping( "/adjusted/{menuId}")
     public ResponseEntity<List<ProductQuantityDTO>> getAdjustedQuantities(
             @PathVariable("menuId") Long menuId
     ) {
@@ -98,7 +98,7 @@ public class ProvisioningController {
         return ResponseEntity.ok(dtoList);
     }
 
-    @GetMapping(value = "/planned/find/{menuId}")
+    @GetMapping("/planned/find/{menuId}")
     public ResponseEntity<List<ProductQuantityDTO>> findPlanned(
             @PathVariable("menuId") Long menuId
     ) {
@@ -125,7 +125,7 @@ public class ProvisioningController {
                 .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
-    @GetMapping(value = "/adjusted/find/{menuId}")
+    @GetMapping( "/adjusted/find/{menuId}")
     public ResponseEntity<List<ProductQuantityDTO>> findAdjusted(
             @PathVariable("menuId") Long menuId
     ) {
@@ -152,7 +152,7 @@ public class ProvisioningController {
                 .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
-    @GetMapping(value = "/production-plan/planned/{menuId}")
+    @GetMapping("/production-plan/planned/{menuId}")
     public ResponseEntity<List<ProductionOrderDTO>> getPlannedProductionPlan(
             @PathVariable("menuId") Long menuId
     ) {
@@ -188,7 +188,7 @@ public class ProvisioningController {
         return ResponseEntity.ok(plan);
     }
 
-    @GetMapping(value = "/production-plan/adjusted/{menuId}")
+    @GetMapping( "/production-plan/adjusted/{menuId}")
     public ResponseEntity<List<ProductionOrderDTO>> getAdjustedProductionPlan(
             @PathVariable("menuId") Long menuId
     ) {
@@ -224,7 +224,7 @@ public class ProvisioningController {
         return ResponseEntity.ok(plan);
     }
 
-    @GetMapping(value = "/planned/update/{menuId}")
+    @GetMapping( "/planned/update/{menuId}")
     public ResponseEntity<List<ProductQuantityDTO>> getUpdatedPlanned(
             @PathVariable("menuId") Long menuId
     ) {

@@ -31,7 +31,7 @@ public class NotificationController {
         return ResponseEntity.ok(notifications);
     }
 
-    @GetMapping(value = "/{id}")
+    @GetMapping( "/{id}")
     public ResponseEntity<NotificationDTO> getNotificationById(
             @PathVariable("id") Long id
     ) {
@@ -44,7 +44,7 @@ public class NotificationController {
         return ResponseEntity.ok(notification);
     }
 
-    @GetMapping(value = "/user/{email}")
+    @GetMapping("/user/{email}")
     public ResponseEntity<List<NotificationDTO>> getNotificationsByUser(
             @PathVariable("email") String email
     ) {
@@ -84,7 +84,7 @@ public class NotificationController {
         return ResponseEntity.ok(createdNotification);
     }
 
-    @PutMapping(value = "/{id}/read")
+    @PutMapping( "/{id}/read")
     public ResponseEntity<Void> markAsRead(
             @PathVariable("id") Long id
     ) {
@@ -101,7 +101,7 @@ public class NotificationController {
         return ResponseEntity.noContent().build();
     }
 
-    @PutMapping(value = "/user/{userId}/read")
+    @PutMapping( "/user/{userId}/read")
     public ResponseEntity<Void> markAllAsReadForUser(
             @PathVariable("userId") Long userId
     ) {
@@ -121,7 +121,7 @@ public class NotificationController {
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping(value = "/{id}")
+    @DeleteMapping( "/{id}")
     public ResponseEntity<Void> deleteNotification(
             @PathVariable("id") Long id
     ) {
@@ -138,7 +138,7 @@ public class NotificationController {
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping(value = "/user/{userId}")
+    @DeleteMapping( "/user/{userId}")
     public ResponseEntity<Void> deleteAllNotificationsForUser(
             @PathVariable("userId") Long userId
     ) {
