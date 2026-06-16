@@ -2,6 +2,7 @@ package bioCanteenApp.waste.controller;
 
 import bioCanteenApp.users.domain.User;
 import bioCanteenApp.users.repository.UserRepo;
+import bioCanteenApp.utils.exceptions.LogSanitizer;
 import bioCanteenApp.waste.dto.WasteDTO;
 import bioCanteenApp.waste.service.IWasteService;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,7 @@ public class WasteController {
     private final IWasteService wasteService;
     private final UserRepo userRepository;
 
-    @GetMapping("/daily")
+    @GetMapping( "/daily")
     public WasteDTO getDailyWaste() {
 
         log.info("Fetching daily waste statistics");
@@ -47,7 +48,7 @@ public class WasteController {
         return waste;
     }
 
-    @GetMapping("/monthly")
+    @GetMapping( "/monthly")
     public WasteDTO getMonthlyWaste() {
 
         log.info("Fetching monthly waste statistics");
@@ -73,7 +74,7 @@ public class WasteController {
         return waste;
     }
 
-    @GetMapping("/kpis/{period}")
+    @GetMapping( "/kpis/{period}")
     public WasteDTO getKPIs(
             @PathVariable("period") String period,
             @RequestParam("userId") Long userId,
@@ -84,8 +85,8 @@ public class WasteController {
 
         log.info(
                 "Fetching waste KPIs for user id: {} and period: {}",
-                userId,
-                period
+                LogSanitizer.sanitize(userId),
+                LogSanitizer.sanitize(period)
         );
 
         User user = userRepository.findById(userId);
@@ -94,7 +95,7 @@ public class WasteController {
 
             log.warn(
                     "Waste KPI request failed. User not found with id: {}",
-                    userId
+                    LogSanitizer.sanitize(userId)
             );
 
             throw new ResponseStatusException(
@@ -108,7 +109,7 @@ public class WasteController {
 
         log.info(
                 "Calculating waste KPIs for role: {} between {} and {}",
-                user.getRole(),
+                LogSanitizer.sanitize(user.getRole()),
                 range[0],
                 range[1]
         );
@@ -119,7 +120,7 @@ public class WasteController {
 
                 log.info(
                         "Generating waste KPIs for canteen id: {}",
-                        user.getCanteen().getId()
+                        LogSanitizer.sanitize(user.getCanteen().getId())
                 );
 
                 return wasteService.aggregateWaste(
@@ -134,7 +135,7 @@ public class WasteController {
 
                 log.info(
                         "Generating waste KPIs for dining hall id: {}",
-                        user.getDiningHall().getId()
+                        LogSanitizer.sanitize(user.getDiningHall().getId())
                 );
 
                 return wasteService.aggregateWaste(
@@ -149,9 +150,9 @@ public class WasteController {
 
                 log.info(
                         "Generating network waste KPIs with filters - canteenId: {}, diningHallId: {}, supplierId: {}",
-                        canteenId,
-                        diningHallId,
-                        supplierId
+                        LogSanitizer.sanitize(canteenId),
+                        LogSanitizer.sanitize(diningHallId),
+                        LogSanitizer.sanitize(supplierId)
                 );
 
                 return wasteService.aggregateWaste(
@@ -166,8 +167,8 @@ public class WasteController {
 
                 log.warn(
                         "Unsupported role {} for user id: {}",
-                        user.getRole(),
-                        userId
+                        LogSanitizer.sanitize(user.getRole()),
+                        LogSanitizer.sanitize(userId)
                 );
 
                 throw new ResponseStatusException(

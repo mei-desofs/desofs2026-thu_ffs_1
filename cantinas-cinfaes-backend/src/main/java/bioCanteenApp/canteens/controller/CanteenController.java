@@ -2,6 +2,7 @@ package bioCanteenApp.canteens.controller;
 
 import bioCanteenApp.canteens.dto.CanteenDTO;
 import bioCanteenApp.canteens.service.ICanteenService;
+import bioCanteenApp.utils.exceptions.LogSanitizer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,11 +23,11 @@ public class CanteenController {
     @PostMapping
     public ResponseEntity<CanteenDTO> createCanteen(@RequestBody CanteenDTO request) {
 
-        log.info("Creating canteen with name: {}", request.getName());
+        log.info("Creating canteen with name: {}", LogSanitizer.sanitize(request.getName()));
 
         CanteenDTO created = service.createCanteen(request);
 
-        log.info("Canteen created successfully with name: {}", created.getName());
+        log.info("Canteen created successfully with name: {}", LogSanitizer.sanitize(created.getName()));
 
         return ResponseEntity.ok(created);
     }
@@ -43,10 +44,10 @@ public class CanteenController {
         return ResponseEntity.ok(canteens);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping( "/{id}")
     public ResponseEntity<CanteenDTO> getCanteenById(@PathVariable("id") Long id) {
 
-        log.info("Fetching canteen with id: {}", id);
+        log.info("Fetching canteen with id: {}", LogSanitizer.sanitize(id));
 
         CanteenDTO dto = service.getById(id);
 
@@ -66,7 +67,7 @@ public class CanteenController {
         log.info(
                 "Quarantined {} canteens in village: {}",
                 quarantined.size(),
-                village
+                LogSanitizer.sanitize(village)
         );
 
         return ResponseEntity.ok(quarantined);
@@ -85,13 +86,13 @@ public class CanteenController {
         log.info(
                 "Unquarantined {} canteens in village: {}",
                 unquarantined.size(),
-                village
+                LogSanitizer.sanitize(village)
         );
 
         return ResponseEntity.ok(unquarantined);
     }
 
-    @GetMapping("/filter/municipality/{municipality}")
+    @GetMapping( "/filter/municipality/{municipality}")
     public ResponseEntity<List<CanteenDTO>> getCanteensByMunicipality(
             @PathVariable("municipality") String municipality
     ) {
@@ -104,13 +105,13 @@ public class CanteenController {
         log.info(
                 "Found {} canteens in municipality: {}",
                 dto.size(),
-                municipality
+                LogSanitizer.sanitize(municipality)
         );
 
         return ResponseEntity.ok(dto);
     }
 
-    @GetMapping("/filter/village/{village}")
+    @GetMapping( "/filter/village/{village}")
     public ResponseEntity<List<CanteenDTO>> getCanteensByVillage(
             @PathVariable("village") String village
     ) {
@@ -123,7 +124,7 @@ public class CanteenController {
         log.info(
                 "Found {} canteens in village: {}",
                 dto.size(),
-                village
+                LogSanitizer.sanitize(village)
         );
 
         return ResponseEntity.ok(dto);

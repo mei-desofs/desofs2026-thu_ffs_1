@@ -2,6 +2,7 @@ package bioCanteenApp.notifications.controller;
 
 import bioCanteenApp.notifications.dto.NotificationDTO;
 import bioCanteenApp.notifications.service.INotificationService;
+import bioCanteenApp.utils.exceptions.LogSanitizer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -30,12 +31,12 @@ public class NotificationController {
         return ResponseEntity.ok(notifications);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping( "/{id}")
     public ResponseEntity<NotificationDTO> getNotificationById(
             @PathVariable("id") Long id
     ) {
 
-        log.info("Fetching notification with id: {}", id);
+        log.info("Fetching notification with id: {}", LogSanitizer.sanitize(id));
 
         NotificationDTO notification =
                 notificationService.getById(id);
@@ -48,7 +49,7 @@ public class NotificationController {
             @PathVariable("email") String email
     ) {
 
-        log.info("Fetching notifications for user email: {}", email);
+        log.info("Fetching notifications for user email: {}", LogSanitizer.sanitize(email));
 
         List<NotificationDTO> notifications =
                 notificationService.getByUserEmail(email);
@@ -56,7 +57,7 @@ public class NotificationController {
         log.info(
                 "Found {} notifications for user email: {}",
                 notifications.size(),
-                email
+                LogSanitizer.sanitize(email)
         );
 
         return ResponseEntity.ok(notifications);
@@ -83,7 +84,7 @@ public class NotificationController {
         return ResponseEntity.ok(createdNotification);
     }
 
-    @PutMapping("/{id}/read")
+    @PutMapping( "/{id}/read")
     public ResponseEntity<Void> markAsRead(
             @PathVariable("id") Long id
     ) {
@@ -100,7 +101,7 @@ public class NotificationController {
         return ResponseEntity.noContent().build();
     }
 
-    @PutMapping("/user/{userId}/read")
+    @PutMapping( "/user/{userId}/read")
     public ResponseEntity<Void> markAllAsReadForUser(
             @PathVariable("userId") Long userId
     ) {
@@ -120,7 +121,7 @@ public class NotificationController {
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping( "/{id}")
     public ResponseEntity<Void> deleteNotification(
             @PathVariable("id") Long id
     ) {
@@ -137,7 +138,7 @@ public class NotificationController {
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/user/{userId}")
+    @DeleteMapping( "/user/{userId}")
     public ResponseEntity<Void> deleteAllNotificationsForUser(
             @PathVariable("userId") Long userId
     ) {

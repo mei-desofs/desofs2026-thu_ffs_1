@@ -11,7 +11,14 @@ public class WasteMapper implements IWasteMapper {
 
     @Override
     public Waste toDomain(WasteDTO dto) {
-        return null;
+        if (dto == null) return null;
+
+        return new Waste(
+                dto.getTotalMealsReserved(),
+                dto.getNotServedWaste(),
+                dto.getServedWaste(),
+                dto.getTotalMealsConsumed()
+        );
     }
 
     @Override

@@ -20,7 +20,7 @@ public class NotificationService implements INotificationService {
         this.mapper = mapper;
     }
 
-
+    @Override
     public NotificationDTO createNotification(NotificationDTO dto) {
         Notification notification = mapper.toDomain(dto);
 
@@ -28,6 +28,7 @@ public class NotificationService implements INotificationService {
         return mapper.toDTO(saved);
     }
 
+    @Override
     public List<NotificationDTO> getAllNotifications() {
         return repo.findAll()
                 .stream()
@@ -35,6 +36,7 @@ public class NotificationService implements INotificationService {
                 .toList();
     }
 
+    @Override
     public NotificationDTO getById(Long id) {
         Notification notification = repo.findById(id)
                 .orElseThrow(() -> new NotificationNotFound(id));
@@ -42,6 +44,7 @@ public class NotificationService implements INotificationService {
         return mapper.toDTO(notification);
     }
 
+    @Override
     public List<NotificationDTO> getByUserEmail(String userId) {
         return repo.findByUserEmail(userId)
                 .stream()
@@ -49,21 +52,25 @@ public class NotificationService implements INotificationService {
                 .toList();
     }
 
+    @Override
     public void markAsRead(Long id) {
-        Notification notification = repo.findById(id)
+        repo.findById(id)
                 .orElseThrow(() -> new NotificationNotFound(id));
 
         repo.markAsRead(id);
     }
 
+    @Override
     public void markAllAsReadForUser(Long userId) {
         repo.markAllAsReadForUser(userId);
     }
 
+    @Override
     public void deleteById(Long id) {
         repo.deleteById(id);
     }
 
+    @Override
     public void deleteAllForUser(Long userId) {
         repo.deleteAllForUser(userId);
     }

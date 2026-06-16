@@ -5,6 +5,7 @@ import bioCanteenApp.security.dto.ForgotPasswordDTO;
 import bioCanteenApp.security.service.PasswordService;
 import bioCanteenApp.users.domain.User;
 import bioCanteenApp.users.repository.UserRepo;
+import bioCanteenApp.utils.exceptions.LogSanitizer;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -52,7 +53,7 @@ public class PasswordController {
 
             log.warn(
                     "Password change request failed due to missing fields for user: {}",
-                    username
+                    LogSanitizer.sanitize(username)
             );
 
             return ResponseEntity.badRequest()
@@ -65,7 +66,7 @@ public class PasswordController {
         if (passwordService.isPasswordExpired(user)) {
             log.warn(
                     "Password for user {} is expired; allowing change via API endpoint.",
-                    user.getEmail()
+                    LogSanitizer.sanitize(user.getEmail())
             );
         }
 
@@ -77,7 +78,7 @@ public class PasswordController {
 
         log.info(
                 "Password changed successfully for user: {}",
-                username
+                LogSanitizer.sanitize(username)
         );
 
         return ResponseEntity.ok("Password changed successfully.");
@@ -92,14 +93,14 @@ public class PasswordController {
 
         log.info(
                 "Password recovery requested for email: {}",
-                email
+                LogSanitizer.sanitize(email)
         );
 
         passwordService.sendPasswordResetEmail(email);
 
         log.info(
                 "Password recovery email processed for email: {}",
-                email
+                LogSanitizer.sanitize(email)
         );
 
         return ResponseEntity.ok(
@@ -142,7 +143,7 @@ public class PasswordController {
 
         log.info(
                 "Checking password expiration for user: {}",
-                authentication.getName()
+                LogSanitizer.sanitize(authentication.getName())
         );
 
         User user = userRepository.findByEmail(authentication.getName())
@@ -153,7 +154,7 @@ public class PasswordController {
 
         log.info(
                 "Password expiration check completed for user: {}. Expired: {}",
-                authentication.getName(),
+                LogSanitizer.sanitize(authentication.getName()),
                 expired
         );
 

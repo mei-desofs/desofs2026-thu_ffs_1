@@ -136,7 +136,7 @@ class SupplierServiceTest {
         when(application.getInterviewStatus()).thenReturn(InterviewStatus.APPROVED); // Aprovou na entrevista
         when(application.getEmail()).thenReturn("supplier@email.com");
         when(application.getName()).thenReturn("BioCorp");
-        when(application.getNif()).thenReturn(Long.valueOf("123456789"));
+        when(application.getNif()).thenReturn(123456789L);
 
         when(supplierRepo.findApplicationById(applicationId)).thenReturn(Optional.of(application));
         when(userRepo.findByEmail("supplier@email.com")).thenReturn(Optional.empty());
