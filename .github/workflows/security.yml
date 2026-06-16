@@ -54,17 +54,12 @@ jobs:
       - name: Debug CodeQL SARIF structure
         run: |
           sarif_file="sarif-results/java.sarif"
-          if [ ! -f "$sarif_file" ]; then
-            echo "SARIF file not found."
-            exit 0
-          fi
-          echo "=== SARIF file exists, size: $(wc -c < "$sarif_file") bytes ==="
-          echo "=== Result ruleIds ==="
-          jq -r '.runs[].results[] | .ruleId // "(null)"' "$sarif_file" | sort -u
-          echo "=== Rules in driver ==="
-          jq -r '.runs[].tool.driver.rules[]? | "\(.id) | sec=\(.properties["security-severity"] // "n/a") | lvl=\(.defaultConfiguration.level // "n/a")"' "$sarif_file"
-          echo "=== Rules in extensions ==="
-          jq -r '.runs[].tool.extensions[]?.rules[]? | "\(.id) | sec=\(.properties["security-severity"] // "n/a") | lvl=\(.defaultConfiguration.level // "n/a")"' "$sarif_file" | grep -i "csrf\|8\.\|7\." || echo "(none matching)"
+          if [ ! -f "$sarif_file" ]; then echo "SARIF file not found."; exit 0; fi
+          echo "=== size: $(wc -c < "$sarif_file") bytes, runs: $(jq '.runs | length' "$sarif_file") ==="
+          echo "=== results count per run ==="
+          jq '.runs[] | .results | length' "$sarif_file"
+          echo "=== first result (raw) ==="
+          jq '.runs[0].results[0]' "$sarif_file"
 
       - name: Fail on High or Critical CodeQL Alerts
         run: |
@@ -81,25 +76,30 @@ jobs:
           #      like spring-disabled-csrf-protection that have no CVSS score)
           findings=$(jq -r '
             .runs[] |
+            . as $run |
             (
               [
-                (.tool.driver.rules // []),
-                ([.tool.extensions[]? | .rules? // []] | add // [])
+                ($run.tool.driver.rules // []),
+                ([$run.tool.extensions[]? | .rules? // []] | add // [])
               ] | add // []
-              | map({
-                  (.id): {
-                    sec: (.properties["security-severity"] // "0"),
-                    lvl: (.defaultConfiguration.level // "none")
-                  }
-                })
+            ) as $all_rules |
+            (
+              $all_rules
+              | map({(.id): {sec: (.properties["security-severity"] // "0"), lvl: (.defaultConfiguration.level // "none")}})
               | add // {}
-            ) as $m |
-            .results[] |
+            ) as $id_map |
+            $run.results[] |
             . as $r |
-            ($m[$r.ruleId] // {sec:"0",lvl:"none"}) as $rule |
+            (
+              if ($r.ruleId // "") != "" then $r.ruleId
+              elif (($r.rule.id? // "") != "") then $r.rule.id
+              elif ($r.rule.index? != null) then ($all_rules[$r.rule.index].id // "")
+              else "" end
+            ) as $rid |
+            ($id_map[$rid] // {sec:"0",lvl:"none"}) as $rule |
             (($rule.sec) | tonumber) as $sev |
             select($sev >= 7.0 or $rule.lvl == "error") |
-            "\(.ruleId) (severity \($sev), level \($rule.lvl)): \(.message.text)"
+            "\($rid) (severity \($sev), level \($rule.lvl)): \($r.message.text)"
           ' "$sarif_file")
 
           if [ -n "$findings" ]; then
