@@ -63,6 +63,7 @@ public class Bootstrapper implements CommandLineRunner {
     private final IDiningHallRepository diningHallRepository;
     private final IWasteRepo wasteRepository;
     private final PasswordEncoder passwordEncoder;
+    private static final Random RANDOM = new Random();
 
     @Override
     @Transactional
@@ -223,7 +224,7 @@ public class Bootstrapper implements CommandLineRunner {
         Product p = productRepository.findByName(productName);
         if (p == null) throw new IllegalStateException("Produto não encontrado: " + productName);
 
-        double zFactor = 1.0 + (new Random().nextDouble() * 0.5);
+        double zFactor = 1.0 + (RANDOM.nextDouble() * 0.5);
 
         return ingredientRepository.save(new Ingredient(productName, zFactor, p));
     }
