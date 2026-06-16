@@ -144,7 +144,67 @@ The tests validate file upload security, input validation, email validation, and
 - Email validation is enforced before persistence.
 - Supplier application data is mapped securely between DTO and domain model.
 
-### UC4–UC7 – Supplier management and administration
+---
+
+### UC5 – Manage meal planning
+
+Meal planning functionality was tested at controller and service level using unit tests with mocks (`MenuControllerTest`, `MenuServiceTest`).
+
+The tests validate menu generation, publication rules, dish selection logic, stock validation, and access control for dietician operations.
+
+---
+
+#### Security probes executed:
+
+| Test | Security objective | Result |
+|---|---|---|
+| Get all menus | Ensure controlled access to menu data | Pass |
+| Create menu | Validate menu creation workflow | Pass |
+| Generate menu | Ensure automated menu generation logic integrity | Pass |
+| Filter menus by week | Ensure correct date-based filtering | Pass |
+| Publish menu | Ensure only authorized publication by dietician | Pass |
+| Close menu | Ensure correct lifecycle state transition | Pass |
+| Get planning statistics | Validate safe aggregation of planning data | Pass |
+| Validate dietician existence | Prevent unauthorized menu creation | Pass |
+| Reject non-dietician user | Enforce role-based access control | Pass |
+| Generate menu with valid stock | Ensure dish selection respects product availability | Pass |
+| Reject menu generation without stock | Prevent invalid menu creation | Pass |
+| Publish menu without valid dietician | Prevent unauthorized publishing | Pass |
+| Close menu transitions | Ensure correct state management | Pass |
+
+---
+
+#### Observations:
+
+- Menu creation is restricted to valid dieticians only.
+- Role validation is enforced before allowing menu creation or publication.
+- Menu generation logic ensures that only dishes with available stock are selected.
+- Dish availability depends on seasonal product constraints.
+- Menu lifecycle is strictly controlled (GENERATED → PUBLISHED → CLOSED).
+- Planning statistics are derived from repository data without exposing internal entities.
+- Date-based filtering ensures users only access relevant weekly menus.
+
+---
+
+### UC6 – Order products from suppliers
+
+Product management functionality was tested at controller and service level using unit tests with mocks (`ProductControllerTest`, `ProductServiceTest`).
+
+The tests validate product retrieval, filtering of seasonal products, counting logic, and business-rule calculations.
+
+#### Security probes executed:
+
+| Test | Security objective | Result |
+|---|---|---|
+| Get all products | Ensure controlled retrieval of product catalog | Pass |
+| Get seasonal products | Ensure correct business filtering logic | Pass |
+| Get product count | Validate safe aggregation of product data | Pass |
+| Product mapping (entity → DTO) | Ensure safe data transformation layer | Pass |
+| Calculate organic product percentage | Validate business rule logic integrity | Pass |
+
+---
+
+### UC4-UC7 – Supplier management and administration
 
 Supplier management functionality was tested at service level using unit tests with mocks (`SupplierServiceTest`).
 
