@@ -117,18 +117,68 @@ The tests validate password strength rules, password history enforcement, reset 
 
 ### UC3 – Supplier application submission
 
-### UC4 – Supplier approval workflow
+Supplier application submission was tested at controller and service level using unit tests with mocks (`SupplierControllerTest`, `SupplierServiceTest`).
 
-### UC5 – Meal planning management
+The tests validate file upload security, input validation, email validation, and virus scanning mechanisms.
 
-### UC6 – Product ordering
+#### Security probes executed:
 
-### UC7 – Supplier management
+| Test | Security objective | Result |
+|---|---|---|
+| Apply to supplier position | Ensure valid supplier application submission | Pass |
+| Missing certificate | Prevent incomplete application submission | Pass |
+| Invalid certificate type (non-PDF) | Enforce file type restrictions | Pass |
+| Certificate exceeding 5MB | Prevent oversized file upload attacks | Pass |
+| Valid PDF upload | Ensure correct file processing | Pass |
+| Email domain validation | Prevent invalid email input | Pass |
+| Virus scan execution | Ensure malware scanning before storage | Pass |
 
+---
 
+#### Observations:
 
+- Only PDF files are accepted for BIO certificates.
+- File size is restricted to 5MB to prevent abuse.
+- Empty or missing certificates are rejected.
+- Uploaded files are scanned using an external virus scanning service.
+- Email validation is enforced before persistence.
+- Supplier application data is mapped securely between DTO and domain model.
 
+### UC4–UC7 – Supplier management and administration
 
+Supplier management functionality was tested at service level using unit tests with mocks (`SupplierServiceTest`).
+
+The tests cover supplier approval, rejection, data retrieval, quarantine mechanisms, and filtering operations.
+
+#### Security probes executed:
+
+| Test | Security objective | Result |
+|---|---|---|
+| Approve supplier application | Ensure only valid applications are approved | Pass |
+| Reject supplier application | Ensure proper rejection workflow with reason | Pass |
+| Application not found | Prevent invalid approval operations | Pass |
+| Bio certificate retrieval | Secure access to stored sensitive file | Pass |
+| Supplier statistics | Ensure safe aggregation of system data | Pass |
+| Find all suppliers | Validate controlled data exposure | Pass |
+| Find suppliers by product | Ensure correct filtering logic | Pass |
+| Find all applications | Ensure safe access to application data | Pass |
+| Quarantine supplier | Enforce safety isolation mechanism | Pass |
+| Unquarantine supplier | Restore supplier availability securely | Pass |
+| Filter suppliers by name | Validate search functionality | Pass |
+| Filter suppliers by village | Validate geographic filtering | Pass |
+| Filter suppliers by municipality | Validate regional filtering logic | Pass |
+
+---
+
+#### Observations:
+
+- Supplier approval is strictly dependent on interview status.
+- Rejection triggers email notification with a reason.
+- Supplier quarantine propagates to associated product batches.
+- Only valid supplier applications can be approved.
+- BIO certificates are retrieved in controlled binary format (PDF).
+- Supplier filtering does not expose unauthorized data.
+- All operations are service-layer controlled (no direct repository exposure in controller).
 
 ---
 
