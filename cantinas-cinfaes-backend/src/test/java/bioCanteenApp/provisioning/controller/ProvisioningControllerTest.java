@@ -113,8 +113,7 @@ class ProvisioningControllerTest {
 
         ResponseEntity<List<ProductQuantityDTO>> response =
                 controller.getAdjustedQuantities(
-                        1L,
-                        List.of()
+                        1L
                 );
 
         assertEquals(200, response.getStatusCode().value());
@@ -431,7 +430,7 @@ class ProvisioningControllerTest {
 
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
-                () -> controller.getAdjustedQuantities(99L, List.of())
+                () -> controller.getAdjustedQuantities(99L)
         );
 
         assertEquals("Menu not found with id: 99", exception.getMessage());
