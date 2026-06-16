@@ -2,6 +2,7 @@ package bioCanteenApp.notifications.controller;
 
 import bioCanteenApp.notifications.dto.NotificationDTO;
 import bioCanteenApp.notifications.service.INotificationService;
+import bioCanteenApp.utils.exceptions.LogSanitizer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +36,7 @@ public class NotificationController {
             @PathVariable("id") Long id
     ) {
 
-        log.info("Fetching notification with id: {}", id);
+        log.info("Fetching notification with id: {}", LogSanitizer.sanitize(id));
 
         NotificationDTO notification =
                 notificationService.getById(id);
@@ -48,7 +49,7 @@ public class NotificationController {
             @PathVariable("email") String email
     ) {
 
-        log.info("Fetching notifications for user email: {}", email);
+        log.info("Fetching notifications for user email: {}", LogSanitizer.sanitize(email));
 
         List<NotificationDTO> notifications =
                 notificationService.getByUserEmail(email);
@@ -56,7 +57,7 @@ public class NotificationController {
         log.info(
                 "Found {} notifications for user email: {}",
                 notifications.size(),
-                email
+                LogSanitizer.sanitize(email)
         );
 
         return ResponseEntity.ok(notifications);
