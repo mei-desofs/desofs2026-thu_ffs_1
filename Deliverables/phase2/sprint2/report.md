@@ -317,12 +317,12 @@ A traceability status is assigned per practice:
 
 ## Security Assessment
 
-[securityAssessment.md](../securityAssessment.md)
+[securityAssessment.md](securityAssessment.md)
 
 
 ## Security Configuration and Installation
 
-[securityConfigurationAndInstallation.md](../securityConfigurationAndInstallation.md)
+[securityConfigurationAndInstallation.md](securityConfigurationAndInstallation.md)
 
 ## Conclusion
 
