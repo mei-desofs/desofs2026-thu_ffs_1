@@ -4,7 +4,6 @@ import bioCanteenApp.canteens.dto.CanteenDTO;
 import bioCanteenApp.canteens.service.ICanteenService;
 import bioCanteenApp.utils.exceptions.LogSanitizer;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,7 +20,7 @@ public class CanteenController {
         this.service = service;
     }
 
-    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping
     public ResponseEntity<CanteenDTO> createCanteen(@RequestBody CanteenDTO request) {
 
         log.info("Creating canteen with name: {}", LogSanitizer.sanitize(request.getName()));
@@ -33,7 +32,7 @@ public class CanteenController {
         return ResponseEntity.ok(created);
     }
 
-    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping
     public ResponseEntity<List<CanteenDTO>> getAllCanteens() {
 
         log.info("Fetching all canteens");
@@ -45,7 +44,7 @@ public class CanteenController {
         return ResponseEntity.ok(canteens);
     }
 
-    @GetMapping(value = "/{id}", produces =  MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/{id}")
     public ResponseEntity<CanteenDTO> getCanteenById(@PathVariable("id") Long id) {
 
         log.info("Fetching canteen with id: {}", LogSanitizer.sanitize(id));
@@ -55,7 +54,7 @@ public class CanteenController {
         return ResponseEntity.ok(dto);
     }
 
-    @PostMapping(value = "/quarantine/{village}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/quarantine/{village}")
     public ResponseEntity<List<CanteenDTO>> quarantineVillage(
             @PathVariable("village") String village
     ) {
@@ -74,7 +73,7 @@ public class CanteenController {
         return ResponseEntity.ok(quarantined);
     }
 
-    @PostMapping(value = "/unquarantine/{village}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/unquarantine/{village}")
     public ResponseEntity<List<CanteenDTO>> unquarantineVillage(
             @PathVariable("village") String village
     ) {
@@ -93,7 +92,7 @@ public class CanteenController {
         return ResponseEntity.ok(unquarantined);
     }
 
-    @GetMapping(value = "/filter/municipality/{municipality}", produces =  MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/filter/municipality/{municipality}")
     public ResponseEntity<List<CanteenDTO>> getCanteensByMunicipality(
             @PathVariable("municipality") String municipality
     ) {
@@ -112,7 +111,7 @@ public class CanteenController {
         return ResponseEntity.ok(dto);
     }
 
-    @GetMapping(value = "/filter/village/{village}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/filter/village/{village}")
     public ResponseEntity<List<CanteenDTO>> getCanteensByVillage(
             @PathVariable("village") String village
     ) {

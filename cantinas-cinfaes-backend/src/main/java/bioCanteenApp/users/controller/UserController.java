@@ -6,7 +6,6 @@ import bioCanteenApp.users.service.IUserService;
 import bioCanteenApp.utils.exceptions.LogSanitizer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -21,7 +20,7 @@ public class UserController {
 
     private final IUserService userService;
 
-    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping
     public ResponseEntity<List<GetUserDTO>> getAllUsers() {
 
         log.info("Fetching all users");
@@ -34,7 +33,7 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
-    @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDTO> createUser(
             @RequestBody UserDTO dto
@@ -57,7 +56,7 @@ public class UserController {
         return ResponseEntity.ok(createdUser);
     }
 
-    @GetMapping(value = "/email/{email}", produces =  MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/email/{email}")
     public ResponseEntity<GetUserDTO> getUserByEmail(
             @PathVariable("email") String email
     ) {
@@ -73,7 +72,7 @@ public class UserController {
         return ResponseEntity.ok(userDTO);
     }
 
-    @DeleteMapping(value = "/{email}", produces =   MediaType.APPLICATION_JSON_VALUE)
+    @DeleteMapping(value = "/{email}")
     public ResponseEntity<Void> deleteUser(
             @PathVariable("email") String email
     ) {

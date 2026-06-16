@@ -4,7 +4,6 @@ import bioCanteenApp.recipes.dto.RecipeDTO;
 import bioCanteenApp.recipes.service.IRecipeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,7 +17,7 @@ public class RecipeController {
 
     private final IRecipeService recipeService;
 
-    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping
     public ResponseEntity<List<RecipeDTO>> getAllRecipes() {
 
         log.info("Fetching all recipes");
@@ -31,7 +30,7 @@ public class RecipeController {
         return ResponseEntity.ok(recipes);
     }
 
-    @GetMapping(value = "/{id}", produces =  MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/{id}")
     public ResponseEntity<RecipeDTO> getRecipeById(
             @PathVariable Long id
     ) {
@@ -44,7 +43,7 @@ public class RecipeController {
         return ResponseEntity.ok(recipe);
     }
 
-    @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping
     public ResponseEntity<RecipeDTO> createRecipe(
             @RequestBody RecipeDTO recipeDTO
     ) {
@@ -62,7 +61,7 @@ public class RecipeController {
         return ResponseEntity.ok(createdRecipe);
     }
 
-    @GetMapping(value = "/stats", produces =  MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/stats")
     public ResponseEntity<Long> getRecipeCount() {
 
         log.info("Fetching recipe statistics");

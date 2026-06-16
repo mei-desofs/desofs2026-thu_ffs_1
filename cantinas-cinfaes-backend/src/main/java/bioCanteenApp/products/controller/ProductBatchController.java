@@ -4,7 +4,6 @@ import bioCanteenApp.products.dto.ProductBatchDTO;
 import bioCanteenApp.products.service.IProductBatchService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,7 +17,7 @@ public class ProductBatchController {
 
     private final IProductBatchService productBatchService;
 
-    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping
     public ResponseEntity<List<ProductBatchDTO>> getAllBatches() {
 
         log.info("Fetching all product batches");
@@ -31,7 +30,7 @@ public class ProductBatchController {
         return ResponseEntity.ok(batches);
     }
 
-    @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping
     public ResponseEntity<ProductBatchDTO> createBatch(
             @RequestBody ProductBatchDTO batchDTO
     ) {
@@ -52,7 +51,7 @@ public class ProductBatchController {
         return ResponseEntity.ok(createdBatch);
     }
 
-    @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/{id}")
     public ResponseEntity<ProductBatchDTO> getBatchById(
             @PathVariable("id") Long id
     ) {
@@ -65,7 +64,7 @@ public class ProductBatchController {
         return ResponseEntity.ok(batch);
     }
 
-    @GetMapping(value = "/product/{productId}", produces =  MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/product/{productId}")
     public ResponseEntity<List<ProductBatchDTO>> getBatchesByProduct(
             @PathVariable("productId") Long productId
     ) {
@@ -87,7 +86,7 @@ public class ProductBatchController {
         return ResponseEntity.ok(batches);
     }
 
-    @GetMapping(value = "/product/{productId}/valid", produces =  MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/product/{productId}/valid")
     public ResponseEntity<List<ProductBatchDTO>> getValidBatchesByProduct(
             @PathVariable("productId") Long productId
     ) {
@@ -109,7 +108,7 @@ public class ProductBatchController {
         return ResponseEntity.ok(batches);
     }
 
-    @GetMapping(value = "/product/{productId}/stock", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/product/{productId}/stock")
     public ResponseEntity<Double> getValidStockByProduct(
             @PathVariable("productId") Long productId
     ) {

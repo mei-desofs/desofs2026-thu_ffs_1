@@ -3,20 +3,17 @@ import bioCanteenApp.dish.service.DishService;
 import bioCanteenApp.menu.dto.MenuDto;
 import bioCanteenApp.menu.mapper.IMenuMapper;
 import bioCanteenApp.menu.service.IMenuService;
-import bioCanteenApp.products.domain.Product;
 import bioCanteenApp.provisioning.service.IProvisioningService;
 import bioCanteenApp.utils.exceptions.LogSanitizer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -30,7 +27,7 @@ public class MenuController {
     private final IProvisioningService provisioningService;
     private final IMenuMapper menuMapper;
 
-    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping
     public List<MenuDto> getAllMenus() {
 
         log.info("Fetching all menus");
@@ -43,7 +40,7 @@ public class MenuController {
         return menus;
     }
 
-    @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping
     public MenuDto createMenu(@RequestBody MenuDto dto) {
 
         log.info(
@@ -63,7 +60,7 @@ public class MenuController {
         return createdMenu;
     }
 
-    @GetMapping(value = "/generate", produces =  MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/generate")
     public MenuDto generateMenu(
             @RequestParam("startDate") String startDate,
             @RequestParam("endDate") String endDate
@@ -93,7 +90,7 @@ public class MenuController {
         return menu;
     }
 
-    @GetMapping(value = "/week", produces =   MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/week")
     public ResponseEntity<List<MenuDto>> getMenusByWeek(
             @RequestParam(name = "startDate")
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
@@ -125,7 +122,7 @@ public class MenuController {
         return ResponseEntity.ok(menus);
     }
 
-    @PostMapping(value = "/publish", produces =   MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/publish")
     public ResponseEntity<Void> publishMenu(
             @RequestParam("startDate") String startDate,
             @RequestParam("endDate") String endDate,
@@ -153,7 +150,7 @@ public class MenuController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping(value = "/close", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/close")
     public ResponseEntity<Void> closeMenu(
             @RequestParam("startDate") String startDate,
             @RequestParam("endDate") String endDate
@@ -188,7 +185,7 @@ public class MenuController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping(value = "/stats", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/stats")
     public ResponseEntity<Map<String, Object>> getPlanningStats() {
 
         log.info("Fetching menu planning statistics");
