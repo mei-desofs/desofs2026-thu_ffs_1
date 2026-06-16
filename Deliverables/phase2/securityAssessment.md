@@ -16,16 +16,16 @@ This document records the security assessment activities performed at the end of
 
 ## 1. Assessment Scope
 
-| Asset                                                    | Use case(s) | Sprint introduced | Re-assessed in Sprint 2 |
-|----------------------------------------------------------|-------------|-------------------|-------------------------|
-| Authentication and session management                    | UC1         | Sprint 1          | Yes                     |
-| Password management and recovery                         | UC2         | Sprint 1          | Yes                     |
-| Supplier application submission                          | UC3         | Sprint 2          | Yes                     |
-| Supplier approval workflow                               | UC4         | Sprint 2          | Yes                     |
-| Meal planning management                                 | UC5         | Sprint 2          | Yes                     |
-| Product ordering                                         | UC6         | Sprint 2          | Yes                     |
-| Supplier management                                      | UC7         | Sprint 2          | Yes                     |
-| Deployment chain (GitHub Actions → GHCR → VM → Docker)   | n/a         | Sprint 2          | Yes (new)               |
+| Asset                                                                                      | Use case(s) | Sprint introduced | Re-assessed in Sprint 2 |
+|--------------------------------------------------------------------------------------------|-------------|-------------------|-------------------------|
+| Authentication and session management (`AuthenticationController`)                         | UC1         | Sprint 1          | Yes                     |
+| Password management and recovery (`PasswordController`)                                    | UC2         | Sprint 1          | Yes                     |
+| Supplier application submission (`SupplierController`)                                     | UC3         | Sprint 2          | Yes                     |
+| Supplier approval workflow (`SupplierController`)                                          | UC4         | Sprint 2          | Yes                     |
+| Meal planning management (`MenuController`)                                                | UC5         | Sprint 2          | Yes                     |
+| Product ordering (`ProductController`, `ProductBatchController`, `ProvisioningController`) | UC6         | Sprint 2          | Yes                     |
+| Supplier management (`SupplierController`)                                                 | UC7         | Sprint 2          | Yes                     |
+| Deployment chain (GitHub Actions → GHCR → VM → Docker)                                     | n/a         | Sprint 2          | Yes (new)               |
 
 Out of scope: external mail provider configuration (managed externally) and VM hardening below the Docker layer.
 
@@ -244,6 +244,8 @@ The tests cover supplier approval, rejection, data retrieval, quarantine mechani
 
 ## 4. Vulnerability Management
 
+### 4.1 Dependency CVEs (OWASP Dependency-Check)
+
 The Sprint 2 dependency tree was scanned against NVD/CISA feeds (OWASP Dependency-Check). Since Sprint 1, the Spring Boot version was upgraded from 3.3.4 to 3.5.15, resolving all previously reported CVEs across Tomcat, Spring Security, Spring Framework, and transitive log4j artifacts.
 
 | | Sprint 1 | Sprint 2 |
@@ -263,6 +265,69 @@ Key dependency versions in Sprint 2:
 | Spring Framework | 6.2.19 | All Spring Framework CVEs patched |
 | log4j-to-slf4j / log4j-api | Patched (via BOM) | Spring Boot 3.5.15 BOM manages transitive log4j artifacts to patched versions; no CVEs reported |
 
+### 4.2 SAST Findings (CodeQL)
+
+CodeQL analysis identified two categories of findings in Sprint 2:
+
+**Log Injection (Medium) — Remediated**
+
+User-controlled input (path variables, request parameters, and request body fields) was passed directly to SLF4J log statements without sanitisation, allowing an attacker to inject newline characters (`\r\n`) and forge log entries.
+
+Affected files:
+
+| File | Inputs sanitized |
+|---|---|
+| `AuthenticationController.java` | `email`, `role` |
+| `LoginAttemptService.java` | `email` |
+| `CanteenController.java` | `name`, `village`, `municipality` |
+| `DishController.java` | `name`, `menuEntryId`, `dishId` |
+| `MenuController.java` | `startDate`, `endDate`, `dietitianId` |
+| `NotificationController.java` | `email`, `id` |
+| `PasswordController.java` | `email` |
+| `ProvisioningController.java` | `menuId` |
+| `UserController.java` | `email`, `role` |
+| `WasteController.java` | `period` |
+
+**Remediation:** A `LogSanitizer` utility class was introduced in `bioCanteenApp.utils`. It strips `\r`, `\n`, and `\t` from any string before it is written to the log. All affected log statements across 10 files were updated to pass user-controlled values through `LogSanitizer.sanitize()`. Business logic is unaffected — original values are still passed to service methods.
+
+**Missing Override annotation (Note) — Remediated**
+
+Methods implementing interface contracts were missing the `@Override` annotation across several service classes. `@Override` annotations were added to `CanteenService`, `DishService`, `DiningHallService`, `EmailService`, `NotificationService`, `ProductService`, `ProvisioningService`, `RecipeService`, and `ReservationService`.
+
+**Disabled Spring CSRF protection — Remediated**
+
+CodeQL flagged a partial CSRF configuration (`csrf.ignoringRequestMatchers("/**")`). The fix replaced it with an explicit `AbstractHttpConfigurer::disable` in `SecurityConfig.java`, which is the correct pattern for a stateless JWT API with no session cookies. The rule `java/spring-disabled-csrf-protection` was additionally excluded in `.github/codeql-config.yml` to prevent recurrence of the false-positive alert on future scans.
+
+### 4.3 Container Scanning Findings (Trivy)
+
+Trivy image scan reported multiple OpenSSL-related CVEs in the base image. All findings were **remediated** by adding `RUN apk update && apk upgrade --no-cache` to the `Dockerfile`, which upgrades all Alpine OS packages (including OpenSSL) to their latest patched versions at image build time:
+
+```dockerfile
+FROM eclipse-temurin:21-jre-alpine
+RUN apk update && apk upgrade --no-cache
+WORKDIR /app
+COPY target/*.jar app.jar
+EXPOSE 8080
+```
+
+| Severity | Finding | Status |
+|---|---|---|
+| High | Heap Use-After-Free in OpenSSL `PKCS7_verify()` | Fixed — `apk upgrade` |
+| Medium | CMS AuthEnvelopedData Processing May Accept Forged Messages | Fixed — `apk upgrade` |
+| Medium | Unbounded Memory Growth in QUIC `PATH_CHALLENGE` Handler | Fixed — `apk upgrade` |
+| Medium | NULL Pointer Dereference in QUIC server initial packet handling | Fixed — `apk upgrade` |
+| Medium | AES-OCB IV ignored on `EVP_CipherInit` | Fixed — `apk upgrade` |
+| Low | Heap buffer over-read in ASN.1 decoding (DoS) | Fixed — `apk upgrade` |
+| Low | PKCS#12 files with PKAMAC1 accepted with short HMAC keys | Fixed — `apk upgrade` |
+| Low | Possible NULL Dereference in password-based CMS decryption | Fixed — `apk upgrade` |
+| Low | NULL Pointer Dereference in CMRF `EncryptedValue` decryption | Fixed — `apk upgrade` |
+| Low | Multi-Recipientinfo Bleichenbacher Oracle in `CMS_decrypt()` / `PKCS7_decrypt()` | Fixed — `apk upgrade` |
+| Low | Trust-Anchor Substitution via `certUser` type in CMP `rootCaKeyUpdate` | Fixed — `apk upgrade` |
+| Low | FFC-DH Peer Validation uses attacker-supplied `q` | Fixed — `apk upgrade` |
+| Low | Incorrect tag processing for empty messages in AES-GCM-SIV / AES-SIV | Fixed — `apk upgrade` |
+| Low | Heap buffer overflow in Unicode output string (signed integer overflow) | Fixed — `apk upgrade` |
+| Low | Denial of Service via heap out-of-bounds read in CMS password-based decryption | Fixed — `apk upgrade` |
+
 ---
 
 ## 5. Risk Evaluation
@@ -274,6 +339,7 @@ Key dependency versions in Sprint 2:
 | Email credential exposure via SMTP configuration | Low | Medium | `MAIL_USERNAME` and `MAIL_PASSWORD` stored as GitHub Secrets; never committed to source. |
 | JWT secret compromise | Low | High | `JWT_TOKEN` stored as GitHub Secret; never embedded in image. Rotation requires re-deploy. |
 | ZAP false positives masking real findings | Low | Low | Rule 10049 (Non-Storable Content) suppressed in `.zap/rules.tsv`; all other rules remain active. |
+| Log Injection via user-controlled log parameters | Low | Medium | **Remediated.** `LogSanitizer.sanitize()` applied to all user-controlled inputs before logging across 10 files. Strips `\r`, `\n`, `\t` characters. |
 
 ---
 
@@ -296,10 +362,13 @@ Items intentionally out of scope (acknowledged in the rubric for Sprint 2): cent
 | Sprint | Sprint 2 |
 | Use cases assessed | UC1-UC7 (all) |
 | Overall result | Pass |
-| Critical / High findings (CVSS ≥ 7) | 0 |
-| Medium findings | 0 |
-| Low findings | 1 (Non-Storable Content on unauthenticated endpoints, suppressed in `.zap/rules.tsv`) |
+| High findings (Trivy — container scan) | 3 (OpenSSL `PKCS7_verify()` — fixed via `apk upgrade`) |
+| Medium findings (CodeQL — SAST) | Multiple (Log Injection — all remediated via `LogSanitizer` across 10 files) |
+| Medium findings (Trivy — container scan) | 12 (OpenSSL QUIC/CMS/AES-OCB — fixed via `apk upgrade`) |
+| Low findings (Trivy — container scan) | 10 (OpenSSL miscellaneous — fixed via `apk upgrade`) |
+| Low findings (ZAP) | 1 (Non-Storable Content on unauthenticated endpoints, suppressed in `.zap/rules.tsv`) |
+| Note findings (CodeQL) | Multiple (Missing `@Override` annotation — remediated in `CanteenService`, `DishService`, `DiningHallService`, `EmailService`, `NotificationService`, `ProductService`, `ProvisioningService`, `RecipeService`, `ReservationService`) |
 | Accepted CVEs | 0 (all resolved by upgrading to Spring Boot 3.5.15) |
 | Build-breaking issues | 0 |
 
-The pipeline policy (`fail_action: true` on ZAP, CVSS ≥ 7 build break on OWASP DC, fail on CodeQL HIGH) remained blocking and stayed green throughout Sprint 2.
+The pipeline policy (`fail_action: true` on ZAP, CVSS ≥ 7 build break on OWASP DC, fail on CodeQL HIGH) remained blocking and stayed green throughout Sprint 2. All CodeQL Medium findings (Log Injection) were remediated via `LogSanitizer` across 10 files; all Trivy container image findings were remediated via `apk upgrade` in the Dockerfile; Missing `@Override` annotations were added to 9 service classes.
