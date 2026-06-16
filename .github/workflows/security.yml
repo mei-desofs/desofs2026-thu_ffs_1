@@ -60,7 +60,10 @@ jobs:
           fi
 
           # Rules are in tool.extensions[].rules in CodeQL SARIF (not tool.driver.rules).
-          # Build a ruleId->security-severity map then filter results.
+          # Build a ruleId -> effective-severity map:
+          #   1. prefer numeric security-severity (CVSS) >= 7.0
+          #   2. fall back to defaultConfiguration.level == "error" (CodeQL High/Error rules
+          #      like spring-disabled-csrf-protection that have no CVSS score)
           findings=$(jq -r '
             .runs[] |
             (
@@ -68,14 +71,20 @@ jobs:
                 (.tool.driver.rules // []),
                 ([.tool.extensions[]? | .rules? // []] | add // [])
               ] | add // []
-              | map({(.id): (.properties["security-severity"] // "0")})
+              | map({
+                  (.id): {
+                    sec: (.properties["security-severity"] // "0"),
+                    lvl: (.defaultConfiguration.level // "none")
+                  }
+                })
               | add // {}
             ) as $m |
             .results[] |
             . as $r |
-            (($m[$r.ruleId] // "0") | tonumber) as $sev |
-            select($sev >= 7.0) |
-            "\(.ruleId) (severity \($sev)): \(.message.text)"
+            ($m[$r.ruleId] // {sec:"0",lvl:"none"}) as $rule |
+            (($rule.sec) | tonumber) as $sev |
+            select($sev >= 7.0 or $rule.lvl == "error") |
+            "\(.ruleId) (severity \($sev), level \($rule.lvl)): \(.message.text)"
           ' "$sarif_file")
 
           if [ -n "$findings" ]; then
