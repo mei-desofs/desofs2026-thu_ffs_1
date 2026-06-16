@@ -86,7 +86,7 @@ jobs:
               ) as $rid |
               ($id_map[$rid] // {sec:"0",lvl:"none"}) as $rule |
               (($rule.sec) | tonumber) as $sev |
-              select($sev >= 7.0 or $rule.lvl == "error") |
+              select($sev >= 7.0 or ($sev == 0 and $rule.lvl == "error")) |
               "  [SARIF] \($rid) (severity \($sev)): \($r.message.text)"
             ' "$sarif_file")
 
