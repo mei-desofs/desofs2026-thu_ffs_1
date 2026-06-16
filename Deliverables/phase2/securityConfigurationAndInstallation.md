@@ -31,12 +31,14 @@ The production image is built from `cantinas-cinfaes-backend/Dockerfile`:
 | | |
 |---|---|
 | Base image | `eclipse-temurin:21-jre-alpine` |
+| OS patch step | `RUN apk update && apk upgrade --no-cache` |
 | Exposed port | 8080 |
 
 The JAR is compiled by the CI runner (`mvn clean package`) before the image is built; only the pre-built JAR is copied into the image. This keeps build tooling (Maven, JDK, source code) entirely off the runtime image.
 
 Hardening controls in place:
 
+- **OS packages patched at build time.** `apk update && apk upgrade --no-cache` runs as the first layer after the base image, ensuring Alpine system packages (including OpenSSL) are at their latest patched versions when the image is built. This resolved all High/Medium/Low Trivy CVEs identified in Sprint 2.
 - **No build tooling at runtime.** The image contains only the JRE and the application JAR; Maven and the JDK are never present in the deployed image.
 - **Minimal port exposure.** Only port 8080 is exposed; mapped to port 80 on the host.
 - **Restart policy.** Container runs with `--restart unless-stopped`; restarts automatically on failure without operator intervention.
