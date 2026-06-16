@@ -162,8 +162,6 @@ This document maps each implemented or in-progress ASVS 5.0 control to its corre
 | **V2.3.5** | L3 | High-value business logic flows require multi-user approval. | **Test:** Identify the high-value flow(s) in scope (e.g., approval of large-volume supplier contracts, REQ4.2). Confirm the documented approval workflow requires sign-off from a second authorized Admin before the action (e.g., `SupplierStatus → Approved`) is finalized, and that this cannot be bypassed via a direct API call from a single Admin account. *(Note: confirm and document where this dual-approval step is implemented — see observation below.)* |
 | **V2.2.2** | L1 | Input validation enforced server-side, not relied upon client-side. | **Test:** Intercept a request that passed any client-side validation and modify field values to invalid data (e.g., negative quantities, disallowed characters). Submit it directly to the server. Verify the server independently validates and rejects the tampered request. |
 | **V15.4.1** | L3 | Shared objects accessed safely (synchronization) to prevent race conditions. | **Test (Double Order Race Condition):** Fire two identical order-finalization requests in parallel/simultaneously. The system must process the first and drop the second via the idempotency token — no duplicate invoices/orders generated. |
-
-> **Observação para V2.3.5:** o tracker marca este requisito como *Compliant*, mas durante a análise não foi identificado código que implemente explicitamente um fluxo de aprovação dual (segundo Admin) para nenhuma operação. Recomenda-se, antes da entrega final, confirmar onde este controlo está implementado (ex.: aprovação de fornecedores de grande volume) ou — caso não exista — reclassificar como *Not Applicable*, com justificação de proporcionalidade ao âmbito atual do projeto (sem operações cujo valor/risco justifique aprovação dual).
  
 ---
 
@@ -312,3 +310,7 @@ A traceability status is assigned per practice:
 | 7 | Automated Security Tests | Traced | Clarify whether External Portal integration tests exist or are future work; adjust wording if not yet implemented. |
 
 **Overall:** 3 of 7 practices (1, 6, 7) are fully traced to concrete, executable tests with no outstanding issues. Practices 3 (Secure Code Review) is partially traced — the automated component is verified, while the process component is a documentation artifact rather than a test. Practices 2, 4, and 5 reveal the same recurring pattern: **the Secure Development Requirements section describes CI/CD security automation (SCA, SAST/SARIF, secret scanning) as implemented, while the ASVS tracker marks the corresponding controls (V14.3.1, V14.2.4, V14.3.2) as *Not Applicable* due to their absence from the GitHub Actions workflows.** This is the single most important finding of this traceability exercise and should be resolved — either by implementing these (relatively low-effort) pipeline steps, or by aligning the documentation's wording with the project's actual current state — before final submission.
+
+## Conclusion
+
+// TO DO
