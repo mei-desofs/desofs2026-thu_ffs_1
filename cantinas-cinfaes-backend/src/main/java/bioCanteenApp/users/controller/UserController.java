@@ -72,7 +72,7 @@ public class UserController {
         return ResponseEntity.ok(userDTO);
     }
 
-    @DeleteMapping("/{email}")
+    @DeleteMapping( "/{email}")
     public ResponseEntity<Void> deleteUser(
             @PathVariable("email") String email
     ) {

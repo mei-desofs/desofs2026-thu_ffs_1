@@ -64,7 +64,7 @@ public class ProductBatchController {
         return ResponseEntity.ok(batch);
     }
 
-    @GetMapping("/product/{productId}")
+    @GetMapping( "/product/{productId}")
     public ResponseEntity<List<ProductBatchDTO>> getBatchesByProduct(
             @PathVariable("productId") Long productId
     ) {
@@ -86,7 +86,7 @@ public class ProductBatchController {
         return ResponseEntity.ok(batches);
     }
 
-    @GetMapping("/product/{productId}/valid")
+    @GetMapping( "/product/{productId}/valid")
     public ResponseEntity<List<ProductBatchDTO>> getValidBatchesByProduct(
             @PathVariable("productId") Long productId
     ) {
@@ -108,7 +108,7 @@ public class ProductBatchController {
         return ResponseEntity.ok(batches);
     }
 
-    @GetMapping("/product/{productId}/stock")
+    @GetMapping( "/product/{productId}/stock")
     public ResponseEntity<Double> getValidStockByProduct(
             @PathVariable("productId") Long productId
     ) {

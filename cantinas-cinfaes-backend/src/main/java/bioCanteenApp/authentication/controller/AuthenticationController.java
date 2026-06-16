@@ -70,7 +70,7 @@ public class AuthenticationController {
                 .body(user);
     }
 
-    @PostMapping("/refresh")
+    @PostMapping( "/refresh")
     public ResponseEntity<UserDTO> refresh(@RequestHeader("X-Refresh-Token") String refreshToken) {
         LoginResponse response = authenticationService.refreshToken(refreshToken);
 

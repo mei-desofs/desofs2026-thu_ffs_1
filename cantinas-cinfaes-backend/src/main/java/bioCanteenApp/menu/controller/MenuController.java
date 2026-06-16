@@ -3,7 +3,6 @@ import bioCanteenApp.dish.service.DishService;
 import bioCanteenApp.menu.dto.MenuDto;
 import bioCanteenApp.menu.mapper.IMenuMapper;
 import bioCanteenApp.menu.service.IMenuService;
-import bioCanteenApp.products.domain.Product;
 import bioCanteenApp.provisioning.service.IProvisioningService;
 import bioCanteenApp.utils.exceptions.LogSanitizer;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -92,7 +90,7 @@ public class MenuController {
         return menu;
     }
 
-    @GetMapping("/week")
+    @GetMapping( "/week")
     public ResponseEntity<List<MenuDto>> getMenusByWeek(
             @RequestParam(name = "startDate")
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
@@ -124,7 +122,7 @@ public class MenuController {
         return ResponseEntity.ok(menus);
     }
 
-    @PostMapping("/publish")
+    @PostMapping( "/publish")
     public ResponseEntity<Void> publishMenu(
             @RequestParam("startDate") String startDate,
             @RequestParam("endDate") String endDate,
@@ -152,7 +150,7 @@ public class MenuController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/close")
+    @PostMapping( "/close")
     public ResponseEntity<Void> closeMenu(
             @RequestParam("startDate") String startDate,
             @RequestParam("endDate") String endDate
@@ -187,7 +185,7 @@ public class MenuController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/stats")
+    @GetMapping( "/stats")
     public ResponseEntity<Map<String, Object>> getPlanningStats() {
 
         log.info("Fetching menu planning statistics");

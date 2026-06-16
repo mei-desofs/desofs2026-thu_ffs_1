@@ -35,7 +35,7 @@ public class IngredientController {
         return ingredients;
     }
 
-    @GetMapping("/all")
+    @GetMapping( "/all")
     public ResponseEntity<List<IngredientDto>> getAllIngredients() {
 
         log.info("Fetching all ingredients");

@@ -56,7 +56,7 @@ public class ReservationController {
         return ResponseEntity.ok(reservations);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping( "/{id}")
     public ResponseEntity<ReservationDTO> getReservationById(
             @PathVariable("id") Long id
     ) {
@@ -69,7 +69,7 @@ public class ReservationController {
         return ResponseEntity.ok(dto);
     }
 
-    @GetMapping("/user/{userId}")
+    @GetMapping( "/user/{userId}")
     public ResponseEntity<List<ReservationDTO>> getReservationsByUserId(
             @PathVariable("userId") Long userId
     ) {
