@@ -4,6 +4,7 @@ import bioCanteenApp.authentication.dto.LoginDTO;
 import bioCanteenApp.authentication.dto.LoginResponse;
 import bioCanteenApp.authentication.service.IAuthenticationService;
 import bioCanteenApp.users.dto.UserDTO;
+import bioCanteenApp.utils.exceptions.LogSanitizer;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +39,7 @@ public class AuthenticationController {
 
             log.warn(
                     "Authentication failed for email: {}",
-                    dto.getEmail()
+                    LogSanitizer.sanitize(dto.getEmail())
             );
 
             return ResponseEntity.status(401).build();
@@ -58,8 +59,8 @@ public class AuthenticationController {
             log.info(
                     "User authenticated successfully. User id: {}, email: {}, role: {}",
                     user.getId(),
-                    user.getEmail(),
-                    user.getRole()
+                    LogSanitizer.sanitize(user.getEmail()),
+                    LogSanitizer.sanitize(user.getRole())
             );
 
             user.setPassword(null);

@@ -3,6 +3,7 @@ package bioCanteenApp.users.controller;
 import bioCanteenApp.users.dto.GetUserDTO;
 import bioCanteenApp.users.dto.UserDTO;
 import bioCanteenApp.users.service.IUserService;
+import bioCanteenApp.utils.exceptions.LogSanitizer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -41,8 +42,8 @@ public class UserController {
 
         log.info(
                 "Creating user with email: {} and role: {}",
-                dto.getEmail(),
-                dto.getRole()
+                LogSanitizer.sanitize(dto.getEmail()),
+                LogSanitizer.sanitize(dto.getRole())
         );
 
         UserDTO createdUser =
@@ -63,7 +64,7 @@ public class UserController {
 
         log.info(
                 "Fetching user with email: {}",
-                email
+                LogSanitizer.sanitize(email)
         );
 
         GetUserDTO userDTO =
@@ -79,14 +80,14 @@ public class UserController {
 
         log.warn(
                 "Deleting user with email: {}",
-                email
+                LogSanitizer.sanitize(email)
         );
 
         userService.deleteUser(email);
 
         log.info(
                 "User deleted successfully with email: {}",
-                email
+                LogSanitizer.sanitize(email)
         );
 
         return ResponseEntity.noContent().build();

@@ -58,8 +58,7 @@ public class ProductService implements IProductService {
                 .toList();
     }
 
-
-    public double calculateOrganicProductsPercentage(Dish dish){
+    public double calculateOrganicProductsPercentage(){
         // TODO: Implement this method with new structure for bio products
         /*
         List<Ingredient> ingredients = dish.getIngredients();

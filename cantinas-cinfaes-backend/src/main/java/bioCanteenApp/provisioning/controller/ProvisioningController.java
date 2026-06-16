@@ -67,8 +67,7 @@ public class ProvisioningController {
 
     @PostMapping(value = "/adjusted/{menuId}", produces =  MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<ProductQuantityDTO>> getAdjustedQuantities(
-            @PathVariable("menuId") Long menuId,
-            @RequestBody List<ProductQuantityDTO> plannedDtos
+            @PathVariable("menuId") Long menuId
     ) {
 
         log.info("Fetching adjusted quantities for menu id: {}", menuId);

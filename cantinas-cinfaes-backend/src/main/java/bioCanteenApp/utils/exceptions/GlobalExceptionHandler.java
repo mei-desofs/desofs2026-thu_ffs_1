@@ -80,7 +80,7 @@ public class GlobalExceptionHandler {
                         "timestamp", LocalDateTime.now(),
                         "status", 401,
                         "error", "Invalid credentials",
-                        "message", "Invalid email or password."
+                        "message", ex.getMessage()
                 )
         );
     }

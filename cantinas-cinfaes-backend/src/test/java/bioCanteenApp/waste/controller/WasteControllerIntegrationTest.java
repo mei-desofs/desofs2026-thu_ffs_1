@@ -87,7 +87,7 @@ class WasteControllerIntegrationTest {
                 false
         );
 
-        Canteen savedCanteen = canteenRepository.save(canteen);
+        canteenRepository.save(canteen);
 
         User manager = new User(
                 "email@test.com",
