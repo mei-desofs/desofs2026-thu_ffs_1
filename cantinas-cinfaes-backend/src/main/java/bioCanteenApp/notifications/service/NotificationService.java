@@ -54,11 +54,10 @@ public class NotificationService implements INotificationService {
 
     @Override
     public void markAsRead(Long id) {
-        Notification notification = repo.findById(id)
+        repo.findById(id)
                 .orElseThrow(() -> new NotificationNotFound(id));
 
-        notification.setRead(true);
-        repo.save(notification);
+        repo.markAsRead(id);
     }
 
     @Override
