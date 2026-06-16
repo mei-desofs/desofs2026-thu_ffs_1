@@ -10,8 +10,15 @@ import org.springframework.stereotype.Component;
 public class WasteMapper implements IWasteMapper {
 
     @Override
-    public Waste toDomain() {
-        return null;
+    public Waste toDomain(WasteDTO dto) {
+        if (dto == null) return null;
+
+        return new Waste(
+                dto.getTotalMealsReserved(),
+                dto.getNotServedWaste(),
+                dto.getServedWaste(),
+                dto.getTotalMealsConsumed()
+        );
     }
 
     @Override
