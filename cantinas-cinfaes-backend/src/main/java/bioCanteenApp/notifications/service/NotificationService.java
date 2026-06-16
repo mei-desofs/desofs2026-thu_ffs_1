@@ -57,7 +57,8 @@ public class NotificationService implements INotificationService {
         Notification notification = repo.findById(id)
                 .orElseThrow(() -> new NotificationNotFound(id));
 
-        repo.markAsRead(id);
+        notification.setRead(true);
+        repo.save(notification);
     }
 
     @Override
