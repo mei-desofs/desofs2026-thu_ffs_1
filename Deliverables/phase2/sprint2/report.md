@@ -310,3 +310,7 @@ A traceability status is assigned per practice:
 | 7 | Automated Security Tests | Traced | Clarify whether External Portal integration tests exist or are future work; adjust wording if not yet implemented. |
 
 **Overall:** 3 of 7 practices (1, 6, 7) are fully traced to concrete, executable tests with no outstanding issues. Practices 3 (Secure Code Review) is partially traced — the automated component is verified, while the process component is a documentation artifact rather than a test. Practices 2, 4, and 5 reveal the same recurring pattern: **the Secure Development Requirements section describes CI/CD security automation (SCA, SAST/SARIF, secret scanning) as implemented, while the ASVS tracker marks the corresponding controls (V14.3.1, V14.2.4, V14.3.2) as *Not Applicable* due to their absence from the GitHub Actions workflows.** This is the single most important finding of this traceability exercise and should be resolved — either by implementing these (relatively low-effort) pipeline steps, or by aligning the documentation's wording with the project's actual current state — before final submission.
+
+## Conclusion
+
+// TO DO
