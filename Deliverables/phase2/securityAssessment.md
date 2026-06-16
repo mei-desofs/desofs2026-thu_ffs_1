@@ -16,19 +16,16 @@ This document records the security assessment activities performed at the end of
 
 ## 1. Assessment Scope
 
-| Asset | Use case(s) | Sprint introduced | Re-assessed in Sprint 2 |
-|---|---|---|---|
-
-
-
-
-
-FAZER O RESTO 
-
-
-
-
-| Deployment chain (GitHub Actions → GHCR → VM → Docker) | n/a | Sprint 2 | Yes (new) |
+| Asset                                                    | Use case(s) | Sprint introduced | Re-assessed in Sprint 2 |
+|----------------------------------------------------------|-------------|-------------------|-------------------------|
+| Authentication and session management                    | UC1         | Sprint 1          | Yes                     |
+| Password management and recovery                         | UC2         | Sprint 1          | Yes                     |
+| Supplier application submission                          | UC3         | Sprint 2          | Yes                     |
+| Supplier approval workflow                               | UC4         | Sprint 2          | Yes                     |
+| Meal planning management                                 | UC5         | Sprint 2          | Yes                     |
+| Product ordering                                         | UC6         | Sprint 2          | Yes                     |
+| Supplier management                                      | UC7         | Sprint 2          | Yes                     |
+| Deployment chain (GitHub Actions → GHCR → VM → Docker)   | n/a         | Sprint 2          | Yes (new)               |
 
 Out of scope: external mail provider configuration (managed externally) and VM hardening below the Docker layer.
 
@@ -50,13 +47,83 @@ Each technique remains automated in the security pipeline ([Pipeline Automation]
 
 ## 3. Per-Use-Case Probes
 
+### UC1 – Authenticate in the system
 
+Authentication was tested at both controller and service level using unit tests with mocks (`AuthenticationControllerTest`, `AuthenticationServiceTest`).
 
+#### Security probes executed:
 
+| Test | Security objective | Result |
+|---|---|---|
+| Login with valid credentials | Verify authentication success and JWT issuance | Pass |
+| Login with invalid credentials | Prevent unauthorized access | Pass |
+| Non-existent user login | Prevent user enumeration and invalid access | Pass |
+| Password mismatch validation | Ensure credential validation logic is enforced | Pass |
+| JWT generation on successful login | Ensure session token creation | Pass |
+| Authorization header returned correctly | Ensure token propagation to client | Pass |
 
+#### Observations:
+- Invalid credentials correctly trigger `InvalidCredentialsException`
+- No authentication bypass paths were identified in the service logic
+- JWT token is only generated after successful password validation
+- Passwords are never exposed in responses
 
-FAZER
+### UC2 – Password management and recovery
 
+Password management was tested at both service and controller level using unit tests with mocks (`PasswordServiceTest`, `PasswordControllerTest`).
+
+The tests validate password strength rules, password history enforcement, reset flows, token validation, and account activation logic.
+
+#### Security probes executed:
+
+| Test | Security objective | Result |
+|---|---|---|
+| Validate strong password | Ensure password complexity requirements are enforced | Pass |
+| Reject null/empty password | Prevent invalid password inputs | Pass |
+| Reject common passwords | Prevent weak credential usage | Pass |
+| Reject weak passwords | Enforce minimum security strength rules | Pass |
+| Prevent reuse of last passwords | Enforce password history policy (last 5 passwords) | Pass |
+| Change password with correct current password | Ensure authenticated password change flow | Pass |
+| Reject incorrect current password | Prevent unauthorized password changes | Pass |
+| Apply new encoded password | Ensure secure password storage (encoding) | Pass |
+| Password expiry check (null date) | Enforce mandatory password update policy | Pass |
+| Password expiry check (>6 months) | Ensure periodic password updates | Pass |
+| Password expiry check (recent) | Allow valid sessions within policy | Pass |
+| Send password reset email | Validate secure reset token generation and email delivery | Pass |
+| Reject reset for unknown email | Prevent user enumeration via reset endpoint | Pass |
+| Generate supplier activation token | Ensure secure onboarding flow for suppliers | Pass |
+| Reset password with valid token | Validate secure token-based password reset | Pass |
+| Reject already used token | Prevent replay attacks | Pass |
+| Reject expired token | Enforce token expiration policy | Pass |
+| Reject invalid token | Prevent unauthorized resets | Pass |
+| Controller: missing fields validation | Ensure input validation at API level | Pass |
+| Controller: user not found handling | Prevent invalid account operations | Pass |
+| Account activation via token | Validate secure onboarding password setup | Pass |
+| Check password expiry endpoint | Expose safe password expiry status | Pass |
+
+---
+
+#### Observations:
+
+- Passwords must satisfy complexity rules (minimum length, uppercase, numeric, special character).
+- Common and weak passwords are explicitly rejected.
+- The system enforces password history (last 5 passwords cannot be reused).
+- Password reset tokens are time-bound and single-use.
+- Expired or reused tokens are correctly rejected.
+- Passwords are always stored in encoded form using a `PasswordEncoder`.
+- No plaintext password exposure was detected in any flow.
+- User enumeration risks are reduced by generic responses in reset flows.
+- Account activation requires secure token-based password setup.
+
+### UC3 – Supplier application submission
+
+### UC4 – Supplier approval workflow
+
+### UC5 – Meal planning management
+
+### UC6 – Product ordering
+
+### UC7 – Supplier management
 
 
 
