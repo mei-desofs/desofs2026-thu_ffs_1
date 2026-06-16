@@ -6,13 +6,16 @@
 
 - [Introduction](#introduction)
 - [Test Planning](#test-planning)
+- [Traceability With Secure Development Requirements Reference](#traceability)
+- [Security Assessment](#security-assessment)
+- [Security Configuration and Installation](#security-configuration-and-installation)
 - [Conclusion](#conclusion)
 
 ---
 
 ## Introduction
 
-This document covers the security engineering practices adopted during the development of the **Cantinas de Cinfães** backend — a Spring Boot REST API for managing canteen operations, including user authentication, meal scheduling, and email notifications.
+This document covers the security engineering practices adopted during the development of the **BioCantinas** backend — a Spring Boot REST API for managing canteen operations, including user authentication, meal scheduling, and email notifications.
 
 The project follows a **shift-left security** approach, integrating security checks throughout the development lifecycle via three automated GitHub Actions pipelines: one for commits, one for Pull Requests, and one for Releases. Practices include SAST, SCA, DAST, secret scanning, artifact scanning, SBOM generation, and automated testing, all traceable to security requirements defined using the OWASP ASVS.
 
@@ -297,7 +300,7 @@ A traceability status is assigned per practice:
 
 ---
 
-## Summary — Traceability Status Overview
+## Traceability With Secure Development Requirements Reference
 
 | # | Practice | Status | Action Required Before Submission |
 | :---: | :--- | :---: | :--- |
@@ -311,6 +314,24 @@ A traceability status is assigned per practice:
 
 **Overall:** 3 of 7 practices (1, 6, 7) are fully traced to concrete, executable tests with no outstanding issues. Practices 3 (Secure Code Review) is partially traced — the automated component is verified, while the process component is a documentation artifact rather than a test. Practices 2, 4, and 5 reveal the same recurring pattern: **the Secure Development Requirements section describes CI/CD security automation (SCA, SAST/SARIF, secret scanning) as implemented, while the ASVS tracker marks the corresponding controls (V14.3.1, V14.2.4, V14.3.2) as *Not Applicable* due to their absence from the GitHub Actions workflows.** This is the single most important finding of this traceability exercise and should be resolved — either by implementing these (relatively low-effort) pipeline steps, or by aligning the documentation's wording with the project's actual current state — before final submission.
 
+
+## Security Assessment
+
+[securityAssessment.md](../securityAssessment.md)
+
+
+## Security Configuration and Installation
+
+[securityConfigurationAndInstallation.md](../securityConfigurationAndInstallation.md)
+
 ## Conclusion
 
-// TO DO
+This document presented the security test planning for Phase 2 – Sprint 2 of the BioCantinas backend, mapping OWASP ASVS 5.0 controls to concrete test procedures across seven functional areas, 
+from authentication and access control to CI/CD pipeline security.
+
+Overall, the application demonstrates a solid security posture, with the majority of in-scope controls either Compliant: backed by well-defined, executable test plans or Not Applicable with documented architectural justification. 
+The traceability analysis confirmed that most implemented secure development practices are verifiable through concrete tests, with secure logging and automated security testing being the most thoroughly covered areas.
+
+To conclude, the security engineering practices adopted throughout this sprint reflect a mature and consistent shift-left approach, with security concerns addressed at every stage of the development lifecycle — from input validation and access control to 
+session management, secure logging, and pipeline automation. The test plans defined are thorough, traceable, and grounded in the actual system architecture,
+providing a solid foundation for the continued secure development of the BioCantinas platform.
