@@ -51,6 +51,21 @@ jobs:
           category: "/language:java"
           output: sarif-results
 
+      - name: Debug CodeQL SARIF structure
+        run: |
+          sarif_file="sarif-results/java.sarif"
+          if [ ! -f "$sarif_file" ]; then
+            echo "SARIF file not found."
+            exit 0
+          fi
+          echo "=== SARIF file exists, size: $(wc -c < "$sarif_file") bytes ==="
+          echo "=== Result ruleIds ==="
+          jq -r '.runs[].results[] | .ruleId // "(null)"' "$sarif_file" | sort -u
+          echo "=== Rules in driver ==="
+          jq -r '.runs[].tool.driver.rules[]? | "\(.id) | sec=\(.properties["security-severity"] // "n/a") | lvl=\(.defaultConfiguration.level // "n/a")"' "$sarif_file"
+          echo "=== Rules in extensions ==="
+          jq -r '.runs[].tool.extensions[]?.rules[]? | "\(.id) | sec=\(.properties["security-severity"] // "n/a") | lvl=\(.defaultConfiguration.level // "n/a")"' "$sarif_file" | grep -i "csrf\|8\.\|7\." || echo "(none matching)"
+
       - name: Fail on High or Critical CodeQL Alerts
         run: |
           sarif_file="sarif-results/java.sarif"
