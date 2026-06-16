@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 public class WasteMapper implements IWasteMapper {
 
     @Override
-    public Waste toDomain(WasteDTO dto) {
+    public Waste toDomain() {
         return null;
     }
 

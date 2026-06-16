@@ -24,7 +24,9 @@ public class RecipeService implements IRecipeService {
 
     @Override
     public RecipeDTO getRecipeById(Long id) {
-        return null;
+        Recipe recipe = recipeRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Recipe not found with id: " + id));
+        return recipeMapper.toDTO(recipe);
     }
 
     @Override

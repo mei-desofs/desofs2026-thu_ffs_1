@@ -6,6 +6,6 @@ import bioCanteenApp.waste.dto.WasteDTO;
 import java.util.List;
 
 public interface IWasteMapper {
-    Waste toDomain(WasteDTO dto);
+    Waste toDomain();
     WasteDTO toDTO(Waste waste);
 }

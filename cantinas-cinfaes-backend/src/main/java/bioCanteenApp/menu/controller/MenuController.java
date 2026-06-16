@@ -172,11 +172,6 @@ public class MenuController {
         MenuDto menu =
                 menuService.getMenusByWeek(start, end).get(0);
 
-        Optional<Map<Product, Double>> planned =
-                provisioningService.findPlanned(
-                        menuMapper.toDomain(menu)
-                );
-
         provisioningService.getAdjustedQuantities(
                 menuMapper.toDomain(menu)
         );
